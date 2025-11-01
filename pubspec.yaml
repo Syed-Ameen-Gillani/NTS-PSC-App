@@ -30,6 +30,12 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  
+  # State Management
+  riverpod: ^3.0.3
+  flutter_riverpod: ^3.0.3
+  # Navigation
+  go_router: ^16.3.0
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
