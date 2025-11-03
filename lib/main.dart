@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:nts_psc_app/router/router.dart'; 
+import 'package:nts_psc_app/config/routes/go_router.dart'; 
 
 void main() {
   // Wrap the main app in ProviderScope
