@@ -1,5 +1,3 @@
-// lib/features/onboarding/presentation/screens/onboarding_screen_6.dart
-
 import 'package:flutter/material.dart';
 //import 'package:go_router/go_router.dart';
 import 'package:nts_psc_app/core/constants/colors.dart';

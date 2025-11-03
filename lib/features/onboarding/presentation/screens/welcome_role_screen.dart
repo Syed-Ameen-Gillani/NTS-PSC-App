@@ -1,5 +1,3 @@
-// lib/features/onboarding/presentation/screens/welcome_role_screen.dart
-
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 //import 'package:go_router/go_router.dart';
@@ -12,8 +10,8 @@ class WelcomeRoleScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Content details for this screen
-    const String imageAsset = 'assets/images/welcome_role.png'; 
-    final whiteContainerHeight = MediaQuery.of(context).size.height * 0.50; 
+    const String imageAsset = 'assets/images/welcome_role.png';
+    final whiteContainerHeight = MediaQuery.of(context).size.height * 0.50;
 
     return Scaffold(
       backgroundColor: kBackgroundColor,
@@ -21,7 +19,7 @@ class WelcomeRoleScreen extends StatelessWidget {
         children: [
           // White Container Area (Reusing Style 1 structure widget)
           Container(
-            height: whiteContainerHeight, 
+            height: whiteContainerHeight,
             width: double.infinity,
             decoration: BoxDecoration(
               color: kWhiteContainerColor,
@@ -30,17 +28,14 @@ class WelcomeRoleScreen extends StatelessWidget {
                 bottomRight: Radius.circular(43.r),
               ),
             ),
-            child: Center( 
+            child: Center(
               child: Padding(
-                padding: EdgeInsets.symmetric(vertical: 20.h, horizontal: 40.w), 
-                child: Image.asset(
-                  imageAsset,
-                  fit: BoxFit.contain, 
-                ),
+                padding: EdgeInsets.symmetric(vertical: 20.h, horizontal: 40.w),
+                child: Image.asset(imageAsset, fit: BoxFit.contain),
               ),
             ),
           ),
-          
+
           //  Vertical Spacer
           SizedBox(height: 30.h),
 
@@ -54,7 +49,7 @@ class WelcomeRoleScreen extends StatelessWidget {
                   'Welcome to Educora.',
                   textAlign: TextAlign.start,
                   style: TextStyle(
-                    fontSize: 28.sp, 
+                    fontSize: 28.sp,
                     fontWeight: FontWeight.w500,
                     color: kTitleColor,
                   ),
@@ -64,7 +59,7 @@ class WelcomeRoleScreen extends StatelessWidget {
                   'Login as a',
                   textAlign: TextAlign.start,
                   style: TextStyle(
-                    fontSize: 28.sp, 
+                    fontSize: 28.sp,
                     fontWeight: FontWeight.w500,
                     color: kTitleColor,
                   ),
@@ -72,9 +67,8 @@ class WelcomeRoleScreen extends StatelessWidget {
               ],
             ),
           ),
-          
+
           const Spacer(), // Pushes buttons to the bottom
-          
           //  Role Selection Buttons
           SafeArea(
             top: false,
@@ -93,7 +87,7 @@ class WelcomeRoleScreen extends StatelessWidget {
                     trailingIcon: null,
                   ),
                   SizedBox(height: 16.h),
-                  
+
                   // Teacher Button (Outlined White/Blue)
                   SizedBox(
                     width: double.infinity,
@@ -103,14 +97,20 @@ class WelcomeRoleScreen extends StatelessWidget {
                         // Teacher button action
                       },
                       style: OutlinedButton.styleFrom(
-                        backgroundColor: kWhiteContainerColor, 
-                        foregroundColor: kPrimaryBlue, 
+                        backgroundColor: kWhiteContainerColor,
+                        foregroundColor: kPrimaryBlue,
                         side: BorderSide(color: kPrimaryBlue, width: 2.w),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(50.r),
                         ),
                       ),
-                      child: Text('Teacher', style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w600)),
+                      child: Text(
+                        'Teacher',
+                        style: TextStyle(
+                          fontSize: 18.sp,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
                   ),
                 ],

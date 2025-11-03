@@ -1,4 +1,3 @@
-// lib/features/onboarding/presentation/widgets/page_indicator.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:nts_psc_app/core/constants/colors.dart';
@@ -6,7 +5,7 @@ import 'package:nts_psc_app/core/constants/colors.dart';
 class PageIndicator extends StatelessWidget {
   final int currentPage;
   final int totalPages;
-  
+
   const PageIndicator({
     super.key,
     required this.currentPage,
@@ -24,7 +23,9 @@ class PageIndicator extends StatelessWidget {
           height: 4.h,
           width: index == currentPage ? 50.w : 20.w,
           decoration: BoxDecoration(
-            color: index == currentPage ? kPrimaryBlue : kPrimaryBlue.withOpacity(0.3),
+            color: index == currentPage
+                ? kPrimaryBlue
+                : kPrimaryBlue.withOpacity(0.3),
             borderRadius: BorderRadius.circular(2.r),
           ),
         ),

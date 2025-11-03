@@ -1,5 +1,3 @@
-// lib/features/onboarding/presentation/widgets/onboarding_content_style_1.dart
-
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:nts_psc_app/core/constants/colors.dart';
@@ -18,15 +16,14 @@ class OnboardingContentStyle1 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    
-    final whiteContainerHeight = MediaQuery.of(context).size.height * 0.55; 
+    final whiteContainerHeight = MediaQuery.of(context).size.height * 0.55;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         //  The White Container (Top Area)
         Container(
-          height: whiteContainerHeight, 
+          height: whiteContainerHeight,
           width: double.infinity,
           decoration: BoxDecoration(
             color: kWhiteContainerColor,
@@ -35,17 +32,14 @@ class OnboardingContentStyle1 extends StatelessWidget {
               bottomRight: Radius.circular(43.r),
             ),
           ),
-          child: Center( 
+          child: Center(
             child: Padding(
-              padding: EdgeInsets.symmetric(vertical: 20.h, horizontal: 40.w), 
-              child: Image.asset(
-                imageAsset,
-                fit: BoxFit.contain, 
-              ),
+              padding: EdgeInsets.symmetric(vertical: 20.h, horizontal: 40.w),
+              child: Image.asset(imageAsset, fit: BoxFit.contain),
             ),
           ),
         ),
-        
+
         // 2. Vertical Spacer
         SizedBox(height: 48.h),
 
@@ -58,7 +52,7 @@ class OnboardingContentStyle1 extends StatelessWidget {
                 title,
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 28.sp, 
+                  fontSize: 28.sp,
                   fontWeight: FontWeight.w900,
                   color: kTitleColor,
                   height: 1.2,
@@ -79,7 +73,7 @@ class OnboardingContentStyle1 extends StatelessWidget {
             ],
           ),
         ),
-        
+
         const Spacer(), // Pushes content up, ensuring responsiveness
         SizedBox(height: 24.h),
       ],

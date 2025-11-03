@@ -1,4 +1,3 @@
-// lib/main.dart (Restored with Go Router)
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

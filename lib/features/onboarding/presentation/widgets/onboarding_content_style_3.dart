@@ -1,5 +1,3 @@
-// lib/features/onboarding/presentation/widgets/onboarding_content_style_3.dart
-
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:nts_psc_app/core/constants/colors.dart';
@@ -52,7 +50,7 @@ class OnboardingContentStyle3 extends StatelessWidget {
             ),
           ),
           SizedBox(height: 14.h),
-          
+
           SizedBox(
             width: 239.w,
             child: Text(
