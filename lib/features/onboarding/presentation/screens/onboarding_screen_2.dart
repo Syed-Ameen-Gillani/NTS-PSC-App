@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 //import 'package:go_router/go_router.dart';
 import 'package:nts_psc_app/core/constants/colors.dart';
-import 'package:nts_psc_app/core/widgets/custom_button.dart';
+import 'package:nts_psc_app/presentation/widgets/custom_button.dart';
 import 'package:nts_psc_app/features/onboarding/presentation/widgets/onboarding_content_style_1.dart';
 
 class OnboardingScreen2 extends StatelessWidget {
