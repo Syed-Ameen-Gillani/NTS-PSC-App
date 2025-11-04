@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:nts_psc_app/core/constants/app_assets.dart';
 //import 'package:go_router/go_router.dart';
 import 'package:nts_psc_app/core/constants/colors.dart';
 import 'package:nts_psc_app/presentation/widgets/custom_button.dart';
@@ -10,7 +11,7 @@ class WelcomeRoleScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Content details for this screen
-    const String imageAsset = 'assets/images/welcome_role.png';
+  
     final whiteContainerHeight = MediaQuery.of(context).size.height * 0.50;
 
     return Scaffold(
@@ -31,7 +32,7 @@ class WelcomeRoleScreen extends StatelessWidget {
             child: Center(
               child: Padding(
                 padding: EdgeInsets.symmetric(vertical: 20.h, horizontal: 40.w),
-                child: Image.asset(imageAsset, fit: BoxFit.contain),
+                child: Image.asset(AppAssets.welcomeRole, fit: BoxFit.contain),
               ),
             ),
           ),

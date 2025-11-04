@@ -3,6 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:nts_psc_app/config/routes/go_router.dart';
+import 'package:nts_psc_app/features/onboarding/presentation/screens/onboarding_screen_1.dart';
+import 'package:nts_psc_app/features/onboarding/presentation/screens/onboarding_screen_2.dart';
+import 'package:nts_psc_app/features/onboarding/presentation/screens/onboarding_screen_3.dart';
+import 'package:nts_psc_app/features/onboarding/presentation/screens/onboarding_screen_4.dart';
+import 'package:nts_psc_app/features/onboarding/presentation/screens/onboarding_screen_5.dart';
+import 'package:nts_psc_app/features/onboarding/presentation/screens/onboarding_screen_6.dart';
+import 'package:nts_psc_app/features/onboarding/presentation/screens/welcome_role_screen.dart';
 import 'package:nts_psc_app/features/splash/splash_screen.dart'; 
 
 

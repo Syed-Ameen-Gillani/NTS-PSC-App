@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:nts_psc_app/core/constants/app_assets.dart';
 import 'package:nts_psc_app/core/constants/colors.dart';
 
 class OnboardingContentStyle3 extends StatelessWidget {
@@ -80,7 +81,7 @@ class OnboardingContentStyle3 extends StatelessWidget {
                   bottom: 120
                       .h, // how far above the bottom of this box the arrow sits
                   child: Image.asset(
-                    'assets/images/curved_arrow.png',
+                   AppAssets.curvedArrow,
                     width: 70.w,
                     height: 120.h,
                     fit: BoxFit.contain,

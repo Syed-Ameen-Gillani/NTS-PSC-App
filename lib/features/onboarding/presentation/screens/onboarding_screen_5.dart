@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:nts_psc_app/core/constants/app_assets.dart';
 //import 'package:go_router/go_router.dart';
 import 'package:nts_psc_app/core/constants/colors.dart';
-import 'package:nts_psc_app/presentation/widgets/custom_button.dart';
 import 'package:nts_psc_app/features/onboarding/presentation/widgets/onboarding_content_style_2.dart';
 import 'package:nts_psc_app/features/onboarding/presentation/widgets/page_indicator.dart';
+import 'package:nts_psc_app/presentation/widgets/custom_button.dart';
 
 class OnboardingScreen5 extends StatelessWidget {
   const OnboardingScreen5({super.key});
@@ -14,7 +15,7 @@ class OnboardingScreen5 extends StatelessWidget {
     const String title = 'Create your own study plan';
     const String description =
         'Study according to the study plan, make study more motivated.';
-    const String imageAsset = 'assets/images/onboarding_5.png';
+   
 
     return Scaffold(
       backgroundColor: kBackgroundColor,
@@ -22,7 +23,7 @@ class OnboardingScreen5 extends StatelessWidget {
         children: [
           // Content Area
           OnboardingContentStyle2(
-            imageAsset: imageAsset,
+            imageAsset: AppAssets.onboarding5,
             title: title,
             description: description,
             showSkipButton: false, // Hide skip button on this screen

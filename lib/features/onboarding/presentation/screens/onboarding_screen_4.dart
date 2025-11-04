@@ -1,6 +1,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:nts_psc_app/core/constants/app_assets.dart';
 //import 'package:go_router/go_router.dart';
 import 'package:nts_psc_app/core/constants/colors.dart';
 import 'package:nts_psc_app/features/onboarding/presentation/widgets/onboarding_content_style_2.dart';
@@ -14,7 +15,6 @@ class OnboardingScreen4 extends StatelessWidget {
     const String title = 'Quick and easy learning';
     const String description =
         'Easy and fast learning at any time to help you improve various skills';
-    const String imageAsset = 'assets/images/onboarding_4.png';
 
     return Scaffold(
       backgroundColor: kBackgroundColor,
@@ -22,7 +22,7 @@ class OnboardingScreen4 extends StatelessWidget {
         children: [
           // Content Area
           OnboardingContentStyle2(
-            imageAsset: imageAsset,
+            imageAsset: AppAssets.onboarding4,
             title: title,
             description: description,
             showSkipButton: true,

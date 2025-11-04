@@ -1,10 +1,11 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:nts_psc_app/core/constants/app_assets.dart';
 //import 'package:go_router/go_router.dart';
 import 'package:nts_psc_app/core/constants/colors.dart';
-import 'package:nts_psc_app/presentation/widgets/custom_button.dart';
 import 'package:nts_psc_app/features/onboarding/presentation/widgets/onboarding_content_style_1.dart';
+import 'package:nts_psc_app/presentation/widgets/custom_button.dart';
 
 class OnboardingScreen1 extends StatelessWidget {
   const OnboardingScreen1({super.key});
@@ -15,7 +16,6 @@ class OnboardingScreen1 extends StatelessWidget {
     const String title = 'Learn Online From Your Home';
     const String description =
         'Amet minim mollit non deserunt ullamco est sit aliqua dolor do amet sint. Velit officia consequat duis enim velit mollit.';
-    const String imageAsset = 'assets/images/onboarding_1.png';
 
     return Scaffold(
       backgroundColor: kBackgroundColor,
@@ -24,7 +24,7 @@ class OnboardingScreen1 extends StatelessWidget {
           // 1. Content Area (Using the reusable Style 1 widget)
           Expanded(
             child: OnboardingContentStyle1(
-              imageAsset: imageAsset,
+              imageAsset: AppAssets.onboarding1,
               title: title,
               description: description,
             ),
