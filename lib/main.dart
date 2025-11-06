@@ -1,8 +1,8 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:nts_psc_app/config/routes/go_router.dart';
+import 'package:nts_psc_app/features/onboarding/domain/entities/onboarding_content.dart';
 import 'package:nts_psc_app/features/onboarding/presentation/screens/onboarding_screen_1.dart';
 import 'package:nts_psc_app/features/onboarding/presentation/screens/onboarding_screen_2.dart';
 import 'package:nts_psc_app/features/onboarding/presentation/screens/onboarding_screen_3.dart';
@@ -10,8 +10,7 @@ import 'package:nts_psc_app/features/onboarding/presentation/screens/onboarding_
 import 'package:nts_psc_app/features/onboarding/presentation/screens/onboarding_screen_5.dart';
 import 'package:nts_psc_app/features/onboarding/presentation/screens/onboarding_screen_6.dart';
 import 'package:nts_psc_app/features/onboarding/presentation/screens/welcome_role_screen.dart';
-import 'package:nts_psc_app/features/splash/splash_screen.dart'; 
-
+import 'package:nts_psc_app/features/splash/splash_screen.dart';
 
 // void main() {
 //   runApp(const ProviderScope(child: MyApp()));
@@ -40,10 +39,6 @@ import 'package:nts_psc_app/features/splash/splash_screen.dart';
 //   }
 // }
 
-
-
-
-
 //temporary main.dart without go_router, so that onboarding screens can be tested directly
 
 //lib/main.dart (Temporary Testing Setup)
@@ -57,20 +52,21 @@ class MyApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    
     return ScreenUtilInit(
       designSize: const Size(414, 896),
       minTextAdapt: true,
       splitScreenMode: true,
       builder: (context, child) {
         return MaterialApp(
-          home: child, 
-          
+          theme: ThemeData.light(),
+          darkTheme: ThemeData.dark(),
+          themeMode: ThemeMode.system,
+          home: OnboardingScreen1(),
           debugShowCheckedModeBanner: false,
         );
       },
 
-      child: const SplashScreen(),
+      child: const WelcomeRoleScreen(),
     );
   }
 }
