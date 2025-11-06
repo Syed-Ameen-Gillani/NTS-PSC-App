@@ -20,7 +20,7 @@ class LoginPage extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              SizedBox(height: 100.h),
+              SizedBox(height: 60.h),
               Text(
                 textAlign: TextAlign.center,
                 'Welcome!\nSign up to continue!',
@@ -29,7 +29,7 @@ class LoginPage extends StatelessWidget {
                   // fontSize: 30.sp,
                 ),
               ),
-              SizedBox(height: 50.h),
+              SizedBox(height: 60.h),
               CustomTextFormField(hintText: 'Email', prefixIcon: Icons.email),
               SizedBox(height: 20.h),
               CustomTextFormField(
