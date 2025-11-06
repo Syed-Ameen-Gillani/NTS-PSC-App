@@ -7,7 +7,7 @@ class AppColors {
   static const Color accent = Color(0xFFFF9D42);
 
   // Backgrounds
-  static const Color background = Color(0xFFFFFFFF);
+  static const Color background =Color.fromRGBO(228, 241, 248, 1);
   static const Color surface = Color(0xFFF7FBFD);
   static const Color surfaceVariant = Color(0xFFEFF7FB);
 

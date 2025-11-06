@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:nts_psc_app/config/routes/go_router.dart';
+import 'package:nts_psc_app/features/auth/presentation/pages/login_page.dart';
 import 'package:nts_psc_app/features/onboarding/domain/entities/onboarding_content.dart';
 import 'package:nts_psc_app/features/onboarding/presentation/screens/onboarding_screen_1.dart';
 import 'package:nts_psc_app/features/onboarding/presentation/screens/onboarding_screen_2.dart';
@@ -61,12 +62,12 @@ class MyApp extends ConsumerWidget {
           theme: ThemeData.light(),
           darkTheme: ThemeData.dark(),
           themeMode: ThemeMode.system,
-          home: OnboardingScreen1(),
+          home: LoginPage(),
           debugShowCheckedModeBanner: false,
         );
       },
 
-      child: const WelcomeRoleScreen(),
+      // child: const LoginPage(),
     );
   }
 }
