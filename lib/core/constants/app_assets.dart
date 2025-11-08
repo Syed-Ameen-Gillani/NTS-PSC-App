@@ -17,6 +17,8 @@ class AppAssets {
   static const String curvedArrow = '$_imagePath/curved_arrow.png';
   
   // Icons
+  static const String googleIcon = 'assets/icons/google.png';
+  static const String facebookIcon = 'assets/icons/facebook.png';
   // static const String homeIcon = '$_iconPath/home.svg';
   
   // You can add more assets here

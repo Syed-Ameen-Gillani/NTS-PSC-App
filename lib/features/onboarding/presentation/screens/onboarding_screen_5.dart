@@ -48,7 +48,7 @@ class OnboardingScreen5 extends StatelessWidget {
               onPressed: () {
                 // sign up action
               },
-              trailingIcon: null,
+              trailingIcon: null, 
             ),
           ),
 

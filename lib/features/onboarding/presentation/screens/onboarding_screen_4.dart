@@ -12,9 +12,9 @@ class OnboardingScreen4 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const String title = 'Quick and easy learning';
+    const String title = 'Quick and easy\n learning';
     const String description =
-        'Easy and fast learning at any time to help you improve various skills';
+        'Easy and fast learning at any time\n  to help you improve various skills';
 
     return Scaffold(
       backgroundColor: kBackgroundColor,

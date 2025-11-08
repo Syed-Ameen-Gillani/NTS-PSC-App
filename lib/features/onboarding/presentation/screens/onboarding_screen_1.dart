@@ -13,7 +13,7 @@ class OnboardingScreen1 extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // --- Unique Content for Screen 1 ---
-    const String title = 'Learn Online From Your Home';
+    const String title = 'Learn Online From\n Your Home';
     const String description =
         'Amet minim mollit non deserunt ullamco est sit aliqua dolor do amet sint. Velit officia consequat duis enim velit mollit.';
 
@@ -46,7 +46,7 @@ class OnboardingScreen1 extends StatelessWidget {
                   Icons.arrow_forward_ios_rounded,
                   size: 18.sp,
                   color: Colors.white,
-                ),
+                ), 
               ),
             ),
           ),

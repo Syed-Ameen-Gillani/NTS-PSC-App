@@ -18,7 +18,7 @@ class CustomButton extends StatelessWidget {
     this.width = double.infinity, // Default to full width if not specified
     this.height = 68.0, // Default height from your spec
     this.borderRadius = 50.0, // Default radius from your spec
-    this.trailingIcon,
+    this.trailingIcon, 
   });
 
   @override
@@ -35,7 +35,7 @@ class CustomButton extends StatelessWidget {
           ),
           // Remove default padding to control size exactly with SizedBox
           padding: EdgeInsets.zero, 
-          elevation: 5, // Adds a subtle lift/shadow
+          elevation: 0, // Adds a subtle lift/shadow
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,

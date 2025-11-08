@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:nts_psc_app/config/routes/go_router.dart';
+import 'package:nts_psc_app/core/theme/app_theme.dart';
+import 'package:nts_psc_app/features/authentication/presentation/pages/login_screen.dart';
 import 'package:nts_psc_app/features/onboarding/presentation/screens/onboarding_screen_1.dart';
 import 'package:nts_psc_app/features/onboarding/presentation/screens/onboarding_screen_2.dart';
 import 'package:nts_psc_app/features/onboarding/presentation/screens/onboarding_screen_3.dart';
@@ -34,6 +36,7 @@ import 'package:nts_psc_app/features/splash/splash_screen.dart';
 //           // Use Go Router config here
 //           routerConfig: router,
 //           debugShowCheckedModeBanner: false,
+//            theme: appTheme(context),
 //         );
 //       },
 //     );
@@ -67,10 +70,11 @@ class MyApp extends ConsumerWidget {
           home: child, 
           
           debugShowCheckedModeBanner: false,
+          theme: AppTheme.lightTheme,
         );
       },
 
-      child: const SplashScreen(),
+      child: const LoginPage(),
     );
   }
 }

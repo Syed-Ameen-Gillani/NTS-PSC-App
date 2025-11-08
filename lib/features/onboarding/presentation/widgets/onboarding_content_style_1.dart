@@ -16,7 +16,12 @@ class OnboardingContentStyle1 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final whiteContainerHeight = MediaQuery.of(context).size.height * 0.55;
+    final Color primaryColor = Theme.of(context).colorScheme.primary;
+    final Color titleColor = Theme.of(context).textTheme.displayLarge!.color!;
+    final Color descriptionColor = Theme.of(
+      context,
+    ).textTheme.bodyLarge!.color!;
+    final whiteContainerHeight = 448.0;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -32,14 +37,18 @@ class OnboardingContentStyle1 extends StatelessWidget {
               bottomRight: Radius.circular(43.r),
             ),
           ),
-          child: Center(
-            child: Padding(
-              padding: EdgeInsets.symmetric(vertical: 20.h, horizontal: 40.w),
-              child: Image.asset(imageAsset, fit: BoxFit.contain),
+          child: Padding(
+            padding: EdgeInsets.only(left: 40.w, right: 40.w, bottom: 30.h),
+            child: Align(
+              alignment: Alignment.bottomCenter,
+              child: Image.asset(
+                imageAsset,
+                fit: BoxFit.contain,
+                height: whiteContainerHeight * 0.7,
+              ),
             ),
           ),
         ),
-
         // 2. Vertical Spacer
         SizedBox(height: 48.h),
 
@@ -51,25 +60,19 @@ class OnboardingContentStyle1 extends StatelessWidget {
               Text(
                 title,
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 28.sp,
-                  fontWeight: FontWeight.w900,
-                  color: kTitleColor,
-                  height: 1.2,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.displayLarge!.copyWith(color: titleColor),
               ),
-              SizedBox(height: 24.h),
+              SizedBox(height: 25.h),
 
               Text(
                 description,
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w400,
-                  color: kDescriptionColor,
-                  height: 1.5,
-                ),
-              ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyLarge!.copyWith(color: descriptionColor),
+              ), 
             ],
           ),
         ),
