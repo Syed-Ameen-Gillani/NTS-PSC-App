@@ -22,7 +22,7 @@ class LoginPage extends StatelessWidget {
             children: [
               SizedBox(height: 60.h),
               Text(
-                'Welcome!\nSign up to continue!',
+                'Welcome!\nSign in to continue!',
                 textAlign: TextAlign.center,
                 style: AppTextStyles.dmSans500med24,
               ),

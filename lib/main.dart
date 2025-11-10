@@ -5,6 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:nts_psc_app/config/routes/go_router.dart';
 import 'package:nts_psc_app/core/theme/app_theme.dart';
 import 'package:nts_psc_app/features/authentication/presentation/pages/login_page.dart';
+import 'package:nts_psc_app/features/authentication/presentation/pages/signup_create_account_screen.dart';
 import 'package:nts_psc_app/features/onboarding/presentation/screens/onboarding_screen_1.dart';
 import 'package:nts_psc_app/features/onboarding/presentation/screens/onboarding_screen_2.dart';
 import 'package:nts_psc_app/features/onboarding/presentation/screens/onboarding_screen_3.dart';
@@ -74,7 +75,7 @@ class MyApp extends ConsumerWidget {
         );
       },
 
-      child: const LoginPage(),
+      child: const SignupCreateAccountScreen(),
     );
   }
 }
