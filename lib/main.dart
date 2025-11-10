@@ -1,10 +1,10 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:nts_psc_app/config/routes/go_router.dart';
 import 'package:nts_psc_app/core/theme/app_theme.dart';
 import 'package:nts_psc_app/features/authentication/presentation/pages/login_page.dart';
+import 'package:nts_psc_app/features/authentication/presentation/pages/registration_success_modal.dart';
 import 'package:nts_psc_app/features/authentication/presentation/pages/signup_create_account_screen.dart';
 import 'package:nts_psc_app/features/onboarding/presentation/screens/onboarding_screen_1.dart';
 import 'package:nts_psc_app/features/onboarding/presentation/screens/onboarding_screen_2.dart';
@@ -13,8 +13,7 @@ import 'package:nts_psc_app/features/onboarding/presentation/screens/onboarding_
 import 'package:nts_psc_app/features/onboarding/presentation/screens/onboarding_screen_5.dart';
 import 'package:nts_psc_app/features/onboarding/presentation/screens/onboarding_screen_6.dart';
 import 'package:nts_psc_app/features/onboarding/presentation/screens/welcome_role_screen.dart';
-import 'package:nts_psc_app/features/splash/splash_screen.dart'; 
-
+import 'package:nts_psc_app/features/splash/splash_screen.dart';
 
 // void main() {
 //   runApp(const ProviderScope(child: MyApp()));
@@ -44,10 +43,6 @@ import 'package:nts_psc_app/features/splash/splash_screen.dart';
 //   }
 // }
 
-
-
-
-
 //temporary main.dart without go_router, so that onboarding screens can be tested directly
 
 //lib/main.dart (Temporary Testing Setup)
@@ -61,21 +56,33 @@ class MyApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    
     return ScreenUtilInit(
       designSize: const Size(414, 896),
       minTextAdapt: true,
       splitScreenMode: true,
       builder: (context, child) {
         return MaterialApp(
-          home: child, 
-          
+          home: child,
+
           debugShowCheckedModeBanner: false,
           theme: AppTheme.lightTheme,
         );
       },
 
-      child: const SignupCreateAccountScreen(),
+      child: RegistrationSuccessModal(
+        // the positional argument required is the function (VoidCallback)
+        onDonePressed: () {
+          // we can navigate away from this screen
+        },
+      ),
     );
   }
 }
+
+
+// registrationsuccessmodel screen needs voidCallBack positional arugment
+// to call it:
+//            child: RegistrationSuccessModal(
+//              onDonePressed: (){}
+//        
+//   )
