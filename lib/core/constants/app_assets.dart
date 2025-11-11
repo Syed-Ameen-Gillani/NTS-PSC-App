@@ -2,6 +2,7 @@ class AppAssets {
   // Private constructor to prevent instantiation
   AppAssets._();
 
+
   static const String _imagePath = 'assets/images';
   static const String _iconPath = 'assets/icons';
 
@@ -21,7 +22,11 @@ class AppAssets {
 
 
   // Icons
+  // static const String googleIcon = 'assets/icons/google.svg';
+  // static const String facebookIcon = 'assets/icons/facebook.svg';
   // static const String homeIcon = '$_iconPath/home.svg';
+
 
   // You can add more assets here
 }
+

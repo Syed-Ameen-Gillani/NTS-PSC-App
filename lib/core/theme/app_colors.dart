@@ -7,19 +7,19 @@ class AppColors {
   static const Color accent = Color(0xFFFF9D42);
 
   // Backgrounds
-  static const Color background =Color.fromRGBO(228, 241, 248, 1);
-  static const Color surface = Color(0xFFF7FBFD);
+  static const Color background = Color(0xFFFFFFFF);
+  static const Color surface = Color(0xFFE4F1F8);
   static const Color surfaceVariant = Color(0xFFEFF7FB);
 
   // Text / content
   static const Color onPrimary = Colors.white;
-  static const Color onBackground = Color(0xFF0F1720);
+  static const Color onBackground = Color(0xFF060302);
   static const Color onSurface = Color(0xFF0F1720);
 
   // Neutral / greys
   static const Color grey900 = Color(0xFF0F1720);
   static const Color grey700 = Color(0xFF334155);
-  static const Color grey500 = Color(0xFF64748B);
+  static const Color grey500 = Color(0xFF767372);
   static const Color grey300 = Color(0xFFCBD5E1);
   static const Color grey100 = Color(0xFFF1F5F9);
 
@@ -39,6 +39,3 @@ class DarkAppColors {
   static const Color onSurface = Color(0xFFE6F6FF);
   static const Color onPrimary = Color(0xFF06243A);
 }
-
-
-

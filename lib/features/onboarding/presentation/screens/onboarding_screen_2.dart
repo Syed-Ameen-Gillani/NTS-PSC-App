@@ -47,7 +47,7 @@ class OnboardingScreen2 extends StatelessWidget {
                   Icons.arrow_forward_ios_rounded,
                   size: 18.sp,
                   color: Colors.white,
-                ),
+                ), 
               ),
             ),
           ),

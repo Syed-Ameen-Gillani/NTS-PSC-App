@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:nts_psc_app/core/constants/colors.dart';
+import 'package:nts_psc_app/core/theme/app_text_styles.dart';
 
 class OnboardingContentStyle2 extends StatelessWidget {
   final String imageAsset;
@@ -20,6 +21,12 @@ class OnboardingContentStyle2 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Color primaryColor = Theme.of(context).colorScheme.primary;
+    final Color titleColor = Theme.of(context).textTheme.displayLarge!.color!;
+    final Color descriptionColor = Theme.of(
+      context,
+    ).textTheme.bodyLarge!.color!;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -33,7 +40,7 @@ class OnboardingContentStyle2 extends StatelessWidget {
                     onPressed: onSkip,
                     child: Text(
                       'Skip',
-                      style: TextStyle(fontSize: 16.sp, color: kPrimaryBlue),
+                      style: TextStyle(fontSize: 16.sp, color: primaryColor),
                     ),
                   )
                 : SizedBox(height: 16.h),
@@ -60,22 +67,21 @@ class OnboardingContentStyle2 extends StatelessWidget {
               Text(
                 title,
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 28.sp,
-                  fontWeight: FontWeight.w900,
-                  color: kTitleColor,
-                  height: 1.2,
+                style: AppTextStyles.dmSans500med24.copyWith(
+                  fontSize: 24.88.sp, //  responsive scaling
+                  color:
+                      kTitleColor, //kTitleColor constant (which maps to AppColors.onBackground)
                 ),
               ),
+
               SizedBox(height: 16.h),
               Text(
                 description,
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w400,
-                  color: kDescriptionColor,
-                  height: 1.5,
+                style: AppTextStyles.dmSans500med12.copyWith(
+                  fontSize: 12.sp, //  responsive scaling
+                  color:
+                      kDescriptionColor, // description color constant
                 ),
               ),
             ],

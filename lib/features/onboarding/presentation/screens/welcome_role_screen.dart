@@ -11,8 +11,8 @@ class WelcomeRoleScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Content details for this screen
-  
-    final whiteContainerHeight = MediaQuery.of(context).size.height * 0.50;
+
+    final whiteContainerHeight = 448.0;
 
     return Scaffold(
       backgroundColor: kBackgroundColor,
@@ -29,43 +29,52 @@ class WelcomeRoleScreen extends StatelessWidget {
                 bottomRight: Radius.circular(43.r),
               ),
             ),
-            child: Center(
-              child: Padding(
-                padding: EdgeInsets.symmetric(vertical: 20.h, horizontal: 40.w),
-                child: Image.asset(AppAssets.welcomeRole, fit: BoxFit.contain),
+            child: Padding(
+                padding: EdgeInsets.only(left: 40.w, right: 40.w, bottom: 30.h),
+                child: Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Image.asset(
+                    AppAssets.welcomeRole,
+                    fit: BoxFit.contain,
+                    height: whiteContainerHeight * 0.7,
+                  ),
+                ),
               ),
-            ),
           ),
 
           //  Vertical Spacer
-          SizedBox(height: 30.h),
+          SizedBox(height: 80.h),
 
           //  Text Content
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 40.w),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Welcome to Educora.',
-                  textAlign: TextAlign.start,
-                  style: TextStyle(
-                    fontSize: 28.sp,
-                    fontWeight: FontWeight.w500,
-                    color: kTitleColor,
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 30.w),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Welcome to \nEducora.',
+                    textAlign: TextAlign.start,
+                    style: TextStyle(
+                      fontSize: 24.88.sp,
+                      fontWeight: FontWeight.w500,
+                      color: kTitleColor,
+                      letterSpacing: -0.3,
+                    ),
                   ),
-                ),
-                SizedBox(height: 10.h),
-                Text(
-                  'Login as a',
-                  textAlign: TextAlign.start,
-                  style: TextStyle(
-                    fontSize: 28.sp,
-                    fontWeight: FontWeight.w500,
-                    color: kTitleColor,
+                  SizedBox(height: 20.h),
+                  Text(
+                    'Login as a',
+                    textAlign: TextAlign.start,
+                    style: TextStyle(
+                      fontSize: 24.88.sp,
+                      fontWeight: FontWeight.w500,
+                      color: kTitleColor,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
 
@@ -108,7 +117,7 @@ class WelcomeRoleScreen extends StatelessWidget {
                       child: Text(
                         'Teacher',
                         style: TextStyle(
-                          fontSize: 18.sp,
+                          fontSize: 17.28.sp,
                           fontWeight: FontWeight.w600,
                         ),
                       ),

@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:nts_psc_app/core/theme/app_colors.dart';
 
-// Overall Screen Background Color (#E4F1F8)
-const Color kBackgroundColor = Color(0xFFE4F1F8); 
-// Primary Button Color (#3787FF)
-const Color kPrimaryBlue = Color(0xFF3787FF); 
-// White Container Color
-const Color kWhiteContainerColor = Colors.white;
-// Title text color (dark gray/black)
-const Color kTitleColor = Color(0xFF2C2C2C); 
-// Description text color (lighter dark gray)
-const Color kDescriptionColor = Color(0xFF5A5A5A);
+// Your primary blue color for buttons and accents
+const Color kPrimaryBlue = AppColors.primary; // Map to new primary
+// The light blue background color for screens (was E4F1F8, now use the closest semantic color)
+const Color kBackgroundColor = AppColors.surfaceVariant; // Use a light background variant
+// White color for containers and backgrounds
+const Color kWhiteContainerColor = AppColors.background;
+// Main text color (dark gray/black)
+const Color kTitleColor = AppColors.onBackground; 
+// Secondary/Description text color
+const Color kDescriptionColor = AppColors.grey500; // Using a gray for description text

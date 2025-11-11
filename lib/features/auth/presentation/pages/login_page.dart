@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -11,8 +12,10 @@ class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
 
   @override
+
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       backgroundColor: Color.fromRGBO(228, 241, 248, 1),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
@@ -24,7 +27,7 @@ class LoginPage extends StatelessWidget {
               Text(
                 textAlign: TextAlign.center,
                 'Welcome!\nSign up to continue!',
-                style: AppTextStyle.dmSans500med24.copyWith(
+                style: AppTextStyles.dmSans500med24.copyWith(
                   // color: Colors.blue,
                   // fontSize: 30.sp,
                 ),
@@ -37,16 +40,23 @@ class LoginPage extends StatelessWidget {
                 isPassword: true,
                 prefixIcon: Icons.lock,
               ),
-              SizedBox(height: 7.h),
+              SizedBox(height: 10.h),
               Align(
                 alignment: Alignment.centerRight,
-                child: Padding(
-                  padding: const EdgeInsets.only(right: 8.0),
-                  child: Text(
-                    'Forgot Password?',
-                    style: AppTextStyle.dmSans500med17.copyWith(
-                      color: AppColors.primary,
-                      fontSize: 17.sp,
+                child: InkWell(
+                  onTap: () {},
+                  borderRadius: BorderRadius.circular(50.r),
+                  overlayColor: WidgetStateProperty.all(AppColors.primaryLight.withOpacity(0.1)),
+                  child: Padding(
+                    padding: const EdgeInsets.all( 8.0),
+                    child: Text(
+                      'Forgot Password?',
+                      style: AppTextStyles.dmSans500med17.copyWith(
+                        color: AppColors.primary,
+                          fontWeight: FontWeight.bold,
+                        fontSize: 14.sp,
+                        
+                      ),
                     ),
                   ),
                 ),
@@ -67,10 +77,10 @@ class LoginPage extends StatelessWidget {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(4.r),
                         ),
-                        fillColor: MaterialStateProperty.resolveWith<Color>((
-                          Set<MaterialState> states,
+                        fillColor: WidgetStateProperty.resolveWith<Color>((
+                          Set<WidgetState> states,
                         ) {
-                          if (states.contains(MaterialState.selected)) {
+                          if (states.contains(WidgetState.selected)) {
                             return AppColors
                                 .primary; // Fill color when checked (true)
                           }
@@ -84,13 +94,17 @@ class LoginPage extends StatelessWidget {
                     Expanded(
                       child: RichText(
                         text: TextSpan(
-                          style: AppTextStyle.dmSans500med17.copyWith(
+                          style: AppTextStyles.dmSans500med17.copyWith(
                             color: AppColors.onBackground,
                             fontSize: 14.sp,
                           ),
                           children: [
                             TextSpan(text: 'I agree to the '),
                             TextSpan(
+                              recognizer: TapGestureRecognizer()
+                                ..onTap = () {
+                                  // Handle Terms and Conditions tap
+                                },
                               text: 'Terms and Conditions',
                               style: TextStyle(
                                 color: AppColors.primary,
@@ -122,7 +136,7 @@ class LoginPage extends StatelessWidget {
                       ),
                       child: Text(
                         'Login',
-                        style: AppTextStyle.dmSans500med17.copyWith(
+                        style: AppTextStyles.dmSans500med17.copyWith(
                           color: Colors.white,
                           fontSize: 18.sp,
                         ),
@@ -137,14 +151,18 @@ class LoginPage extends StatelessWidget {
                   children: [
                     TextSpan(
                       text: "Don't have an account? ",
-                      style: AppTextStyle.dmSans500med17.copyWith(
+                      style: AppTextStyles.dmSans500med17.copyWith(
                         color: AppColors.grey500,
                         fontSize: 14.sp,
                       ),
                     ),
                     TextSpan(
+                      recognizer: TapGestureRecognizer()
+                        ..onTap = () {
+                          // Navigate to Sign Up page
+                        },
                       text: "Sign Up",
-                      style: AppTextStyle.dmSans500med17.copyWith(
+                      style: AppTextStyles.dmSans500med17.copyWith(
                         color: AppColors.primary,
                         fontSize: 14.sp,
                         fontWeight: FontWeight.bold,
@@ -156,7 +174,7 @@ class LoginPage extends StatelessWidget {
               SizedBox(height: 32.h),
               Text(
                 "OR",
-                style: AppTextStyle.dmSans500med17.copyWith(
+                style: AppTextStyles.dmSans500med17.copyWith(
                   color: AppColors.grey500,
                   fontWeight: FontWeight.bold,
                   fontSize: 14.sp,
@@ -180,11 +198,11 @@ class LoginPage extends StatelessWidget {
                         flex: 6,
                         child: Text(
                           'Continue with Google',
-                          style: AppTextStyle.dmSans500med17.copyWith(
-                            color: AppColors.onBackground,
-                            fontWeight: FontWeight.bold,
-                            // fontSize: 14.sp,
-                          ),
+                         style: AppTextStyles.dmSans500med12.copyWith(
+                          color: AppColors.onBackground,
+                          fontSize: 17.sp,
+                          fontWeight: FontWeight.bold,
+                        ),
                         ),
                       ),
                     ],
@@ -209,9 +227,10 @@ class LoginPage extends StatelessWidget {
                         flex: 6,
                         child: Text(
                           'Continue with Facebook',
-                          style: AppTextStyle.dmSans500med17.copyWith(
+                          style: AppTextStyles.dmSans500med17.copyWith(
                             color: AppColors.onBackground,
                             fontWeight: FontWeight.bold,
+                            fontSize: 17.sp,
                             // fontSize: 14.sp,
                           ),
                         ),
