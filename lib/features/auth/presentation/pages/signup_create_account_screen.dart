@@ -7,8 +7,8 @@ import 'package:nts_psc_app/core/theme/app_colors.dart';
 import 'package:nts_psc_app/presentation/widgets/custom_button.dart';
 import 'package:nts_psc_app/presentation/widgets/custom_text_field.dart';
 import 'package:nts_psc_app/core/theme/app_text_styles.dart';
-import 'package:nts_psc_app/features/authentication/presentation/widgets/auth_terms_checkbox.dart';
-import 'package:nts_psc_app/features/authentication/presentation/widgets/auth_title_subtitle.dart';
+import 'package:nts_psc_app/features/auth/presentation/widgets/auth_terms_checkbox.dart';
+import 'package:nts_psc_app/features/auth/presentation/widgets/auth_title_subtitle.dart';
 
 class SignupCreateAccountScreen extends StatelessWidget {
   const SignupCreateAccountScreen({super.key});
@@ -51,7 +51,6 @@ class SignupCreateAccountScreen extends StatelessWidget {
             children: [
               SizedBox(height: 120.h),
 
-              // icon
               Icon(Icons.people_alt, size: 60.sp, color: primaryColor),
 
               // reusable Title and Subtitle Block
@@ -81,7 +80,7 @@ class SignupCreateAccountScreen extends StatelessWidget {
               ),
               SizedBox(height: 16.h),
 
-              // 5. Existing Account Link
+              // Existing Account Link
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [

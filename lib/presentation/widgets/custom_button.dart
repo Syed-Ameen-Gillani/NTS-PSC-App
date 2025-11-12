@@ -16,8 +16,8 @@ class CustomButton extends StatelessWidget {
     required this.onPressed,
     this.color = kPrimaryBlue, // Use the new constant
     this.width = double.infinity, // Default to full width if not specified
-    this.height = 68.0, // Default height from your spec
-    this.borderRadius = 50.0, // Default radius from your spec
+    this.height = 68.0, // Default height 
+    this.borderRadius = 50.0, // Default radius 
     this.trailingIcon, 
   });
 

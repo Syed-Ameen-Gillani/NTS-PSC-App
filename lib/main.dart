@@ -3,9 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:nts_psc_app/config/routes/go_router.dart';
 import 'package:nts_psc_app/core/theme/app_theme.dart';
-import 'package:nts_psc_app/features/authentication/presentation/pages/login_page.dart';
-import 'package:nts_psc_app/features/authentication/presentation/pages/registration_success_modal.dart';
-import 'package:nts_psc_app/features/authentication/presentation/pages/signup_create_account_screen.dart';
+import 'package:nts_psc_app/features/auth/presentation/pages/account_created_success_screen.dart';
+import 'package:nts_psc_app/features/auth/presentation/pages/check_email_screen.dart';
+import 'package:nts_psc_app/features/auth/presentation/pages/forgot_password_email_screen.dart';
+import 'package:nts_psc_app/features/auth/presentation/pages/login_page.dart';
+import 'package:nts_psc_app/features/auth/presentation/pages/registration_success_modal.dart';
+import 'package:nts_psc_app/features/auth/presentation/pages/signup_create_account_screen.dart';
+import 'package:nts_psc_app/features/auth/presentation/pages/signup_details_screen.dart';
 import 'package:nts_psc_app/features/onboarding/presentation/screens/onboarding_screen_1.dart';
 import 'package:nts_psc_app/features/onboarding/presentation/screens/onboarding_screen_2.dart';
 import 'package:nts_psc_app/features/onboarding/presentation/screens/onboarding_screen_3.dart';
@@ -69,20 +73,8 @@ class MyApp extends ConsumerWidget {
         );
       },
 
-      child: RegistrationSuccessModal(
-        // the positional argument required is the function (VoidCallback)
-        onDonePressed: () {
-          // we can navigate away from this screen
-        },
-      ),
+      child: CheckEmailScreen(),
     );
   }
 }
 
-
-// registrationsuccessmodel screen needs voidCallBack positional arugment
-// to call it:
-//            child: RegistrationSuccessModal(
-//              onDonePressed: (){}
-//        
-//   )

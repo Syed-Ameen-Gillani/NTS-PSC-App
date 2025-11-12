@@ -9,7 +9,7 @@ class AppColors {
   // Backgrounds
   static const Color background = Color(0xFFFFFFFF);
   static const Color surface = Color(0xFFE4F1F8);
-  static const Color surfaceVariant = Color(0xFFEFF7FB);
+  static const Color surfaceVariant = Color(0xFFE4F1F8);
 
   // Text / content
   static const Color onPrimary = Colors.white;

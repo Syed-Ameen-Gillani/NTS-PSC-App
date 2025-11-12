@@ -15,6 +15,8 @@ class AppAssets {
   static const String onboarding6 = '$_imagePath/onboarding_6.png';
   static const String welcomeRole = '$_imagePath/welcome_role.png';
   static const String curvedArrow = '$_imagePath/curved_arrow.png';
+  static const String sparklingstars = '$_imagePath/sparkling_stars.png';
+   static const String emailCheckIllustration = '$_imagePath/email_check_illustration.png';
 
   // Icons
   static const String googleIcon = 'assets/icons/google.svg';
