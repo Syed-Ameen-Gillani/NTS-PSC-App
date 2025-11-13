@@ -67,7 +67,7 @@ class AccountCreatedSuccessScreen extends StatelessWidget {
                   ),
                 ),
 
-                // Spacing before button
+                
                 SizedBox(height: 35.08.h),
 
                 //  Sign In Button

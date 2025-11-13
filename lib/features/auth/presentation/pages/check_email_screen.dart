@@ -1,5 +1,3 @@
-// lib/features/authentication/presentation/screens/check_email_screen.dart
-
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
@@ -7,6 +5,7 @@ import 'package:nts_psc_app/core/constants/app_assets.dart';
 import 'package:nts_psc_app/core/theme/app_colors.dart';
 import 'package:nts_psc_app/core/theme/app_text_styles.dart';
 import 'package:nts_psc_app/presentation/widgets/custom_button.dart';
+import 'package:nts_psc_app/presentation/widgets/home_indicator.dart';
 
 class CheckEmailScreen extends StatelessWidget {
   const CheckEmailScreen({super.key});
@@ -17,10 +16,12 @@ class CheckEmailScreen extends StatelessWidget {
     final Color primaryColor = AppColors.primary;
     final Color titleColor = AppColors.onBackground;
     final Color greyColor = AppColors.grey500;
+    final Color screenBackground = AppColors.surfaceVariant;
 
     return Scaffold(
-      backgroundColor: AppColors.surfaceVariant,
+      backgroundColor: screenBackground,
       body: SafeArea(
+        bottom: false, //allow indicator to extend to bottom edge
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 40.w), // Global padding
           child: Column(
@@ -67,7 +68,7 @@ class CheckEmailScreen extends StatelessWidget {
               CustomButton(
                 text: 'Login',
                 onPressed: () {
-                  //context.go('/login');
+                  //('/login');
                 },
                 height: 60.h,
               ),
@@ -121,6 +122,14 @@ class CheckEmailScreen extends StatelessWidget {
             ],
           ),
         ),
+      ),
+      // Home Indicator at the bottom
+      bottomNavigationBar: HomeIndicator(
+        color: AppColors.primary,
+        backgroundColor: screenBackground,
+        containerHeight: 34.h, // Responsive height using ScreenUtil
+        height: 5.h, // Responsive indicator bar height
+        bottomPadding: 8.h, // Responsive bottom padding
       ),
     );
   }

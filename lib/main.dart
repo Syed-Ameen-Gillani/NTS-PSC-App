@@ -10,6 +10,7 @@ import 'package:nts_psc_app/features/auth/presentation/pages/login_page.dart';
 import 'package:nts_psc_app/features/auth/presentation/pages/registration_success_modal.dart';
 import 'package:nts_psc_app/features/auth/presentation/pages/signup_create_account_screen.dart';
 import 'package:nts_psc_app/features/auth/presentation/pages/signup_details_screen.dart';
+import 'package:nts_psc_app/features/auth/presentation/pages/signup_method_selection_screen.dart';
 import 'package:nts_psc_app/features/onboarding/presentation/screens/onboarding_screen_1.dart';
 import 'package:nts_psc_app/features/onboarding/presentation/screens/onboarding_screen_2.dart';
 import 'package:nts_psc_app/features/onboarding/presentation/screens/onboarding_screen_3.dart';
@@ -73,7 +74,7 @@ class MyApp extends ConsumerWidget {
         );
       },
 
-      child: CheckEmailScreen(),
+      child: SignupMethodSelectionScreen(),
     );
   }
 }

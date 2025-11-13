@@ -1,12 +1,10 @@
-// lib/features/authentication/presentation/screens/forgot_password_email_screen.dart
-
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:nts_psc_app/core/theme/app_colors.dart';
-import 'package:nts_psc_app/presentation/widgets/botton_indicator.dart';
 import 'package:nts_psc_app/presentation/widgets/custom_button.dart';
 import 'package:nts_psc_app/presentation/widgets/custom_text_field.dart';
+import 'package:nts_psc_app/presentation/widgets/home_indicator.dart';
 
 class ForgotPasswordEmailScreen extends StatelessWidget {
   const ForgotPasswordEmailScreen({super.key});
@@ -54,10 +52,13 @@ class ForgotPasswordEmailScreen extends StatelessWidget {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
-          onPressed: () {}, // Go back
+          onPressed: () {
+            context.pop(); // Go back using GoRouter
+          },
         ),
       ),
       body: SafeArea(
+        bottom: false, // Important: Allow indicator to extend to bottom edge
         child: SingleChildScrollView(
           padding: EdgeInsets.symmetric(horizontal: 24.w),
           child: Column(
@@ -103,6 +104,18 @@ class ForgotPasswordEmailScreen extends StatelessWidget {
               SizedBox(height: 396.h),
             ],
           ),
+        ),
+      ),
+      // Home Indicator at the bottom
+      bottomNavigationBar: HomeIndicator(
+        color: AppColors.primary, // Use your app's primary color
+        backgroundColor: screenBackground, // Match screen background
+        containerHeight: 34.h, // Responsive height using ScreenUtil
+        height: 5.h, // Responsive indicator bar height
+        bottomPadding: 8.h, // Responsive bottom padding
+        topBorder: BorderSide(
+          color: Colors.grey.withOpacity(0.2), // Subtle separator
+          width: 1,
         ),
       ),
     );

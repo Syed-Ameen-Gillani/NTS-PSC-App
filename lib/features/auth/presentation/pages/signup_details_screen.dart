@@ -3,7 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:nts_psc_app/core/theme/app_colors.dart';
 import 'package:nts_psc_app/features/auth/presentation/widgets/auth_title_subtitle.dart';
-import 'package:nts_psc_app/presentation/widgets/botton_indicator.dart';
+import 'package:nts_psc_app/presentation/widgets/home_indicator.dart';
 import 'package:nts_psc_app/presentation/widgets/custom_button.dart';
 import 'package:nts_psc_app/presentation/widgets/custom_text_field.dart';
 
@@ -24,10 +24,13 @@ class SignupDetailsScreen extends StatelessWidget {
           icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
           onPressed: () {
             // back to the previous screen
+            context.pop();
           },
         ),
       ),
       body: SafeArea(
+        bottom:
+            false, // Allow indicator to extend to the bottom edge
         child: SingleChildScrollView(
           padding: EdgeInsets.symmetric(horizontal: 24.w),
           child: Column(
@@ -57,13 +60,10 @@ class SignupDetailsScreen extends StatelessWidget {
               ),
 
               SizedBox(height: 13.h),
-              _buildValidationError(
-                context,
-                'please enter valid email',
-              ), 
+              _buildValidationError(context, 'please enter valid email'),
 
               SizedBox(height: 14.h),
-              //Password Field (with required validation)
+              
               const CustomTextFormField(
                 hintText: 'password',
                 isPassword: true,
@@ -75,22 +75,18 @@ class SignupDetailsScreen extends StatelessWidget {
               _buildValidationError(
                 context,
                 'Must contain 8 character',
-              ), // Inline error message
+              ), 
 
-              SizedBox(height: 14.h), 
+              SizedBox(height: 14.h),
               // Confirm Password Field (with required validation)
               const CustomTextFormField(
                 hintText: 'confirm password',
                 isPassword: true,
                 prefixIcon: Icons.lock_outline,
                 fillColor: AppColors.background,
-                
               ),
               SizedBox(height: 13.h),
-              _buildValidationError(
-                context,
-                'Must match both password',
-              ), 
+              _buildValidationError(context, 'Must match both password'),
 
               SizedBox(height: 76.h),
 
@@ -104,16 +100,18 @@ class SignupDetailsScreen extends StatelessWidget {
               ),
 
               SizedBox(height: 76.h), // Bottom buffer
-
-              // Positioned(
-              //   bottom: 8.h, // Position just above the bottom edge/system navigation bar
-              //   left: 0,
-              //   right: 0,
-              //   child: const AuthBottomIndicator(),
-              // ),
             ],
           ),
         ),
+      ),
+
+      // Home Indicator at the bottom
+      bottomNavigationBar: HomeIndicator(
+        color: AppColors.primary, 
+        backgroundColor: screenBackground, 
+        containerHeight: 34.h, // Responsive height using ScreenUtil
+        height: 5.h, // Responsive indicator bar height
+        bottomPadding: 8.h, // Responsive bottom padding
       ),
     );
   }
