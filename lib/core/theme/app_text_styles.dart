@@ -11,6 +11,13 @@ class AppTextStyles {
     color: Colors.black,
   );
   
+  static const TextStyle dmSans600med24 = TextStyle(
+    fontFamily: fontFamily,
+    fontSize: 24,
+    fontWeight: FontWeight.w600,
+    color: Colors.black,
+  );
+  
   static const TextStyle dmSans500med17 = TextStyle(
     fontFamily: fontFamily,
     fontSize: 17,

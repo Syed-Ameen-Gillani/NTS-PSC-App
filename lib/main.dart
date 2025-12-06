@@ -6,6 +6,7 @@ import 'package:nts_psc_app/core/theme/app_theme.dart';
 import 'package:nts_psc_app/features/auth/presentation/pages/login_page.dart';
 import 'package:nts_psc_app/features/authentication/presentation/pages/registration_success_modal.dart';
 import 'package:nts_psc_app/features/authentication/presentation/pages/signup_create_account_screen.dart';
+import 'package:nts_psc_app/features/home/presentation/pages/home_screen.dart';
 import 'package:nts_psc_app/features/onboarding/presentation/screens/onboarding_screen_1.dart';
 import 'package:nts_psc_app/features/onboarding/presentation/screens/onboarding_screen_2.dart';
 import 'package:nts_psc_app/features/onboarding/presentation/screens/onboarding_screen_3.dart';
@@ -62,7 +63,7 @@ class MyApp extends ConsumerWidget {
       splitScreenMode: true,
       builder: (context, child) {
         return MaterialApp(
-          home: SignupCreateAccountScreen(),
+          home: const HomeScreen(),
 
           debugShowCheckedModeBanner: false,
           theme: AppTheme.lightTheme,
