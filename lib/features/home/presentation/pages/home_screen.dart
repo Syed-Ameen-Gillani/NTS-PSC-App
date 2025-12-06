@@ -172,7 +172,7 @@ class HomeScreen extends StatelessWidget {
         _buildSectionHeader('Popular category\nour in platform', 'see more'),
         SizedBox(height: 36.h),
         SizedBox(
-          height: 120.h,
+          height: 140.h,
           child: ListView(
             scrollDirection: Axis.horizontal,
             padding: EdgeInsets.symmetric(horizontal: kHorizontalPadding.w),
@@ -294,7 +294,7 @@ class HomeScreen extends StatelessWidget {
         children: [
           // Course image placeholder
           Container(
-            height: 143.h,
+            height: 140.h,
             clipBehavior: Clip.antiAlias,
             decoration: BoxDecoration(
               color: Colors.grey[200],
