@@ -10,6 +10,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:nts_psc_app/core/constants/app_assets.dart';
 import 'package:nts_psc_app/core/theme/app_colors.dart';
 import 'package:nts_psc_app/core/theme/app_text_styles.dart';
+import 'package:nts_psc_app/features/home/widgets/bottomnavbar.dart';
 
 /// Main HomeScreen widget - UI only, no business logic
 ///
@@ -292,7 +293,7 @@ class HomeScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Course image placeholder
+          // Course image placeholder with "Best sell" tag
           Container(
             height: 140.h,
             clipBehavior: Clip.antiAlias,
@@ -300,7 +301,38 @@ class HomeScreen extends StatelessWidget {
               color: Colors.grey[200],
               borderRadius: BorderRadius.circular(4.r),
             ),
-            child: Image.asset(AppAssets.course1, fit: BoxFit.cover),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                Image.asset(
+                  AppAssets.course1,
+                  fit: BoxFit.cover,
+                  width: double.infinity,
+                  height: double.infinity,
+                ),
+                // "Best sell" tag positioned on top-left
+                Positioned(
+                  top: 10.h,
+                  left: 10.w,
+                  child: Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 15.w,
+                      vertical: 4.h,
+                    ),
+                    decoration: BoxDecoration(
+                      color: kOrangeAccent,
+                      borderRadius: BorderRadius.circular(4.r),
+                    ),
+                    child: Text(
+                      'Best sell',
+                      style: AppTextStyles.dmSans500med12.copyWith(
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
             // Replace with: Image.asset('assets/images/course_$title.jpg', fit: BoxFit.cover)
           ),
           SizedBox(height: 15.h),
@@ -600,50 +632,6 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildBottomNavBar() {
-    return Container(
-      height: 60.h,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildNavItem(Icons.home, 'Home', true),
-          _buildNavItem(Icons.search, 'Search', false),
-          _buildNavItem(Icons.bookmark_border, 'Saved', false),
-          _buildNavItem(Icons.person_outline, 'Profile', false),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNavItem(IconData icon, String label, bool isActive) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(
-          icon,
-          color: isActive ? kPrimaryBlue : kTextSecondary,
-          size: 24.sp,
-        ),
-        if (isActive)
-          Container(
-            margin: EdgeInsets.only(top: 4.h),
-            height: 3.h,
-            width: 3.w,
-            decoration: const BoxDecoration(
-              color: kPrimaryBlue,
-              shape: BoxShape.circle,
-            ),
-          ),
-      ],
-    );
+    return const BottomNavBar();
   }
 }
