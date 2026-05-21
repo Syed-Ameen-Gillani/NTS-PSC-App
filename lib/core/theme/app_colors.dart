@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class AppColors {
   // Primary brand colors
-  static const Color primary = Color(0xFF3787FF);
+  static const Color primary = Color(0xFF1E75F1); // Updated to vibrant blue from screenshot
   static const Color primaryLight = Color(0xFF64A2FD);
   static const Color accent = Color(0xFFFF9D42);
 
@@ -13,15 +13,16 @@ class AppColors {
 
   // Text / content
   static const Color onPrimary = Colors.white;
-  static const Color onBackground = Color(0xFF060302);
-  static const Color onSurface = Color(0xFF0F1720);
+  static const Color onBackground = Color(0xFF111827); // Darker text for headers
+  static const Color onSurface = Color(0xFF1F2937);
 
   // Neutral / greys
-  static const Color grey900 = Color(0xFF0F1720);
-  static const Color grey700 = Color(0xFF334155);
-  static const Color grey500 = Color(0xFF767372);
-  static const Color grey300 = Color(0xFFCBD5E1);
-  static const Color grey100 = Color(0xFFF1F5F9);
+  static const Color grey900 = Color(0xFF111827);
+  static const Color grey700 = Color(0xFF374151);
+  static const Color grey500 = Color(0xFF6B7280); // Subtitle text grey
+  static const Color grey400 = Color(0xFF9CA3AF); // Leading/Trailing icon color
+  static const Color grey300 = Color(0xFFE5E7EB); // Border color
+  static const Color grey100 = Color(0xFFF9FAFB); // Custom text field bg
 
   // Error
   static const Color error = Color(0xFFB00020);

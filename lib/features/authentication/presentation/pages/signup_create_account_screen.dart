@@ -1,115 +1,259 @@
-// lib/features/authentication/presentation/screens/signup_create_account_screen.dart
-
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:nts_psc_app/core/constants/app_assets.dart';
 import 'package:nts_psc_app/core/theme/app_colors.dart';
+import 'package:nts_psc_app/core/theme/app_text_styles.dart';
+import 'package:nts_psc_app/config/routes/app_routes.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:nts_psc_app/core/utils/form_validators.dart';
+import 'package:nts_psc_app/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:nts_psc_app/presentation/widgets/custom_button.dart';
 import 'package:nts_psc_app/presentation/widgets/custom_text_field.dart';
-import 'package:nts_psc_app/core/theme/app_text_styles.dart';
-import 'package:nts_psc_app/features/authentication/presentation/widgets/auth_terms_checkbox.dart';
-import 'package:nts_psc_app/features/authentication/presentation/widgets/auth_title_subtitle.dart';
 
-class SignupCreateAccountScreen extends StatelessWidget {
+class SignupCreateAccountScreen extends ConsumerStatefulWidget {
   const SignupCreateAccountScreen({super.key});
 
-  //  Helper Functions for Text Fields to wrap CustomTextFormField
+  @override
+  ConsumerState<SignupCreateAccountScreen> createState() => _SignupCreateAccountScreenState();
+}
 
-  Widget _buildEmailField() {
-    return const CustomTextFormField(
-      hintText: 'Email id',
-      prefixIcon: Icons.mail_outline_rounded,
-      fillColor: AppColors.background, // Explicitly white background
-      borderColor: Colors.transparent,
+class _SignupCreateAccountScreenState extends ConsumerState<SignupCreateAccountScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  Widget _buildFieldLabel(String text) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 8.h),
+      child: Text(
+        text,
+        style: AppTextStyles.interSemiBold16.copyWith(
+          color: AppColors.onBackground,
+          fontSize: 14.sp,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
     );
   }
 
-  Widget _buildPasswordField() {
-    return const CustomTextFormField(
-      hintText: 'Password',
-      prefixIcon: Icons.lock_outlined,
-      isPassword: true,
-      fillColor: AppColors.background,
-      borderColor: Colors.transparent,
+  Widget _buildSocialButton({required String text, required String iconAsset}) {
+    return SizedBox(
+      width: double.infinity,
+      height: 56.h,
+      child: OutlinedButton(
+        onPressed: () {},
+        style: OutlinedButton.styleFrom(
+          padding: EdgeInsets.symmetric(vertical: 16.h),
+          backgroundColor: Colors.white,
+          side: BorderSide(color: AppColors.grey300, width: 1.w),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(50.r),
+          ),
+          elevation: 0,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            iconAsset.endsWith('.svg')
+                ? SvgPicture.asset(iconAsset, width: 24.w, height: 24.w)
+                : Image.asset(iconAsset, width: 24.w, height: 24.w),
+            SizedBox(width: 12.w),
+            Text(
+              text,
+              style: AppTextStyles.interSemiBold16.copyWith(
+                color: AppColors.onBackground,
+                fontSize: 16.sp,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final Color primaryColor = AppColors.primary;
-    final Color bodyTextColor = AppColors.onBackground;
-
     return Scaffold(
-      backgroundColor: Theme.of(
-        context,
-      ).colorScheme.surfaceVariant, // Light gray-blue background
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: AppColors.onBackground),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            }
+          },
+        ),
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: EdgeInsets.symmetric(horizontal: 24.w),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
+          child: Form(
+            key: _formKey,
+            child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(height: 120.h),
-
-              // icon
-              Icon(Icons.people_alt, size: 60.sp, color: primaryColor),
-
-              // reusable Title and Subtitle Block
-              AuthTitleSubtitle(
-                title: 'Create an Account',
-                subtitle: 'A handful of model sentence structures',
-                topPadding: 24.0,
-              ),
-
-              //input Fields
-              _buildEmailField(),
               SizedBox(height: 16.h),
-              _buildPasswordField(),
-              SizedBox(height: 24.h),
 
-              //reusable Terms Checkbox
-              const AuthTermsCheckbox(),
+              // Title
+              Text(
+                'Create Account',
+                style: AppTextStyles.interBold30.copyWith(
+                  color: AppColors.onBackground,
+                  fontSize: 32.sp,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              SizedBox(height: 8.h),
+
+              // Subtitle
+              Text(
+                'Join us to start your learning journey today.',
+                style: AppTextStyles.interRegular16.copyWith(
+                  color: AppColors.grey500,
+                  fontSize: 16.sp,
+                  height: 1.5,
+                ),
+              ),
               SizedBox(height: 32.h),
 
-              //Create Account Button
-              CustomButton(
-                text: 'Create Account',
-                onPressed: () {
-                  // Navigation to success screen or next signup step
-                },
-                height: 56.h,
-              ),
+              // Social Buttons
+              _buildSocialButton(text: 'Continue with Google', iconAsset: AppAssets.google),
               SizedBox(height: 16.h),
+              _buildSocialButton(text: 'Continue with Apple', iconAsset: AppAssets.appleSvg),
+              SizedBox(height: 32.h),
 
-              // 5. Existing Account Link
+              // Divider
+              Row(
+                children: [
+                  Expanded(child: Divider(color: AppColors.grey300, thickness: 1.h)),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16.w),
+                    child: Text(
+                      'OR REGISTER WITH EMAIL',
+                      style: AppTextStyles.interMedium16.copyWith(
+                        color: AppColors.grey500,
+                        fontSize: 12.sp,
+                        letterSpacing: 1.0,
+                      ),
+                    ),
+                  ),
+                  Expanded(child: Divider(color: AppColors.grey300, thickness: 1.h)),
+                ],
+              ),
+              SizedBox(height: 32.h),
+
+              // Full Name Field
+              _buildFieldLabel('Full Name'),
+              CustomTextFormField(
+                controller: _nameController,
+                hintText: 'e.g. Ahmed Ali',
+                prefixIcon: Icons.person_outline,
+                keyboardType: TextInputType.name,
+                validator: FormValidators.validateName,
+              ),
+              SizedBox(height: 24.h),
+
+              // Email Address Field
+              _buildFieldLabel('Email Address'),
+              CustomTextFormField(
+                controller: _emailController,
+                hintText: 'e.g. ahmed@example.com',
+                prefixIcon: Icons.mail_outline,
+                keyboardType: TextInputType.emailAddress,
+                validator: FormValidators.validateEmail,
+              ),
+              SizedBox(height: 24.h),
+
+              // Password Field
+              _buildFieldLabel('Password'),
+              CustomTextFormField(
+                controller: _passwordController,
+                hintText: 'Enter your password',
+                prefixIcon: Icons.lock_outline,
+                isPassword: true,
+                validator: FormValidators.validatePassword,
+              ),
+              SizedBox(height: 8.h),
+
+              // Password helper text
+              Text(
+                'Must be at least 8 characters.',
+                style: AppTextStyles.interRegular14.copyWith(
+                  color: AppColors.grey500,
+                  fontSize: 12.sp,
+                ),
+              ),
+              SizedBox(height: 32.h),
+
+              // Sign Up Button
+              Consumer(
+                builder: (context, ref, child) {
+                  final authState = ref.watch(authControllerProvider);
+                  return CustomButton(
+                    text: authState.isLoading ? 'Signing up...' : 'Sign Up',
+                    onPressed: authState.isLoading
+                        ? () {}
+                        : () async {
+                            if (_formKey.currentState?.validate() ?? false) {
+                              final success = await ref
+                                  .read(authControllerProvider.notifier)
+                                  .signup(_nameController.text.trim(), _emailController.text.trim(), _passwordController.text);
+                                  
+                              if (success && context.mounted) {
+                                // Navigate to success or home
+                              }
+                            }
+                          },
+                    color: AppColors.primary,
+                  );
+                },
+              ),
+              SizedBox(height: 32.h),
+
+              // Footer Login Link
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    'Already have an account?',
-                    style: AppTextStyles.dmSans500med12.copyWith(
+                    'Already have an account? ',
+                    style: AppTextStyles.interMedium16.copyWith(
                       color: AppColors.grey500,
                       fontSize: 14.sp,
                     ),
                   ),
-                  TextButton(
-                    onPressed: () {
-                      //context.go('/login');
+                  InkWell(
+                    onTap: () {
+                      context.pushReplacementNamed(AppRoute.login.name);
                     },
                     child: Text(
-                      'Sign in',
-                      style: TextStyle(
-                        color: primaryColor,
-                        fontWeight: FontWeight.bold,
+                      'Log In',
+                      style: AppTextStyles.interBold24.copyWith(
+                        color: AppColors.primary,
                         fontSize: 14.sp,
                       ),
                     ),
                   ),
                 ],
               ),
+              SizedBox(height: 24.h),
             ],
           ),
         ),
+      ),
       ),
     );
   }

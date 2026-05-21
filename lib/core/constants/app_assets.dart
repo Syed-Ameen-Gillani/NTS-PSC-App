@@ -32,6 +32,8 @@ class AppAssets {
   // static const String facebookIcon = 'assets/icons/facebook.svg';
   // static const String homeIcon = '$_iconPath/home.svg';
   static const String searchIcon = '$_iconPath/search.svg';
+  static const String bookSvg = '$_iconPath/book.svg';
+  static const String appleSvg = '$_iconPath/apple.svg';
 
   // You can add more assets here
 }

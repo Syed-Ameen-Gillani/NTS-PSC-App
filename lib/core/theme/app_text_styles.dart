@@ -32,4 +32,43 @@ class AppTextStyles {
     color: const Color(0xFF767372),
   );
 
+  // --- Inter Font Styles ---
+  static const String interFontFamily = 'Inter';
+
+  static const TextStyle interBold30 = TextStyle(
+    fontFamily: interFontFamily,
+    fontSize: 30,
+    fontWeight: FontWeight.bold,
+  );
+
+  static const TextStyle interBold24 = TextStyle(
+    fontFamily: interFontFamily,
+    fontSize: 24,
+    fontWeight: FontWeight.bold,
+  );
+
+  static const TextStyle interSemiBold16 = TextStyle(
+    fontFamily: interFontFamily,
+    fontSize: 16,
+    fontWeight: FontWeight.w600,
+  );
+
+  static const TextStyle interMedium16 = TextStyle(
+    fontFamily: interFontFamily,
+    fontSize: 16,
+    fontWeight: FontWeight.w500,
+  );
+
+  static const TextStyle interRegular16 = TextStyle(
+    fontFamily: interFontFamily,
+    fontSize: 16,
+    fontWeight: FontWeight.w400,
+  );
+
+  static const TextStyle interRegular14 = TextStyle(
+    fontFamily: interFontFamily,
+    fontSize: 14,
+    fontWeight: FontWeight.w400,
+  );
+
 }

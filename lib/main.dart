@@ -14,6 +14,7 @@ import 'package:nts_psc_app/features/onboarding/presentation/screens/onboarding_
 import 'package:nts_psc_app/features/onboarding/presentation/screens/onboarding_screen_5.dart';
 import 'package:nts_psc_app/features/onboarding/presentation/screens/onboarding_screen_6.dart';
 import 'package:nts_psc_app/features/onboarding/presentation/screens/welcome_role_screen.dart';
+import 'package:nts_psc_app/features/onboarding/presentation/screens/welcome_screen.dart';
 import 'package:nts_psc_app/features/splash/splash_screen.dart';
 
 // void main() {
@@ -62,8 +63,8 @@ class MyApp extends ConsumerWidget {
       minTextAdapt: true,
       splitScreenMode: true,
       builder: (context, child) {
-        return MaterialApp(
-          home: const HomeScreen(),
+        return MaterialApp.router(
+          routerConfig: appRouter,
 
           debugShowCheckedModeBanner: false,
           theme: AppTheme.lightTheme,

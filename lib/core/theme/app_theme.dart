@@ -22,6 +22,11 @@ class AppTheme {
       bodyMedium: TextStyle(color: AppColors.onSurface),
       labelLarge: TextStyle(color: AppColors.onPrimary),
     ),
+    appBarTheme: const AppBarTheme(
+      scrolledUnderElevation: 0,
+      backgroundColor: AppColors.background,
+      elevation: 0,
+    ),
   );
 
   static ThemeData darkTheme = ThemeData(
@@ -43,6 +48,11 @@ class AppTheme {
       bodyLarge: TextStyle(color: DarkAppColors.onBackground),
       bodyMedium: TextStyle(color: DarkAppColors.onSurface),
       labelLarge: TextStyle(color: DarkAppColors.onPrimary),
+    ),
+    appBarTheme: const AppBarTheme(
+      scrolledUnderElevation: 0,
+      backgroundColor: DarkAppColors.background,
+      elevation: 0,
     ),
   );
 }
