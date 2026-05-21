@@ -116,32 +116,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               ),
               SizedBox(height: 32.h),
 
-              // Social Buttons
-              _buildSocialButton(text: 'Continue with Google', iconAsset: AppAssets.google),
-              SizedBox(height: 16.h),
-              _buildSocialButton(text: 'Continue with Apple', iconAsset: AppAssets.appleSvg),
-              SizedBox(height: 32.h),
-
-              // Divider
-              Row(
-                children: [
-                  Expanded(child: Divider(color: AppColors.grey300, thickness: 1.h)),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16.w),
-                    child: Text(
-                      'OR LOG IN WITH EMAIL',
-                      style: AppTextStyles.interMedium16.copyWith(
-                        color: AppColors.grey500,
-                        fontSize: 12.sp,
-                        letterSpacing: 1.0,
-                      ),
-                    ),
-                  ),
-                  Expanded(child: Divider(color: AppColors.grey300, thickness: 1.h)),
-                ],
-              ),
-              SizedBox(height: 32.h),
-
               // Email Address Field
               _buildFieldLabel('Email Address'),
               CustomTextFormField(
@@ -200,7 +174,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                   .login(_emailController.text.trim(), _passwordController.text);
                                   
                               if (success && context.mounted) {
-                                // Navigate to Home
+                                context.goNamed(AppRoute.main.name);
                               }
                             }
                           },
@@ -208,6 +182,32 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   );
                 },
               ),
+              SizedBox(height: 32.h),
+
+              // Divider
+              Row(
+                children: [
+                  Expanded(child: Divider(color: AppColors.grey300, thickness: 1.h)),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16.w),
+                    child: Text(
+                      'OR CONTINUE WITH',
+                      style: AppTextStyles.interMedium16.copyWith(
+                        color: AppColors.grey500,
+                        fontSize: 12.sp,
+                        letterSpacing: 1.0,
+                      ),
+                    ),
+                  ),
+                  Expanded(child: Divider(color: AppColors.grey300, thickness: 1.h)),
+                ],
+              ),
+              SizedBox(height: 32.h),
+
+              // Social Buttons
+              _buildSocialButton(text: 'Continue with Google', iconAsset: AppAssets.google),
+              SizedBox(height: 16.h),
+              _buildSocialButton(text: 'Continue with Apple', iconAsset: AppAssets.appleSvg),
               SizedBox(height: 32.h),
 
               // Footer Sign Up Link

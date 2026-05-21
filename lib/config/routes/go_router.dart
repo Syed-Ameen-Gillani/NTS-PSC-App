@@ -12,6 +12,8 @@ import 'package:nts_psc_app/features/onboarding/presentation/screens/welcome_scr
 import 'package:nts_psc_app/features/auth/presentation/pages/login_page.dart';
 import 'package:nts_psc_app/features/authentication/presentation/pages/signup_create_account_screen.dart';
 import 'package:nts_psc_app/features/auth/presentation/pages/forgot_password_screen.dart';
+import 'package:nts_psc_app/features/main/presentation/pages/main_screen.dart';
+import 'package:nts_psc_app/features/profile/presentation/pages/account_settings_screen.dart';
 import 'package:nts_psc_app/config/routes/app_routes.dart';
 
 final appRouter = GoRouter(
@@ -34,5 +36,7 @@ final appRouter = GoRouter(
     GoRoute(path: AppRoute.login.path, name: AppRoute.login.name, builder: (context, state) => const LoginPage()),
     GoRoute(path: AppRoute.signup.path, name: AppRoute.signup.name, builder: (context, state) => const SignupCreateAccountScreen()),
     GoRoute(path: AppRoute.forgotPassword.path, name: AppRoute.forgotPassword.name, builder: (context, state) => const ForgotPasswordScreen()),
+    GoRoute(path: AppRoute.main.path, name: AppRoute.main.name, builder: (context, state) => const MainScreen()),
+    GoRoute(path: AppRoute.accountSettings.path, name: AppRoute.accountSettings.name, builder: (context, state) => const AccountSettingsScreen()),
   ],
 );

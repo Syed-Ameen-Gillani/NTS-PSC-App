@@ -11,6 +11,8 @@ enum AppRoute {
   login,
   signup,
   forgotPassword,
+  main,
+  accountSettings,
 }
 
 extension AppRouteExtension on AppRoute {
@@ -40,6 +42,10 @@ extension AppRouteExtension on AppRoute {
         return '/signup';
       case AppRoute.forgotPassword:
         return '/forgot_password';
+      case AppRoute.main:
+        return '/main';
+      case AppRoute.accountSettings:
+        return '/account_settings';
     }
   }
 }

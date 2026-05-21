@@ -86,18 +86,6 @@ class _SignupCreateAccountScreenState extends ConsumerState<SignupCreateAccountS
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.onBackground),
-          onPressed: () {
-            if (context.canPop()) {
-              context.pop();
-            }
-          },
-        ),
-      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: EdgeInsets.symmetric(horizontal: 24.w),
@@ -106,7 +94,7 @@ class _SignupCreateAccountScreenState extends ConsumerState<SignupCreateAccountS
             child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(height: 16.h),
+              SizedBox(height: 56.h), // Replaced AppBar with a hollow SizedBox
 
               // Title
               Text(
@@ -127,32 +115,6 @@ class _SignupCreateAccountScreenState extends ConsumerState<SignupCreateAccountS
                   fontSize: 16.sp,
                   height: 1.5,
                 ),
-              ),
-              SizedBox(height: 32.h),
-
-              // Social Buttons
-              _buildSocialButton(text: 'Continue with Google', iconAsset: AppAssets.google),
-              SizedBox(height: 16.h),
-              _buildSocialButton(text: 'Continue with Apple', iconAsset: AppAssets.appleSvg),
-              SizedBox(height: 32.h),
-
-              // Divider
-              Row(
-                children: [
-                  Expanded(child: Divider(color: AppColors.grey300, thickness: 1.h)),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16.w),
-                    child: Text(
-                      'OR REGISTER WITH EMAIL',
-                      style: AppTextStyles.interMedium16.copyWith(
-                        color: AppColors.grey500,
-                        fontSize: 12.sp,
-                        letterSpacing: 1.0,
-                      ),
-                    ),
-                  ),
-                  Expanded(child: Divider(color: AppColors.grey300, thickness: 1.h)),
-                ],
               ),
               SizedBox(height: 32.h),
 
@@ -214,7 +176,7 @@ class _SignupCreateAccountScreenState extends ConsumerState<SignupCreateAccountS
                                   .signup(_nameController.text.trim(), _emailController.text.trim(), _passwordController.text);
                                   
                               if (success && context.mounted) {
-                                // Navigate to success or home
+                                context.goNamed(AppRoute.main.name);
                               }
                             }
                           },
@@ -222,6 +184,32 @@ class _SignupCreateAccountScreenState extends ConsumerState<SignupCreateAccountS
                   );
                 },
               ),
+              SizedBox(height: 32.h),
+
+              // Divider
+              Row(
+                children: [
+                  Expanded(child: Divider(color: AppColors.grey300, thickness: 1.h)),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16.w),
+                    child: Text(
+                      'OR CONTINUE WITH',
+                      style: AppTextStyles.interMedium16.copyWith(
+                        color: AppColors.grey500,
+                        fontSize: 12.sp,
+                        letterSpacing: 1.0,
+                      ),
+                    ),
+                  ),
+                  Expanded(child: Divider(color: AppColors.grey300, thickness: 1.h)),
+                ],
+              ),
+              SizedBox(height: 32.h),
+
+              // Social Buttons
+              _buildSocialButton(text: 'Continue with Google', iconAsset: AppAssets.google),
+              SizedBox(height: 16.h),
+              _buildSocialButton(text: 'Continue with Apple', iconAsset: AppAssets.appleSvg),
               SizedBox(height: 32.h),
 
               // Footer Login Link
