@@ -11,6 +11,7 @@ import 'package:nts_psc_app/core/utils/form_validators.dart';
 import 'package:nts_psc_app/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:nts_psc_app/presentation/widgets/custom_button.dart';
 import 'package:nts_psc_app/presentation/widgets/custom_text_field.dart';
+import 'package:nts_psc_app/presentation/widgets/custom_toast.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
@@ -174,6 +175,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                   .login(_emailController.text.trim(), _passwordController.text);
                                   
                               if (success && context.mounted) {
+                                CustomToast.showSuccess(context, message: 'Welcome back!');
                                 context.goNamed(AppRoute.main.name);
                               }
                             }

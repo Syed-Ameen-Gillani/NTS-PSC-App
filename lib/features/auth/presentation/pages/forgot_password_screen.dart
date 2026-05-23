@@ -8,6 +8,7 @@ import 'package:nts_psc_app/core/utils/form_validators.dart';
 import 'package:nts_psc_app/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:nts_psc_app/presentation/widgets/custom_button.dart';
 import 'package:nts_psc_app/presentation/widgets/custom_text_field.dart';
+import 'package:nts_psc_app/presentation/widgets/custom_toast.dart';
 
 class ForgotPasswordScreen extends ConsumerStatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -48,7 +49,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.onBackground),
+          icon: const Icon(Icons.arrow_back_ios_new, color: AppColors.onBackground, size: 20),
           onPressed: () {
             if (context.canPop()) {
               context.pop();
@@ -115,12 +116,9 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                                   .sendPasswordReset(_emailController.text.trim());
                                   
                               if (success && context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Password reset link sent to your email!'),
-                                    backgroundColor: AppColors.primary,
-                                    duration: Duration(seconds: 2),
-                                  ),
+                                CustomToast.showSuccess(
+                                  context,
+                                  message: 'Password reset link sent to your email',
                                 );
                                 context.pop();
                               }

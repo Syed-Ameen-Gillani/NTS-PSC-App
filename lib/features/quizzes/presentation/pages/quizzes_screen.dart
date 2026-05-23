@@ -6,6 +6,8 @@ import 'package:nts_psc_app/core/theme/app_text_styles.dart';
 import 'package:nts_psc_app/features/quizzes/presentation/controllers/quizzes_controller.dart';
 import 'package:nts_psc_app/presentation/widgets/category_filter_chips.dart';
 import 'package:nts_psc_app/presentation/widgets/quiz_card.dart';
+import 'package:go_router/go_router.dart';
+import 'package:nts_psc_app/config/routes/app_routes.dart';
 
 class QuizzesScreen extends ConsumerWidget {
   const QuizzesScreen({super.key});
@@ -116,7 +118,7 @@ class QuizzesScreen extends ConsumerWidget {
                     ),
                   ),
                   SizedBox(height: 24.h),
-                  const Divider(color: Color(0xFFE2E8F0), height: 1, thickness: 1),
+                  Divider(color: const Color(0xFFE2E8F0), height: 1.h, thickness: 1.h),
                   SizedBox(height: 24.h),
                   
                   const CategoryFilterChips(
@@ -137,11 +139,14 @@ class QuizzesScreen extends ConsumerWidget {
                             color: AppColors.onBackground,
                           ),
                         ),
-                        Text(
-                          'Generate New',
-                          style: AppTextStyles.interMedium16.copyWith(
-                            fontSize: 14.sp,
-                            color: AppColors.primary,
+                        GestureDetector(
+                          onTap: () => context.pushNamed(AppRoute.generateAiQuiz.name),
+                          child: Text(
+                            'Generate New',
+                            style: AppTextStyles.interMedium16.copyWith(
+                              fontSize: 14.sp,
+                              color: AppColors.primary,
+                            ),
                           ),
                         ),
                       ],

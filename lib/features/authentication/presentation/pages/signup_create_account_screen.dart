@@ -11,6 +11,7 @@ import 'package:nts_psc_app/core/utils/form_validators.dart';
 import 'package:nts_psc_app/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:nts_psc_app/presentation/widgets/custom_button.dart';
 import 'package:nts_psc_app/presentation/widgets/custom_text_field.dart';
+import 'package:nts_psc_app/presentation/widgets/custom_toast.dart';
 
 class SignupCreateAccountScreen extends ConsumerStatefulWidget {
   const SignupCreateAccountScreen({super.key});
@@ -176,6 +177,10 @@ class _SignupCreateAccountScreenState extends ConsumerState<SignupCreateAccountS
                                   .signup(_nameController.text.trim(), _emailController.text.trim(), _passwordController.text);
                                   
                               if (success && context.mounted) {
+                                CustomToast.showSuccess(
+                                  context,
+                                  message: 'Account created successfully! Welcome.',
+                                );
                                 context.goNamed(AppRoute.main.name);
                               }
                             }

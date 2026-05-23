@@ -22,6 +22,7 @@ class CustomTextFormField extends StatefulWidget {
   final int? maxLength;
   final TextInputAction? textInputAction;
   final bool enabled;
+  final AutovalidateMode? autovalidateMode;
   final Color? fillColor;
   final Color? prefixIconColor;
   final Color? suffixIconColor;
@@ -49,6 +50,7 @@ class CustomTextFormField extends StatefulWidget {
     this.maxLength,
     this.textInputAction,
     this.enabled = true,
+    this.autovalidateMode,
     this.fillColor,
     this.prefixIconColor,
     this.suffixIconColor,
@@ -81,6 +83,7 @@ class _CustomTextFormFieldState extends State<CustomTextFormField> {
       maxLength: widget.maxLength,
       textInputAction: widget.textInputAction,
       enabled: widget.enabled,
+      autovalidateMode: widget.autovalidateMode,
       style: TextStyle(
         fontFamily: 'Inter',
         fontWeight: FontWeight.w400,

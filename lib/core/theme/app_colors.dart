@@ -24,8 +24,9 @@ class AppColors {
   static const Color grey300 = Color(0xFFE5E7EB); // Border color
   static const Color grey100 = Color(0xFFF9FAFB); // Custom text field bg
 
-  // Error
+  // Status Colors
   static const Color error = Color(0xFFB00020);
+  static const Color success = Color(0xFF10B981);
 }
 
 class DarkAppColors {

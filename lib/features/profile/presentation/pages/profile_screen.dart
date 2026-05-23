@@ -162,14 +162,17 @@ class ProfileScreen extends ConsumerWidget {
                           ],
                         ),
                       ),
-                      Container(
-                        width: 40.w,
-                        height: 40.w,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFFF8F9FA),
-                          shape: BoxShape.circle,
+                      GestureDetector(
+                        onTap: () => context.pushNamed(AppRoute.editProfile.name),
+                        child: Container(
+                          width: 40.w,
+                          height: 40.w,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFF8F9FA),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(Icons.edit_outlined, color: AppColors.onBackground, size: 20.w),
                         ),
-                        child: Icon(Icons.edit_outlined, color: AppColors.onBackground, size: 20.w),
                       ),
                     ],
                   ),
@@ -204,8 +207,16 @@ class ProfileScreen extends ConsumerWidget {
                     'Account Settings',
                     onTap: () => context.pushNamed(AppRoute.accountSettings.name),
                   ),
-                  _buildMenuButton(Icons.credit_card_outlined, 'Payment Methods'),
-                  _buildMenuButton(Icons.notifications_outlined, 'Notifications'),
+                  _buildMenuButton(
+                    Icons.credit_card_outlined, 
+                    'Payment Methods',
+                    onTap: () => context.pushNamed(AppRoute.paymentMethods.name),
+                  ),
+                  _buildMenuButton(
+                    Icons.notifications_outlined, 
+                    'Notifications',
+                    onTap: () => context.pushNamed(AppRoute.notifications.name),
+                  ),
                   
                   SizedBox(height: 24.h),
                   
@@ -220,7 +231,11 @@ class ProfileScreen extends ConsumerWidget {
                   ),
                   SizedBox(height: 16.h),
                   _buildMenuButton(Icons.help_outline, 'Help Center'),
-                  _buildMenuButton(Icons.info_outline, 'About Us'),
+                  _buildMenuButton(
+                    Icons.info_outline, 
+                    'About Us',
+                    onTap: () => context.pushNamed(AppRoute.aboutUs.name),
+                  ),
                   
                   SizedBox(height: 32.h),
                   

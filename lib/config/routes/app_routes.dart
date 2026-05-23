@@ -13,6 +13,23 @@ enum AppRoute {
   forgotPassword,
   main,
   accountSettings,
+  editProfile,
+  appLanguage,
+  generateAiQuiz,
+  quizReady,
+  activeQuiz,
+  quizCompleted,
+  deleteAccount,
+  paymentMethods,
+  addPaymentMethod,
+  addCard,
+  addWallet,
+  notifications,
+  aboutUs,
+  termsOfService,
+  privacyPolicy,
+  rateApp,
+  testAlerts,
 }
 
 extension AppRouteExtension on AppRoute {
@@ -46,6 +63,40 @@ extension AppRouteExtension on AppRoute {
         return '/main';
       case AppRoute.accountSettings:
         return '/account_settings';
+      case AppRoute.editProfile:
+        return '/edit_profile';
+      case AppRoute.appLanguage:
+        return '/app_language';
+      case AppRoute.generateAiQuiz:
+        return '/generate_ai_quiz';
+      case AppRoute.quizReady:
+        return '/quiz_ready';
+      case AppRoute.activeQuiz:
+        return '/active_quiz';
+      case AppRoute.quizCompleted:
+        return '/quiz_completed';
+      case AppRoute.deleteAccount:
+        return '/delete_account';
+      case AppRoute.paymentMethods:
+        return '/payment_methods';
+      case AppRoute.addPaymentMethod:
+        return '/add_payment_method';
+      case AppRoute.addCard:
+        return '/add_card';
+      case AppRoute.addWallet:
+        return '/add_wallet';
+      case AppRoute.notifications:
+        return '/notifications';
+      case AppRoute.aboutUs:
+        return '/about_us';
+      case AppRoute.termsOfService:
+        return '/terms_of_service';
+      case AppRoute.privacyPolicy:
+        return '/privacy_policy';
+      case AppRoute.rateApp:
+        return '/rate_app';
+      case AppRoute.testAlerts:
+        return '/test_alerts';
     }
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:nts_psc_app/core/constants/app_assets.dart';
 
 class SplashScreen extends StatelessWidget {
@@ -10,8 +11,8 @@ class SplashScreen extends StatelessWidget {
       body: Center(
         child: Image.asset(
           AppAssets.appLogo,
-          width: 200,
-          height: 200,
+          width: 200.w,
+          height: 200.w,
           // Add error handling
           errorBuilder: (context, error, stackTrace) {
             return Column(
