@@ -13,8 +13,6 @@ class AccountSettingsScreen extends StatefulWidget {
 }
 
 class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
-  bool _twoFactorEnabled = false;
-
   Widget _buildSectionHeader(String title) {
     return Padding(
       padding: EdgeInsets.only(left: 24.w, bottom: 8.h, top: 24.h),

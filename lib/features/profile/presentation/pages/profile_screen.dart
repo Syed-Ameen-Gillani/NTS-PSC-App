@@ -6,6 +6,9 @@ import 'package:nts_psc_app/core/theme/app_text_styles.dart';
 import 'package:nts_psc_app/features/profile/presentation/controllers/profile_controller.dart';
 import 'package:nts_psc_app/config/routes/app_routes.dart';
 import 'package:go_router/go_router.dart';
+import 'package:nts_psc_app/core/models/user_role.dart';
+import 'package:nts_psc_app/features/auth/presentation/controllers/auth_controller.dart';
+import 'package:nts_psc_app/presentation/widgets/custom_toast.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -237,6 +240,16 @@ class ProfileScreen extends ConsumerWidget {
                     onTap: () => context.pushNamed(AppRoute.aboutUs.name),
                   ),
                   
+                  _buildMenuButton(
+                    Icons.school_outlined,
+                    'Teacher & Instructor Studio',
+                    onTap: () {
+                      ref.read(authControllerProvider.notifier).selectRole(UserRole.teacher);
+                      CustomToast.showSuccess(context, message: 'Switched to Teacher Studio.');
+                      context.goNamed(AppRoute.teacherMain.name);
+                    },
+                  ),
+                  
                   SizedBox(height: 32.h),
                   
                   // Log Out Button
@@ -244,8 +257,12 @@ class ProfileScreen extends ConsumerWidget {
                     width: double.infinity,
                     height: 56.h,
                     child: ElevatedButton(
-                      onPressed: () {
-                        context.goNamed(AppRoute.welcome.name);
+                      onPressed: () async {
+                        await ref.read(authControllerProvider.notifier).logout();
+                        if (context.mounted) {
+                          CustomToast.showInfo(context, message: 'Logged out successfully.');
+                          context.goNamed(AppRoute.welcomeRole.name);
+                        }
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFFFF0F0),

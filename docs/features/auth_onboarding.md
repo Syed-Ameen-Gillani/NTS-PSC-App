@@ -27,7 +27,7 @@ The Authentication and Onboarding modules act as the entry point to the applicat
 
 2. **Forgot Password (`forgot_password_screen.dart`)**
    - Captures email input to dispatch password reset instructions.
-   - On success, triggers a `CustomSnackBar` (`CustomSnackBar.showSuccess`) to inform the user that a link was dispatched, replacing generic inline Snackbars.
+   - On success, triggers a `CustomToast` (`CustomToast.showSuccess`) to inform the user that a link was dispatched, replacing generic inline Snackbars.
 
 ## Design Patterns
 - Both modules heavily rely on `AppTextStyles` for `Inter` font rendering.

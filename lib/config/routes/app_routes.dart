@@ -19,6 +19,7 @@ enum AppRoute {
   quizReady,
   activeQuiz,
   quizCompleted,
+  quizReview,
   deleteAccount,
   paymentMethods,
   addPaymentMethod,
@@ -30,6 +31,25 @@ enum AppRoute {
   privacyPolicy,
   rateApp,
   testAlerts,
+  // New Student Learning Routes
+  courseDetail,
+  courseEnroll,
+  lessonPlayer,
+  publicTeacherProfile,
+  studentLiveClasses,
+  // New Teacher Routes
+  teacherWelcome,
+  teacherLogin,
+  teacherSignup,
+  teacherMain,
+  teacherCreateCourse,
+  teacherCreateQuiz,
+  teacherAnalytics,
+  teacherManageCourse,
+  teacherDoubts,
+  teacherLiveClasses,
+  teacherStudents,
+  teacherPayouts,
 }
 
 extension AppRouteExtension on AppRoute {
@@ -75,6 +95,8 @@ extension AppRouteExtension on AppRoute {
         return '/active_quiz';
       case AppRoute.quizCompleted:
         return '/quiz_completed';
+      case AppRoute.quizReview:
+        return '/quiz_review';
       case AppRoute.deleteAccount:
         return '/delete_account';
       case AppRoute.paymentMethods:
@@ -97,6 +119,40 @@ extension AppRouteExtension on AppRoute {
         return '/rate_app';
       case AppRoute.testAlerts:
         return '/test_alerts';
+      case AppRoute.courseDetail:
+        return '/course_detail';
+      case AppRoute.courseEnroll:
+        return '/course_enroll';
+      case AppRoute.lessonPlayer:
+        return '/lesson_player';
+      case AppRoute.publicTeacherProfile:
+        return '/public_teacher_profile';
+      case AppRoute.studentLiveClasses:
+        return '/student_live_classes';
+      case AppRoute.teacherWelcome:
+        return '/teacher_welcome';
+      case AppRoute.teacherLogin:
+        return '/teacher_login';
+      case AppRoute.teacherSignup:
+        return '/teacher_signup';
+      case AppRoute.teacherMain:
+        return '/teacher_main';
+      case AppRoute.teacherCreateCourse:
+        return '/teacher_create_course';
+      case AppRoute.teacherCreateQuiz:
+        return '/teacher_create_quiz';
+      case AppRoute.teacherAnalytics:
+        return '/teacher_analytics';
+      case AppRoute.teacherManageCourse:
+        return '/teacher_manage_course';
+      case AppRoute.teacherDoubts:
+        return '/teacher_doubts';
+      case AppRoute.teacherLiveClasses:
+        return '/teacher_live_classes';
+      case AppRoute.teacherStudents:
+        return '/teacher_students';
+      case AppRoute.teacherPayouts:
+        return '/teacher_payouts';
     }
   }
 }

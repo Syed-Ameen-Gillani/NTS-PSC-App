@@ -21,12 +21,6 @@ class OnboardingContentStyle2 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color primaryColor = Theme.of(context).colorScheme.primary;
-    final Color titleColor = Theme.of(context).textTheme.displayLarge!.color!;
-    final Color descriptionColor = Theme.of(
-      context,
-    ).textTheme.bodyLarge!.color!;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -36,11 +30,14 @@ class OnboardingContentStyle2 extends StatelessWidget {
           child: Padding(
             padding: EdgeInsets.only(top: 16.h, right: 24.w),
             child: showSkipButton
-                ? TextButton(
+                  ? TextButton(
                     onPressed: onSkip,
                     child: Text(
                       'Skip',
-                      style: TextStyle(fontSize: 16.sp, color: primaryColor),
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
                     ),
                   )
                 : SizedBox(height: 16.h),

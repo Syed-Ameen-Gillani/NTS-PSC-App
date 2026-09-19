@@ -4,6 +4,9 @@ import 'package:nts_psc_app/core/theme/app_colors.dart';
 import 'package:nts_psc_app/core/theme/app_text_styles.dart';
 import 'package:nts_psc_app/core/models/app_models.dart';
 
+import 'package:go_router/go_router.dart';
+import 'package:nts_psc_app/config/routes/app_routes.dart';
+
 class PopularTeachersList extends StatelessWidget {
   final List<TeacherModel> teachers;
 
@@ -28,56 +31,63 @@ class PopularTeachersList extends StatelessWidget {
         ),
         SizedBox(height: 16.h),
         SizedBox(
-          height: 135.h,
+          height: 148.h,
           child: ListView.separated(
             padding: EdgeInsets.symmetric(horizontal: 24.w),
             scrollDirection: Axis.horizontal,
             itemCount: teachers.length,
-            separatorBuilder: (context, index) => SizedBox(width: 24.w),
+            separatorBuilder: (context, index) => SizedBox(width: 20.w),
             itemBuilder: (context, index) {
               final teacher = teachers[index];
-              return SizedBox(
-                width: 80.w,
-                child: Column(
-                  children: [
-                    Container(
-                      width: 80.w,
-                      height: 80.w,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: const Color(0x331A73E8),
-                          width: 2.w,
+              return InkWell(
+                onTap: () {
+                  context.pushNamed(AppRoute.publicTeacherProfile.name, extra: teacher);
+                },
+                borderRadius: BorderRadius.circular(12.r),
+                child: SizedBox(
+                  width: 84.w,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 74.w,
+                        height: 74.w,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: const Color(0x331A73E8),
+                            width: 2.w,
+                          ),
+                          image: DecorationImage(
+                            image: AssetImage(teacher.imagePath),
+                            fit: BoxFit.cover,
+                          ),
                         ),
-                        image: DecorationImage(
-                          image: AssetImage(teacher.imagePath),
-                          fit: BoxFit.cover,
+                      ),
+                      SizedBox(height: 6.h),
+                      Text(
+                        teacher.name,
+                        style: AppTextStyles.interBold24.copyWith(
+                          fontSize: 12.sp,
+                          color: AppColors.onBackground,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
                       ),
-                    ),
-                    SizedBox(height: 8.h),
-                    Text(
-                      teacher.name,
-                      style: AppTextStyles.interBold24.copyWith(
-                        fontSize: 12.sp,
-                        color: AppColors.onBackground,
+                      SizedBox(height: 2.h),
+                      Text(
+                        teacher.subject,
+                        style: AppTextStyles.interRegular14.copyWith(
+                          fontSize: 10.sp,
+                          color: AppColors.grey500,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center,
-                    ),
-                    SizedBox(height: 2.h),
-                    Text(
-                      teacher.subject,
-                      style: AppTextStyles.interRegular14.copyWith(
-                        fontSize: 10.sp,
-                        color: AppColors.grey500,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               );
             },

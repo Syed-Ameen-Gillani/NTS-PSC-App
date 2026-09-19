@@ -82,30 +82,30 @@ class WelcomeScreen extends StatelessWidget {
                     ),
                   ),
 
-                  SizedBox(height: 32.h), // Fixed, reasonable gap instead of pushing to extremes
+                  SizedBox(height: 32.h),
 
-                  // Create an Account Button
+                  // Log In Button
                   CustomButton(
-                    text: 'Create an Account',
+                    text: 'Log In',
                     onPressed: () {
-                      context.pushNamed(AppRoute.signup.name);
+                      context.pushReplacementNamed(AppRoute.login.name);
                     },
                     color: AppColors.primary,
                   ),
 
                   SizedBox(height: 16.h),
 
-                  // Log In Button
+                  // Continue as Guest Button
                   SizedBox(
                     width: double.infinity,
                     height: 56.h,
                     child: OutlinedButton(
                       onPressed: () {
-                        context.pushReplacementNamed(AppRoute.login.name);
+                        context.goNamed(AppRoute.main.name);
                       },
                       style: OutlinedButton.styleFrom(
                         padding: EdgeInsets.symmetric(vertical: 16.h),
-                        backgroundColor: AppColors.grey100.withOpacity(0.5), 
+                        backgroundColor: AppColors.grey100.withValues(alpha: 0.5),
                         side: BorderSide(color: AppColors.grey300, width: 1.w),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(50.r),
@@ -113,41 +113,10 @@ class WelcomeScreen extends StatelessWidget {
                         elevation: 0,
                       ),
                       child: Text(
-                        'Log In',
+                        'Continue as Guest',
                         style: AppTextStyles.interSemiBold16.copyWith(
                           color: AppColors.onBackground,
                           fontSize: 16.sp,
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  SizedBox(height: 24.h),
-
-                  // Explore Courses as Guest
-                  Center(
-                    child: InkWell(
-                      onTap: () {
-                        // Navigate to guest flow
-                      },
-                      child: Container(
-                        padding: EdgeInsets.only(
-                          bottom: 2.h, // Space between text and underline
-                        ),
-                        decoration: BoxDecoration(
-                          border: Border(
-                            bottom: BorderSide(
-                              color: AppColors.grey500,
-                              width: 1.0,
-                            ),
-                          ),
-                        ),
-                        child: Text(
-                          'Explore Courses as Guest',
-                          style: AppTextStyles.interMedium16.copyWith(
-                            color: AppColors.grey500,
-                            fontSize: 14.sp,
-                          ),
                         ),
                       ),
                     ),

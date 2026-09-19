@@ -2,16 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:nts_psc_app/core/models/app_models.dart';
 import 'package:nts_psc_app/core/theme/app_colors.dart';
 import 'package:nts_psc_app/core/theme/app_text_styles.dart';
 import 'package:nts_psc_app/config/routes/app_routes.dart';
 import 'package:nts_psc_app/presentation/widgets/custom_button.dart';
 
 class QuizCompletedScreen extends ConsumerWidget {
-  const QuizCompletedScreen({super.key});
+  final QuizSubmissionResultModel? result;
+
+  const QuizCompletedScreen({super.key, this.result});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final total = result?.totalQuestions ?? 4;
+    final score = result?.score ?? 3;
+    final percentage = total > 0 ? ((score / total) * 100).toInt() : 0;
+    final isPassed = percentage >= 60;
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -26,9 +34,9 @@ class QuizCompletedScreen extends ConsumerWidget {
           SizedBox(width: 8.w),
         ],
         title: Text(
-          'Quiz Completed',
+          'Assessment Results',
           style: AppTextStyles.interBold24.copyWith(
-            fontSize: 20.sp,
+            fontSize: 18.sp,
             color: AppColors.grey900,
           ),
         ),
@@ -47,43 +55,45 @@ class QuizCompletedScreen extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              SizedBox(height: 32.h),
+              SizedBox(height: 24.h),
               Container(
                 width: 96.w,
                 height: 96.w,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFFFF7E6), // Light orange/yellow
+                decoration: BoxDecoration(
+                  color: isPassed ? const Color(0xFFFFF7E6) : const Color(0xFFFFEBEE),
                   shape: BoxShape.circle,
                 ),
                 child: Center(
                   child: Icon(
-                    Icons.emoji_events, // Trophy
-                    color: Color(0xFFFA8C16), // Orange
+                    isPassed ? Icons.emoji_events : Icons.refresh_rounded,
+                    color: isPassed ? const Color(0xFFFA8C16) : AppColors.error,
                     size: 48.w,
                   ),
                 ),
               ),
-              SizedBox(height: 24.h),
+              SizedBox(height: 20.h),
               Text(
-                'Congratulations!',
+                isPassed ? 'Test Passed!' : 'Practice Makes Perfect!',
                 textAlign: TextAlign.center,
                 style: AppTextStyles.interBold30.copyWith(
-                  fontSize: 28.sp,
+                  fontSize: 26.sp,
                   color: AppColors.grey900,
                   height: 1.2,
                 ),
               ),
-              SizedBox(height: 16.h),
+              SizedBox(height: 12.h),
               Text(
-                'You have successfully completed the\nCurrent Affairs Challenge.',
+                result != null
+                    ? 'You have completed "${result!.quizTitle}" with $percentage% accuracy.'
+                    : 'You have successfully completed the competitive practice challenge.',
                 textAlign: TextAlign.center,
                 style: AppTextStyles.interRegular14.copyWith(
                   color: AppColors.grey500,
                   height: 1.5,
                 ),
               ),
-              SizedBox(height: 48.h),
-              
+              SizedBox(height: 36.h),
+
               Container(
                 width: double.infinity,
                 padding: EdgeInsets.all(24.w),
@@ -96,27 +106,74 @@ class QuizCompletedScreen extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Your Results',
+                      'Performance Breakdown',
                       style: AppTextStyles.interBold24.copyWith(
-                        fontSize: 20.sp,
+                        fontSize: 18.sp,
                         color: AppColors.grey900,
                         height: 1.2,
                       ),
                     ),
-                    SizedBox(height: 24.h),
-                    _buildSpecRow(Icons.check_circle_outline, 'Score: 12 / 15', const Color(0xFF10B981), const Color(0xFFD1FAE5)),
-                    SizedBox(height: 16.h),
-                    _buildSpecRow(Icons.pie_chart_outline, 'Accuracy: 80%', AppColors.primary, const Color(0xFFE3F2FD)),
-                    SizedBox(height: 16.h),
-                    _buildSpecRow(Icons.access_time, 'Time: 08:45', const Color(0xFFF59E0B), const Color(0xFFFEF3C7)),
+                    SizedBox(height: 20.h),
+                    _buildSpecRow(
+                      Icons.check_circle_outline,
+                      'Score: $score / $total',
+                      const Color(0xFF10B981),
+                      const Color(0xFFD1FAE5),
+                    ),
+                    SizedBox(height: 14.h),
+                    _buildSpecRow(
+                      Icons.pie_chart_outline,
+                      'Accuracy: $percentage%',
+                      AppColors.primary,
+                      const Color(0xFFE3F2FD),
+                    ),
+                    SizedBox(height: 14.h),
+                    _buildSpecRow(
+                      Icons.timer_outlined,
+                      'Time Taken: 04:32',
+                      const Color(0xFFF59E0B),
+                      const Color(0xFFFEF3C7),
+                    ),
                   ],
+                ),
+              ),
+              SizedBox(height: 36.h),
+
+              // Action buttons
+              CustomButton(
+                text: 'Review Answers & Explanations',
+                color: AppColors.primary,
+                trailingIcon: const Icon(Icons.arrow_forward, color: Colors.white, size: 18),
+                onPressed: () {
+                  context.pushNamed(
+                    AppRoute.quizReview.name,
+                    extra: result,
+                  );
+                },
+              ),
+              SizedBox(height: 14.h),
+              SizedBox(
+                width: double.infinity,
+                height: 52.h,
+                child: OutlinedButton(
+                  onPressed: () => context.goNamed(AppRoute.main.name),
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: AppColors.grey300, width: 1.w),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50.r)),
+                  ),
+                  child: Text(
+                    'Return to Dashboard',
+                    style: AppTextStyles.interSemiBold16.copyWith(
+                      fontSize: 15.sp,
+                      color: AppColors.onBackground,
+                    ),
+                  ),
                 ),
               ),
             ],
           ),
         ),
       ),
-
     );
   }
 
@@ -135,7 +192,7 @@ class QuizCompletedScreen extends ConsumerWidget {
         Text(
           text,
           style: AppTextStyles.interMedium16.copyWith(
-            fontSize: 16.sp,
+            fontSize: 15.sp,
             color: AppColors.grey700,
           ),
         ),

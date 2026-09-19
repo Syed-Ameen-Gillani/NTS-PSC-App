@@ -7,6 +7,7 @@ import 'package:nts_psc_app/core/theme/app_colors.dart';
 import 'package:nts_psc_app/core/theme/app_text_styles.dart';
 import 'package:nts_psc_app/config/routes/app_routes.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:nts_psc_app/core/models/user_role.dart';
 import 'package:nts_psc_app/core/utils/form_validators.dart';
 import 'package:nts_psc_app/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:nts_psc_app/presentation/widgets/custom_button.dart';
@@ -174,7 +175,12 @@ class _SignupCreateAccountScreenState extends ConsumerState<SignupCreateAccountS
                             if (_formKey.currentState?.validate() ?? false) {
                               final success = await ref
                                   .read(authControllerProvider.notifier)
-                                  .signup(_nameController.text.trim(), _emailController.text.trim(), _passwordController.text);
+                                  .signup(
+                                    name: _nameController.text.trim(),
+                                    email: _emailController.text.trim(),
+                                    password: _passwordController.text,
+                                    role: UserRole.student,
+                                  );
                                   
                               if (success && context.mounted) {
                                 CustomToast.showSuccess(

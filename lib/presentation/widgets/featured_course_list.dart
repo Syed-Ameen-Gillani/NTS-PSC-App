@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
+import 'package:nts_psc_app/config/routes/app_routes.dart';
 import 'package:nts_psc_app/core/theme/app_colors.dart';
 import 'package:nts_psc_app/core/theme/app_text_styles.dart';
 import 'package:nts_psc_app/core/models/app_models.dart';
@@ -14,7 +16,7 @@ class FeaturedCourseList extends StatelessWidget {
     if (courses.isEmpty) return const SizedBox.shrink();
 
     return SizedBox(
-      height: 235.h, // Slightly larger than 231.8 to prevent overflow, or exactly 231.8.h
+      height: 246.h,
       child: ListView.separated(
         padding: EdgeInsets.symmetric(horizontal: 24.w),
         scrollDirection: Axis.horizontal,
@@ -22,7 +24,15 @@ class FeaturedCourseList extends StatelessWidget {
         separatorBuilder: (context, index) => SizedBox(width: 16.w),
         itemBuilder: (context, index) {
           final course = courses[index];
-          return Container(
+          return InkWell(
+            onTap: () {
+              context.pushNamed(
+                AppRoute.courseDetail.name,
+                extra: course,
+              );
+            },
+            borderRadius: BorderRadius.circular(16.r),
+            child: Container(
             width: 220.w,
             decoration: BoxDecoration(
               color: const Color(0xFFF8F9FA),
@@ -40,7 +50,7 @@ class FeaturedCourseList extends StatelessWidget {
                       child: Image.asset(
                         course.imagePath,
                         width: 218.w,
-                        height: 122.h,
+                        height: 118.h,
                         fit: BoxFit.cover,
                       ),
                     ),
@@ -119,6 +129,7 @@ class FeaturedCourseList extends StatelessWidget {
                 ),
               ],
             ),
+          ),
           );
         },
       ),

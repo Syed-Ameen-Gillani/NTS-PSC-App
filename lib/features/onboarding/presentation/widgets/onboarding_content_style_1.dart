@@ -16,7 +16,6 @@ class OnboardingContentStyle1 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color primaryColor = Theme.of(context).colorScheme.primary;
     final Color titleColor = Theme.of(context).textTheme.displayLarge!.color!;
     final Color descriptionColor = Theme.of(
       context,

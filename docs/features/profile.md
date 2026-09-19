@@ -12,7 +12,7 @@ The Profile feature in the NTS-PSC-App handles user settings, account management
 2. **EditProfileScreen (`edit_profile_screen.dart`)**
    - Allows users to modify their Full Name, Email Address, Phone Number, and Location.
    - Includes an avatar upload UI.
-   - Uses `CustomTextFormField` and `CustomButton` with a `CustomSnackBar` for success validation.
+   - Uses `CustomTextFormField` and `CustomButton` with a `CustomToast.showSuccess` for success validation.
 
 3. **Payment Methods (`payment_methods_screen.dart`, `add_card_screen.dart`, `add_wallet_screen.dart`)**
    - **List Screen**: Shows saved Credit/Debit cards (Mastercard, Visa) and Mobile Wallets (Easypaisa, JazzCash). Includes a customized 3-dot dropdown menu to edit or delete methods.
@@ -36,9 +36,9 @@ The Profile feature in the NTS-PSC-App handles user settings, account management
 7. **About Us & Legal (`about_us_screen.dart`, `terms_of_service_screen.dart`, `privacy_policy_screen.dart`, `rate_app_screen.dart`)**
    - **About Us**: Displays app version and links to sub-screens.
    - **Terms & Privacy**: Static, cleanly formatted typography screens detailing legal agreements, ending with "Contact Us" cards.
-   - **Rate App**: Interactive 5-star rating system with a multiline feedback field. Triggers a custom error SnackBar if submitted without a rating, and animates into a success state upon completion.
+   - **Rate App**: Interactive 5-star rating system with a multiline feedback field. Triggers a custom error Toast if submitted without a rating, and animates into a success state upon completion.
 
 ## Design & UI Rules Followed
 - **Responsiveness**: Everything is wrapped in `SafeArea` and utilizes `flutter_screenutil` (`.w`, `.h`, `.sp`, `.r`).
 - **Theming**: Consistently applies `AppColors` and typography from `AppTextStyles` (Inter font family).
-- **Feedback**: Standardized error/success states using `CustomSnackBar` and `CustomToast`.
+- **Feedback**: Standardized error/success states using the unified `CustomToast` system.

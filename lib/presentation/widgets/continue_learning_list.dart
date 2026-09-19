@@ -28,7 +28,7 @@ class ContinueLearningList extends StatelessWidget {
         ),
         SizedBox(height: 16.h),
         SizedBox(
-          height: 260.h, // Slightly larger than 258.38.h to prevent RenderFlex overflow
+          height: 275.h,
           child: ListView.separated(
             padding: EdgeInsets.symmetric(horizontal: 24.w),
             scrollDirection: Axis.horizontal,
@@ -38,11 +38,11 @@ class ContinueLearningList extends StatelessWidget {
               final course = courses[index];
               final progressPct = (course.progress ?? 0) * 100;
               return Container(
-                width: 260.w, // width: 260
+                width: 260.w,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF8F9FA), // background: #F8F9FA
+                  color: const Color(0xFFF8F9FA),
                   borderRadius: BorderRadius.circular(16.r),
-                  border: Border.all(color: const Color(0xFFDADCE0), width: 1.w), // border: #DADCE0
+                  border: Border.all(color: const Color(0xFFDADCE0), width: 1.w),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -52,7 +52,7 @@ class ContinueLearningList extends StatelessWidget {
                       child: Image.asset(
                         course.imagePath,
                         width: 258.w,
-                        height: 145.h,
+                        height: 132.h,
                         fit: BoxFit.cover,
                       ),
                     ),

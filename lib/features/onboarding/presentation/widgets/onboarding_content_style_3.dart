@@ -96,6 +96,7 @@ class OnboardingContentStyle3 extends StatelessWidget {
                     width: 100.w,
                     height: 100.w,
                     child: FloatingActionButton(
+                      heroTag: null,
                       onPressed: onContinue,
                       backgroundColor: kPrimaryBlue,
                       elevation: 6,
