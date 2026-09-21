@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:nts_psc_app/core/models/app_models.dart';
 import 'package:nts_psc_app/core/repositories/lesson_player_repository.dart';
 import 'package:nts_psc_app/features/learn/presentation/controllers/in_video_quiz_controller.dart';
 import 'package:nts_psc_app/features/learn/presentation/controllers/lesson_playback_controller.dart';
+import 'package:nts_psc_app/features/learn/presentation/pages/full_screen_video_player_page.dart';
 import 'package:nts_psc_app/features/learn/presentation/pages/lesson_player_screen.dart';
 import 'package:nts_psc_app/features/learn/presentation/widgets/in_video_quiz_dialog.dart';
 
@@ -216,6 +218,42 @@ void main() {
       // Verify result explanation and Continue button
       expect(find.textContaining('Correct! Well done.'), findsOneWidget);
       expect(find.text('Continue Video ▶'), findsOneWidget);
+    });
+
+    testWidgets('FullScreenVideoPlayerPage renders in landscape with exit button and controls', (tester) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          child: ScreenUtilInit(
+            designSize: const Size(812, 375),
+            minTextAdapt: true,
+            builder: (_, __) => MaterialApp(
+              home: FullScreenVideoPlayerPage(
+                course: CourseModel(
+                  id: 'c1',
+                  title: 'AJK PSC Masterclass',
+                  author: 'Dr. Usman',
+                  rating: 4.9,
+                  price: 'Rs 3,500',
+                  imagePath: 'assets/images/course4.jpg',
+                ),
+                lesson: LessonModel(
+                  id: 'l1',
+                  title: 'AJK Interim Constitution Act 1974',
+                  durationMinutes: 25,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      expect(find.text('AJK PSC Masterclass'), findsOneWidget);
+      expect(find.text('AJK Interim Constitution Act 1974'), findsOneWidget);
+      expect(find.byIcon(Icons.replay_10), findsOneWidget);
+      expect(find.byIcon(Icons.forward_10), findsOneWidget);
+      expect(find.byIcon(Icons.fullscreen_exit), findsOneWidget);
     });
   });
 }

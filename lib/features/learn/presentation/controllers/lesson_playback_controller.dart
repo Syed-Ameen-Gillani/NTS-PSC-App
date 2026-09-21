@@ -143,6 +143,30 @@ class LessonPlaybackNotifier extends Notifier<LessonPlaybackState> {
     seekToSeconds(state.positionSeconds + seconds);
   }
 
+  void seekBy(int seconds) {
+    if (seconds < 0) {
+      rewind(-seconds);
+    } else {
+      forward(seconds);
+    }
+  }
+
+  void syncFromVideo(int positionSeconds, {int? durationSeconds}) {
+    // Checkpoint detection
+    if (positionSeconds >= checkpoint1 && !_triggeredCheckpoints.contains(checkpoint1)) {
+      _triggerCheckpoint(checkpoint1);
+      return;
+    } else if (positionSeconds >= checkpoint2 && !_triggeredCheckpoints.contains(checkpoint2)) {
+      _triggerCheckpoint(checkpoint2);
+      return;
+    }
+
+    state = state.copyWith(
+      positionSeconds: positionSeconds,
+      durationSeconds: durationSeconds ?? state.durationSeconds,
+    );
+  }
+
   void setSpeed(double speed) {
     state = state.copyWith(speed: speed);
     if (state.isPlaying) {
