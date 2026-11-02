@@ -1,3 +1,4 @@
+import 'package:nts_psc_app/presentation/widgets/app_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
@@ -14,7 +15,8 @@ class ForgotPasswordScreen extends ConsumerStatefulWidget {
   const ForgotPasswordScreen({super.key});
 
   @override
-  ConsumerState<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
+  ConsumerState<ForgotPasswordScreen> createState() =>
+      _ForgotPasswordScreenState();
 }
 
 class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
@@ -43,13 +45,17 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AppScaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: AppColors.onBackground, size: 20),
+          icon: const Icon(
+            Icons.arrow_back_ios_new,
+            color: AppColors.onBackground,
+            size: 20,
+          ),
           onPressed: () {
             if (context.canPop()) {
               context.pop();
@@ -63,75 +69,81 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
           child: Form(
             key: _formKey,
             child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(height: 16.h),
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(height: 16.h),
 
-              // Title
-              Text(
-                'Forgot Password',
-                style: AppTextStyles.interBold30.copyWith(
-                  color: AppColors.onBackground,
-                  fontSize: 32.sp,
-                  letterSpacing: -0.5,
+                // Title
+                Text(
+                  'Forgot Password',
+                  style: AppTextStyles.interBold30.copyWith(
+                    color: AppColors.onBackground,
+                    fontSize: 32.sp,
+                    letterSpacing: -0.5,
+                  ),
                 ),
-              ),
-              SizedBox(height: 8.h),
+                SizedBox(height: 8.h),
 
-              // Subtitle
-              Text(
-                'Enter your email address and we will send you a password reset link.',
-                style: AppTextStyles.interRegular16.copyWith(
-                  color: AppColors.grey500,
-                  fontSize: 16.sp,
-                  height: 1.5,
+                // Subtitle
+                Text(
+                  'Enter your email address and we will send you a password reset link.',
+                  style: AppTextStyles.interRegular16.copyWith(
+                    color: AppColors.grey500,
+                    fontSize: 16.sp,
+                    height: 1.5,
+                  ),
                 ),
-              ),
-              SizedBox(height: 48.h),
+                SizedBox(height: 48.h),
 
-              // Email Address Field
-              _buildFieldLabel('Email Address'),
-              CustomTextFormField(
-                controller: _emailController,
-                hintText: 'e.g. ahmed@example.com',
-                prefixIcon: Icons.mail_outline,
-                keyboardType: TextInputType.emailAddress,
-                validator: FormValidators.validateEmail,
-              ),
-              
-              SizedBox(height: 40.h),
+                // Email Address Field
+                _buildFieldLabel('Email Address'),
+                CustomTextFormField(
+                  controller: _emailController,
+                  hintText: 'e.g. ahmed@example.com',
+                  textInputAction: TextInputAction.done,
+                  prefixIcon: Icons.mail_outline,
+                  keyboardType: TextInputType.emailAddress,
+                  validator: FormValidators.validateEmail,
+                ),
 
-              // Send Reset Link Button
-              Consumer(
-                builder: (context, ref, child) {
-                  final authState = ref.watch(authControllerProvider);
-                  return CustomButton(
-                    text: authState.isLoading ? 'Sending...' : 'Send Reset Link',
-                    onPressed: authState.isLoading
-                        ? () {}
-                        : () async {
-                            if (_formKey.currentState?.validate() ?? false) {
-                              final success = await ref
-                                  .read(authControllerProvider.notifier)
-                                  .sendPasswordReset(_emailController.text.trim());
-                                  
-                              if (success && context.mounted) {
-                                CustomToast.showSuccess(
-                                  context,
-                                  message: 'Password reset link sent to your email',
-                                );
-                                context.pop();
+                SizedBox(height: 40.h),
+
+                // Send Reset Link Button
+                Consumer(
+                  builder: (context, ref, child) {
+                    final authState = ref.watch(authControllerProvider);
+                    return CustomButton(
+                      text: authState.isLoading
+                          ? 'Sending...'
+                          : 'Send Reset Link',
+                      onPressed: authState.isLoading
+                          ? () {}
+                          : () async {
+                              if (_formKey.currentState?.validate() ?? false) {
+                                final success = await ref
+                                    .read(authControllerProvider.notifier)
+                                    .sendPasswordReset(
+                                      _emailController.text.trim(),
+                                    );
+
+                                if (success && context.mounted) {
+                                  CustomToast.showSuccess(
+                                    context,
+                                    message:
+                                        'Password reset link sent to your email',
+                                  );
+                                  context.pop();
+                                }
                               }
-                            }
-                          },
-                    color: AppColors.primary,
-                  );
-                },
-              ),
-            ],
+                            },
+                      color: AppColors.primary,
+                    );
+                  },
+                ),
+              ],
+            ),
           ),
         ),
-      ),
       ),
     );
   }

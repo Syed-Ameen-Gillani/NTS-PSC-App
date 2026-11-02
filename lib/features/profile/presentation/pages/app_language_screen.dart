@@ -1,3 +1,4 @@
+import 'package:nts_psc_app/presentation/widgets/app_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -36,7 +37,7 @@ class AppLanguageScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedLanguage = ref.watch(appLanguageProvider);
 
-    return Scaffold(
+    return AppScaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.background,
@@ -98,7 +99,7 @@ class AppLanguageScreen extends ConsumerWidget {
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Column(
+                                Expanded(child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
@@ -115,7 +116,7 @@ class AppLanguageScreen extends ConsumerWidget {
                                       ),
                                     ),
                                   ],
-                                ),
+                                )),
                                 if (isSelected)
                                   Icon(
                                     Icons.check,

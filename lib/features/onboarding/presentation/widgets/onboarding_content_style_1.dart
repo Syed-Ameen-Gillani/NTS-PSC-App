@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:nts_psc_app/core/constants/colors.dart';
@@ -20,9 +22,10 @@ class OnboardingContentStyle1 extends StatelessWidget {
     final Color descriptionColor = Theme.of(
       context,
     ).textTheme.bodyLarge!.color!;
-    final whiteContainerHeight = 448.0;
+    return LayoutBuilder(builder: (context, constraints) {
+    final whiteContainerHeight = math.min(448.0, constraints.maxHeight * 0.58);
 
-    return Column(
+    return SingleChildScrollView(child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         //  The White Container (Top Area)
@@ -76,9 +79,9 @@ class OnboardingContentStyle1 extends StatelessWidget {
           ),
         ),
 
-        const Spacer(), // Pushes content up, ensuring responsiveness
         SizedBox(height: 24.h),
       ],
-    );
+    ));
+    });
   }
 }

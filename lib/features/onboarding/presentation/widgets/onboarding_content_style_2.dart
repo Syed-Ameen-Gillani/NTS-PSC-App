@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:nts_psc_app/core/constants/colors.dart';
@@ -21,7 +23,8 @@ class OnboardingContentStyle2 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    final availableHeight = MediaQuery.sizeOf(context).height;
+    return SingleChildScrollView(child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         // 1. Skip Button (Top Right Corner)
@@ -49,8 +52,8 @@ class OnboardingContentStyle2 extends StatelessWidget {
         Center(
           child: Image.asset(
             imageAsset,
-            height: 250.h,
-            width: 250.w,
+            height: math.min(250.h, availableHeight * 0.35),
+            width: math.min(250.w, MediaQuery.sizeOf(context).width * 0.7),
             fit: BoxFit.contain,
           ),
         ),
@@ -85,8 +88,8 @@ class OnboardingContentStyle2 extends StatelessWidget {
           ),
         ),
 
-        const Spacer(),
+        SizedBox(height: 140.h),
       ],
-    );
+    ));
   }
 }

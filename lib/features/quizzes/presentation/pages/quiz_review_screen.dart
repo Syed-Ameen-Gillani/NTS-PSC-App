@@ -1,17 +1,37 @@
+import 'package:nts_psc_app/presentation/widgets/app_scaffold.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:nts_psc_app/core/models/app_models.dart';
+import 'package:nts_psc_app/core/networks/supabase_client.dart';
+import 'package:nts_psc_app/features/quizzes/presentation/controllers/quizzes_controller.dart';
 import 'package:nts_psc_app/core/theme/app_colors.dart';
 import 'package:nts_psc_app/core/theme/app_text_styles.dart';
 
-class QuizReviewScreen extends StatelessWidget {
+class QuizReviewScreen extends ConsumerWidget {
   final QuizSubmissionResultModel? result;
+  final String? attemptId;
 
-  const QuizReviewScreen({super.key, this.result});
+  const QuizReviewScreen({super.key, this.result, this.attemptId});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (AppConfig.isSupabaseEnabled) {
+      final id = attemptId ?? result?.attemptId;
+      if (id == null) return const AppScaffold(body: Center(child: Text('Review unavailable')));
+      return ref.watch(quizAttemptResultProvider(id)).when(
+        data: (saved) => saved == null
+            ? const AppScaffold(body: Center(child: Text('Review unavailable')))
+            : _buildReview(context, saved),
+        loading: () => const AppScaffold(body: Center(child: CircularProgressIndicator())),
+        error: (_, __) => const AppScaffold(body: Center(child: Text('Could not load review'))),
+      );
+    }
+    return _buildReview(context, result);
+  }
+
+  Widget _buildReview(BuildContext context, QuizSubmissionResultModel? result) {
     final submission = result ??
         QuizSubmissionResultModel(
           quizId: 'q1',
@@ -51,7 +71,7 @@ class QuizReviewScreen extends StatelessWidget {
           ],
         );
 
-    return Scaffold(
+    return AppScaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
@@ -89,7 +109,7 @@ class QuizReviewScreen extends StatelessWidget {
                 color: const Color(0xFFF8F9FA),
                 borderRadius: BorderRadius.circular(16.r),
                 border: Border.all(
-                  color: isCorrect ? AppColors.success.withOpacity(0.5) : AppColors.error.withOpacity(0.5),
+                  color: isCorrect ? AppColors.success.withValues(alpha: 0.5) : AppColors.error.withValues(alpha: 0.5),
                   width: 1.w,
                 ),
               ),
@@ -100,17 +120,17 @@ class QuizReviewScreen extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
+                      Flexible(child: Text(
                         'Question ${qIndex + 1} of ${submission.questions.length}',
                         style: AppTextStyles.interSemiBold16.copyWith(
                           fontSize: 12.sp,
                           color: AppColors.grey500,
                         ),
-                      ),
+                      )),
                       Container(
                         padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
                         decoration: BoxDecoration(
-                          color: isCorrect ? AppColors.success.withOpacity(0.12) : AppColors.error.withOpacity(0.12),
+                          color: isCorrect ? AppColors.success.withValues(alpha: 0.12) : AppColors.error.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(20.r),
                         ),
                         child: Row(
@@ -156,11 +176,11 @@ class QuizReviewScreen extends StatelessWidget {
                     Color textColor = AppColors.onBackground;
 
                     if (isAnswer) {
-                      optBg = AppColors.success.withOpacity(0.12);
+                      optBg = AppColors.success.withValues(alpha: 0.12);
                       optBorder = AppColors.success;
                       textColor = const Color(0xFF065F46);
                     } else if (isUserPick && !isCorrect) {
-                      optBg = AppColors.error.withOpacity(0.1);
+                      optBg = AppColors.error.withValues(alpha: 0.1);
                       optBorder = AppColors.error;
                       textColor = AppColors.error;
                     }
@@ -209,7 +229,7 @@ class QuizReviewScreen extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(10.r),
-                        border: Border.all(color: AppColors.primary.withOpacity(0.25), width: 1.w),
+                        border: Border.all(color: AppColors.primary.withValues(alpha: 0.25), width: 1.w),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -218,13 +238,13 @@ class QuizReviewScreen extends StatelessWidget {
                             children: [
                               Icon(Icons.lightbulb_outline, color: AppColors.accent, size: 16.w),
                               SizedBox(width: 6.w),
-                              Text(
+                              Expanded(child: Text(
                                 'Exam Preparation Rationale:',
                                 style: AppTextStyles.interSemiBold16.copyWith(
                                   fontSize: 12.sp,
                                   color: AppColors.primary,
                                 ),
-                              ),
+                              )),
                             ],
                           ),
                           SizedBox(height: 6.h),

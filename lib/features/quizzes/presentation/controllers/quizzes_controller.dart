@@ -1,71 +1,37 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:nts_psc_app/core/models/app_models.dart';
+import 'package:nts_psc_app/core/networks/supabase_client.dart';
+import 'package:nts_psc_app/core/repositories/supabase_quiz_repository.dart';
 
 class QuizzesState {
-  final List<QuizModel> aiQuizzes;
   final List<QuizModel> courseQuizzes;
+  final int weeklyCompleted;
 
-  QuizzesState({
-    this.aiQuizzes = const [],
-    this.courseQuizzes = const [],
-  });
+  QuizzesState({this.courseQuizzes = const [], this.weeklyCompleted = 5});
 }
 
 class QuizzesController extends AsyncNotifier<QuizzesState> {
   @override
   FutureOr<QuizzesState> build() async {
-    await Future.delayed(const Duration(milliseconds: 500)); // Simulate API call
-    
+    final repository = ref.read(quizRepositoryProvider);
+    final quizzes = await repository.getCourseQuizzes();
+    final weeklyCompleted = repository is SupabaseQuizRepository
+        ? await repository.getWeeklyAttemptCount()
+        : 5;
     return QuizzesState(
-      aiQuizzes: [
-        QuizModel(
-          id: '1',
-          title: 'Current Affairs Weekly Challenge',
-          category: 'Current Affairs',
-          isAiGenerated: true,
-          totalQuestions: 15,
-          score: null,
-        ),
-        QuizModel(
-          id: '2',
-          title: 'English Grammar Weak Areas',
-          category: 'English',
-          isAiGenerated: true,
-          totalQuestions: 20,
-          score: '16/20',
-        ),
-      ],
-      courseQuizzes: [
-        QuizModel(
-          id: '3',
-          title: 'Pakistan Studies - Pre-Partition',
-          category: 'Pakistan Affairs',
-          isAiGenerated: false,
-          totalQuestions: 25,
-          score: null,
-        ),
-        QuizModel(
-          id: '4',
-          title: 'General Science Basics',
-          category: 'Everyday Science',
-          isAiGenerated: false,
-          totalQuestions: 10,
-          score: '8/10',
-        ),
-        QuizModel(
-          id: '5',
-          title: 'Islamic Studies Mock Test 1',
-          category: 'Islamic Studies',
-          isAiGenerated: false,
-          totalQuestions: 50,
-          score: null,
-        ),
-      ],
+      courseQuizzes: quizzes,
+      weeklyCompleted: weeklyCompleted,
     );
   }
 }
 
-final quizzesControllerProvider = AsyncNotifierProvider<QuizzesController, QuizzesState>(() {
-  return QuizzesController();
-});
+final quizzesControllerProvider =
+    AsyncNotifierProvider<QuizzesController, QuizzesState>(() {
+      return QuizzesController();
+    });
+
+final quizAttemptResultProvider =
+    FutureProvider.family<QuizSubmissionResultModel?, String>((ref, attemptId) {
+      return ref.watch(quizRepositoryProvider).getAttemptResult(attemptId);
+    });

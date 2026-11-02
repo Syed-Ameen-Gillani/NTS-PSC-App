@@ -1,497 +1,417 @@
+import 'package:nts_psc_app/presentation/widgets/app_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:nts_psc_app/config/routes/app_routes.dart';
+import 'package:nts_psc_app/core/constants/app_assets.dart';
 import 'package:nts_psc_app/core/theme/app_colors.dart';
 import 'package:nts_psc_app/core/theme/app_text_styles.dart';
+import 'package:nts_psc_app/presentation/widgets/app_avatar.dart';
+import 'package:nts_psc_app/features/profile/presentation/controllers/profile_controller.dart';
+import 'package:nts_psc_app/features/notifications/presentation/controllers/notification_inbox_controller.dart';
+import 'package:nts_psc_app/features/notifications/presentation/widgets/notification_bell_button.dart';
+import 'package:nts_psc_app/features/teacher/domain/models/teacher_insights_models.dart';
+import 'package:nts_psc_app/features/teacher/data/teacher_insights_repository_provider.dart';
 import 'package:nts_psc_app/features/teacher/presentation/controllers/teacher_controller.dart';
+import 'package:nts_psc_app/features/teacher/presentation/pages/teacher_main_screen.dart';
+import 'package:nts_psc_app/features/teacher/presentation/widgets/teacher_metric_grid.dart';
+import 'package:nts_psc_app/features/teacher/presentation/widgets/teacher_quick_actions.dart';
 
 class TeacherDashboardScreen extends ConsumerWidget {
   const TeacherDashboardScreen({super.key});
 
-  Widget _buildStatCard({
-    required String title,
-    required String value,
-    required IconData icon,
-    required Color color,
-    required Color bgColor,
-  }) {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final teacherState = ref.watch(teacherControllerProvider);
+    final financial = ref.watch(teacherFinancialOverviewProvider);
+    final profile = ref.watch(profileControllerProvider).value;
+
+    return AppScaffold(
+      backgroundColor: AppColors.background,
+      body: SafeArea(
+        child: teacherState.when(
+          data: (state) => RefreshIndicator(
+            onRefresh: () async {
+              ref.invalidate(profileControllerProvider);
+              ref.invalidate(teacherControllerProvider);
+              ref.invalidate(teacherFinancialOverviewProvider);
+              await ref.read(teacherControllerProvider.future);
+            },
+            child: ListView(
+              padding: EdgeInsets.fromLTRB(20.w, 18.h, 20.w, 28.h),
+              children: [
+                _DashboardHeader(
+                  name: profile?.name ?? 'Instructor',
+                  imagePath: profile?.imagePath ?? AppAssets.teacher1,
+                  unreadCount: ref.watch(notificationUnreadCountProvider),
+                  onNotifications: () =>
+                      context.pushNamed(AppRoute.notificationInbox.name),
+                ),
+                SizedBox(height: 24.h),
+                _TeachingSummary(
+                  learnerCount: state.stats.totalStudents,
+                  courseCount: state.stats.activeCourses,
+                  onManageCourses: () =>
+                      ref.read(teacherMainTabProvider.notifier).select(1),
+                ),
+                SizedBox(height: 24.h),
+                _SectionTitle(
+                  title: 'Studio overview',
+                  actionLabel: 'View analytics',
+                  onAction: () =>
+                      context.pushNamed(AppRoute.teacherAnalytics.name),
+                ),
+                SizedBox(height: 12.h),
+                TeacherMetricGrid(
+                  items: [
+                    TeacherMetricItem(
+                      label: 'Learners',
+                      value: '${state.stats.totalStudents} enrolled',
+                      icon: Icons.people_outline,
+                      onTap: () =>
+                          context.pushNamed(AppRoute.teacherStudents.name),
+                    ),
+                    TeacherMetricItem(
+                      label: 'Courses',
+                      value: '${state.stats.activeCourses} published',
+                      icon: Icons.school_outlined,
+                      onTap: () =>
+                          ref.read(teacherMainTabProvider.notifier).select(1),
+                    ),
+                    TeacherMetricItem(
+                      label: 'Assessments',
+                      value: '${state.stats.totalQuizzes} quizzes',
+                      icon: Icons.assignment_outlined,
+                      onTap: () =>
+                          ref.read(teacherMainTabProvider.notifier).select(2),
+                    ),
+                    TeacherMetricItem(
+                      label: 'Earnings',
+                      value: financial.when(
+                        data: (overview) =>
+                            overview.formatMinor(overview.netEarningsMinor),
+                        loading: () => '…',
+                        error: (_, _) => 'Unavailable',
+                      ),
+                      icon: Icons.account_balance_wallet_outlined,
+                      onTap: () =>
+                          context.pushNamed(AppRoute.teacherPayouts.name),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 28.h),
+                _SectionTitle(title: 'Quick actions'),
+                SizedBox(height: 12.h),
+                TeacherQuickActions(
+                  onCreateCourse: () =>
+                      context.pushNamed(AppRoute.teacherCreateCourse.name),
+                  onCreateQuiz: () =>
+                      context.pushNamed(AppRoute.teacherCreateQuiz.name),
+                  onCreateAssignment: () =>
+                      context.pushNamed(AppRoute.teacherCreateAssignment.name),
+                ),
+                SizedBox(height: 28.h),
+                _SectionTitle(
+                  title: 'Recent enrollments',
+                  actionLabel: state.recentEnrollments.isEmpty
+                      ? null
+                      : 'View learners',
+                  onAction: () =>
+                      context.pushNamed(AppRoute.teacherStudents.name),
+                ),
+                SizedBox(height: 10.h),
+                _RecentEnrollments(items: state.recentEnrollments),
+              ],
+            ),
+          ),
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (error, _) => Center(
+            child: TextButton(
+              onPressed: () => ref.invalidate(teacherControllerProvider),
+              child: const Text('Could not load dashboard. Try again'),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DashboardHeader extends StatelessWidget {
+  const _DashboardHeader({
+    required this.name,
+    required this.imagePath,
+    required this.unreadCount,
+    required this.onNotifications,
+  });
+
+  final String name;
+  final String imagePath;
+  final int unreadCount;
+  final VoidCallback onNotifications;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Text(
+                    'Educora Studio',
+                    style: AppTextStyles.interSemiBold16.copyWith(
+                      fontSize: 12.sp,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                  SizedBox(width: 6.w),
+                  Icon(Icons.verified, size: 14.w, color: AppColors.primary),
+                ],
+              ),
+              SizedBox(height: 2.h),
+              Text(
+                name,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: AppTextStyles.interBold24.copyWith(
+                  fontSize: 22.sp,
+                  color: AppColors.onBackground,
+                ),
+              ),
+            ],
+          ),
+        ),
+        NotificationBellButton(
+          unreadCount: unreadCount,
+          onPressed: onNotifications,
+        ),
+        SizedBox(width: 8.w),
+        AppAvatar(size: 48.w, imagePath: imagePath, name: name),
+      ],
+    );
+  }
+}
+
+class _TeachingSummary extends StatelessWidget {
+  const _TeachingSummary({
+    required this.learnerCount,
+    required this.courseCount,
+    required this.onManageCourses,
+  });
+
+  final int learnerCount;
+  final int courseCount;
+  final VoidCallback onManageCourses;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasActivity = learnerCount > 0 || courseCount > 0;
     return Container(
-      padding: EdgeInsets.all(16.w),
+      padding: EdgeInsets.all(20.w),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8F9FA),
-        borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(color: const Color(0xFFDADCE0), width: 1.w),
+        color: AppColors.primary,
+        borderRadius: BorderRadius.circular(8.r),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Text(
-                  title,
-                  style: AppTextStyles.interRegular14.copyWith(
-                    fontSize: 12.sp,
-                    color: AppColors.grey500,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              SizedBox(width: 4.w),
-              Container(
-                padding: EdgeInsets.all(6.w),
-                decoration: BoxDecoration(color: bgColor, shape: BoxShape.circle),
-                child: Icon(icon, color: color, size: 16.w),
-              ),
-            ],
-          ),
-          SizedBox(height: 10.h),
           Text(
-            value,
+            hasActivity
+                ? 'Your teaching at a glance'
+                : 'Build your first course',
+            style: AppTextStyles.interSemiBold16.copyWith(
+              fontSize: 13.sp,
+              color: AppColors.onPrimary.withValues(alpha: 0.8),
+            ),
+          ),
+          SizedBox(height: 7.h),
+          Text(
+            hasActivity
+                ? '$learnerCount learners across $courseCount published courses'
+                : 'Create a structured course, add lessons, then publish it to the catalog.',
             style: AppTextStyles.interBold24.copyWith(
               fontSize: 20.sp,
-              color: AppColors.onBackground,
+              height: 1.25,
+              color: AppColors.onPrimary,
+            ),
+          ),
+          SizedBox(height: 16.h),
+          OutlinedButton(
+            onPressed: onManageCourses,
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.onPrimary,
+              side: BorderSide(
+                color: AppColors.onPrimary.withValues(alpha: 0.65),
+              ),
+              padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8.r),
+              ),
+            ),
+            child: Text(
+              hasActivity ? 'Manage courses' : 'Start a course',
+              style: AppTextStyles.interSemiBold16.copyWith(fontSize: 13.sp),
             ),
           ),
         ],
       ),
     );
   }
+}
+
+class _SectionTitle extends StatelessWidget {
+  const _SectionTitle({required this.title, this.actionLabel, this.onAction});
+
+  final String title;
+  final String? actionLabel;
+  final VoidCallback? onAction;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final teacherState = ref.watch(teacherControllerProvider);
-
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: teacherState.when(
-          data: (state) {
-            return SingleChildScrollView(
-              padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 16.h),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Top Header
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Text(
-                                'Educora Studio',
-                                style: AppTextStyles.interRegular14.copyWith(
-                                  fontSize: 12.sp,
-                                  color: AppColors.primary,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              SizedBox(width: 6.w),
-                              Icon(Icons.verified, color: AppColors.primary, size: 14.w),
-                            ],
-                          ),
-                          SizedBox(height: 2.h),
-                          Text(
-                            'Sir Tariq Mahmood',
-                            style: AppTextStyles.interBold24.copyWith(
-                              fontSize: 22.sp,
-                              color: AppColors.onBackground,
-                            ),
-                          ),
-                        ],
-                      ),
-                      CircleAvatar(
-                        radius: 24.r,
-                        backgroundImage: const AssetImage('assets/images/teacher1.png'),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 24.h),
-
-                  // Earnings Banner
-                  Container(
-                    width: double.infinity,
-                    padding: EdgeInsets.all(20.w),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF1E75F1), Color(0xFF0F4DB8)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(20.r),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.primary.withOpacity(0.25),
-                          blurRadius: 12,
-                          offset: const Offset(0, 6),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Accrued Course Royalties',
-                              style: AppTextStyles.interMedium16.copyWith(
-                                fontSize: 13.sp,
-                                color: Colors.white70,
-                              ),
-                            ),
-                            SizedBox(height: 6.h),
-                            Text(
-                              state.stats.totalEarnings,
-                              style: AppTextStyles.interBold30.copyWith(
-                                fontSize: 26.sp,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ],
-                        ),
-                        ElevatedButton(
-                          onPressed: () => context.pushNamed(AppRoute.teacherPayouts.name),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: AppColors.primary,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(50.r),
-                            ),
-                            elevation: 0,
-                            padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
-                          ),
-                          child: Text(
-                            'Payouts',
-                            style: AppTextStyles.interSemiBold16.copyWith(
-                              fontSize: 13.sp,
-                              color: AppColors.primary,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(height: 20.h),
-
-                  // 2x2 Stats Grid
-                  Row(
-                    children: [
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () => context.pushNamed(AppRoute.teacherStudents.name),
-                          child: _buildStatCard(
-                            title: 'Enrolled Students',
-                            value: '${state.stats.totalStudents}',
-                            icon: Icons.people_outline,
-                            color: AppColors.primary,
-                            bgColor: const Color(0xFFE3F2FD),
-                          ),
-                        ),
-                      ),
-                      SizedBox(width: 12.w),
-                      Expanded(
-                        child: _buildStatCard(
-                          title: 'Active Courses',
-                          value: '${state.stats.activeCourses}',
-                          icon: Icons.school_outlined,
-                          color: const Color(0xFF10B981),
-                          bgColor: const Color(0xFFD1FAE5),
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 12.h),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildStatCard(
-                          title: 'Mock Quizzes',
-                          value: '${state.stats.totalQuizzes}',
-                          icon: Icons.assignment_outlined,
-                          color: const Color(0xFFF59E0B),
-                          bgColor: const Color(0xFFFEF3C7),
-                        ),
-                      ),
-                      SizedBox(width: 12.w),
-                      Expanded(
-                        child: _buildStatCard(
-                          title: 'Student Rating',
-                          value: '${state.stats.avgRating} ★',
-                          icon: Icons.star_outline,
-                          color: const Color(0xFF8B5CF6),
-                          bgColor: const Color(0xFFEDE9FE),
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 28.h),
-
-                  // Quick Actions
-                  Text(
-                    'Instructor Quick Actions',
-                    style: AppTextStyles.interBold24.copyWith(
-                      fontSize: 17.sp,
-                      color: AppColors.onBackground,
-                    ),
-                  ),
-                  SizedBox(height: 14.h),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: InkWell(
-                          onTap: () => context.pushNamed(AppRoute.teacherCreateCourse.name),
-                          borderRadius: BorderRadius.circular(16.r),
-                          child: Container(
-                            padding: EdgeInsets.symmetric(vertical: 14.h, horizontal: 12.w),
-                            decoration: BoxDecoration(
-                              color: AppColors.surface,
-                              borderRadius: BorderRadius.circular(16.r),
-                              border: Border.all(color: AppColors.primary.withValues(alpha: 0.3), width: 1.w),
-                            ),
-                            child: Column(
-                              children: [
-                                Icon(Icons.add_to_photos_rounded, color: AppColors.primary, size: 24.w),
-                                SizedBox(height: 6.h),
-                                Text(
-                                  '+ Course',
-                                  style: AppTextStyles.interSemiBold16.copyWith(
-                                    fontSize: 12.sp,
-                                    color: AppColors.primary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                      SizedBox(width: 10.w),
-                      Expanded(
-                        child: InkWell(
-                          onTap: () => context.pushNamed(AppRoute.teacherCreateQuiz.name),
-                          borderRadius: BorderRadius.circular(16.r),
-                          child: Container(
-                            padding: EdgeInsets.symmetric(vertical: 14.h, horizontal: 12.w),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFFFF7ED),
-                              borderRadius: BorderRadius.circular(16.r),
-                              border: Border.all(color: Colors.orange.withValues(alpha: 0.3), width: 1.w),
-                            ),
-                            child: Column(
-                              children: [
-                                Icon(Icons.quiz_outlined, color: Colors.orange, size: 24.w),
-                                SizedBox(height: 6.h),
-                                Text(
-                                  '+ Quiz',
-                                  style: AppTextStyles.interSemiBold16.copyWith(
-                                    fontSize: 12.sp,
-                                    color: Colors.orange,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                      SizedBox(width: 10.w),
-                      Expanded(
-                        child: InkWell(
-                          onTap: () => context.pushNamed(AppRoute.teacherAnalytics.name),
-                          borderRadius: BorderRadius.circular(16.r),
-                          child: Container(
-                            padding: EdgeInsets.symmetric(vertical: 14.h, horizontal: 12.w),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF3E8FF),
-                              borderRadius: BorderRadius.circular(16.r),
-                              border: Border.all(color: Colors.purple.withValues(alpha: 0.3), width: 1.w),
-                            ),
-                            child: Column(
-                              children: [
-                                Icon(Icons.analytics_outlined, color: Colors.purple, size: 24.w),
-                                SizedBox(height: 6.h),
-                                Text(
-                                  'Analytics',
-                                  style: AppTextStyles.interSemiBold16.copyWith(
-                                    fontSize: 12.sp,
-                                    color: Colors.purple,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 10.h),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: InkWell(
-                          onTap: () => context.pushNamed(AppRoute.teacherLiveClasses.name),
-                          borderRadius: BorderRadius.circular(16.r),
-                          child: Container(
-                            padding: EdgeInsets.symmetric(vertical: 14.h, horizontal: 12.w),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFFFEBEE),
-                              borderRadius: BorderRadius.circular(16.r),
-                              border: Border.all(color: Colors.red.withValues(alpha: 0.3), width: 1.w),
-                            ),
-                            child: Column(
-                              children: [
-                                Icon(Icons.videocam_outlined, color: Colors.red, size: 24.w),
-                                SizedBox(height: 6.h),
-                                Text(
-                                  'Live Classes',
-                                  style: AppTextStyles.interSemiBold16.copyWith(
-                                    fontSize: 12.sp,
-                                    color: Colors.red,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                      SizedBox(width: 10.w),
-                      Expanded(
-                        child: InkWell(
-                          onTap: () => context.pushNamed(AppRoute.teacherDoubts.name),
-                          borderRadius: BorderRadius.circular(16.r),
-                          child: Container(
-                            padding: EdgeInsets.symmetric(vertical: 14.h, horizontal: 12.w),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFECFDF5),
-                              borderRadius: BorderRadius.circular(16.r),
-                              border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.3), width: 1.w),
-                            ),
-                            child: Column(
-                              children: [
-                                Icon(Icons.question_answer_outlined, color: const Color(0xFF10B981), size: 24.w),
-                                SizedBox(height: 6.h),
-                                Text(
-                                  'Q&A Doubts',
-                                  style: AppTextStyles.interSemiBold16.copyWith(
-                                    fontSize: 12.sp,
-                                    color: const Color(0xFF10B981),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                      SizedBox(width: 10.w),
-                      Expanded(
-                        child: InkWell(
-                          onTap: () => context.pushNamed(AppRoute.teacherStudents.name),
-                          borderRadius: BorderRadius.circular(16.r),
-                          child: Container(
-                            padding: EdgeInsets.symmetric(vertical: 14.h, horizontal: 12.w),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFEFF6FF),
-                              borderRadius: BorderRadius.circular(16.r),
-                              border: Border.all(color: AppColors.primary.withValues(alpha: 0.3), width: 1.w),
-                            ),
-                            child: Column(
-                              children: [
-                                Icon(Icons.people_alt_outlined, color: AppColors.primary, size: 24.w),
-                                SizedBox(height: 6.h),
-                                Text(
-                                  'Roster',
-                                  style: AppTextStyles.interSemiBold16.copyWith(
-                                    fontSize: 12.sp,
-                                    color: AppColors.primary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 28.h),
-
-                  // Recent Enrollments
-                  Text(
-                    'Recent Student Enrollments',
-                    style: AppTextStyles.interBold24.copyWith(
-                      fontSize: 17.sp,
-                      color: AppColors.onBackground,
-                    ),
-                  ),
-                  SizedBox(height: 12.h),
-                  _buildEnrollmentItem('Hamza Tariq', 'FPSC Inspector Customs', '10 mins ago'),
-                  _buildEnrollmentItem('Ayesha Siddiqa', 'AJK PSC General Masterclass', '1 hour ago'),
-                  _buildEnrollmentItem('Bilal Hassan', 'Everyday Science Complete', '3 hours ago'),
-                ],
-              ),
-            );
-          },
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (_, __) => const Center(child: Text('Error loading teacher dashboard')),
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Expanded(
+          child: Text(
+            title,
+            style: AppTextStyles.interBold24.copyWith(
+              fontSize: 17.sp,
+              color: AppColors.onBackground,
+            ),
+          ),
         ),
-      ),
+        if (actionLabel != null)
+          TextButton(
+            onPressed: onAction,
+            style: TextButton.styleFrom(
+              padding: EdgeInsets.symmetric(vertical: 8.h),
+              minimumSize: Size(0, 40.h),
+            ),
+            child: Text(actionLabel!),
+          ),
+      ],
     );
   }
+}
 
-  Widget _buildEnrollmentItem(String student, String course, String time) {
-    return Container(
-      margin: EdgeInsets.only(bottom: 10.h),
-      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8F9FA),
-        borderRadius: BorderRadius.circular(14.r),
-        border: Border.all(color: AppColors.grey300, width: 1.w),
-      ),
+class _RecentEnrollments extends StatelessWidget {
+  const _RecentEnrollments({required this.items});
+
+  final List<RecentEnrollmentModel> items;
+
+  @override
+  Widget build(BuildContext context) {
+    if (items.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 28.h),
+        decoration: BoxDecoration(
+          color: AppColors.grey100,
+          borderRadius: BorderRadius.circular(8.r),
+          border: Border.all(color: AppColors.grey300, width: 1.w),
+        ),
+        child: Column(
+          children: [
+            Icon(Icons.people_outline, size: 30.w, color: AppColors.grey400),
+            SizedBox(height: 10.h),
+            Text(
+              'No enrollments yet',
+              style: AppTextStyles.interSemiBold16.copyWith(
+                fontSize: 14.sp,
+                color: AppColors.onBackground,
+              ),
+            ),
+            SizedBox(height: 3.h),
+            Text(
+              'New learners will appear here after joining your courses.',
+              textAlign: TextAlign.center,
+              style: AppTextStyles.interRegular14.copyWith(
+                fontSize: 12.sp,
+                color: AppColors.grey500,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        for (var index = 0; index < items.length; index++) ...[
+          _EnrollmentRow(item: items[index]),
+          if (index != items.length - 1)
+            Divider(height: 1.h, color: AppColors.grey300, indent: 48.w),
+        ],
+      ],
+    );
+  }
+}
+
+class _EnrollmentRow extends StatelessWidget {
+  const _EnrollmentRow({required this.item});
+
+  final RecentEnrollmentModel item;
+
+  @override
+  Widget build(BuildContext context) {
+    final initial = item.studentName.trim().isEmpty
+        ? '?'
+        : item.studentName.trim()[0].toUpperCase();
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 12.h),
       child: Row(
         children: [
-          CircleAvatar(
-            radius: 18.r,
-            backgroundColor: AppColors.surface,
-            child: Icon(Icons.person, color: AppColors.primary, size: 18.w),
-          ),
+          AppAvatar(size: 36.w, name: initial),
           SizedBox(width: 12.w),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  student,
+                  item.studentName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: AppTextStyles.interSemiBold16.copyWith(
                     fontSize: 13.sp,
                     color: AppColors.onBackground,
                   ),
                 ),
+                SizedBox(height: 2.h),
                 Text(
-                  course,
-                  style: AppTextStyles.interRegular14.copyWith(
-                    fontSize: 11.sp,
-                    color: AppColors.grey500,
-                  ),
+                  item.courseTitle,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.interRegular14.copyWith(
+                    fontSize: 12.sp,
+                    color: AppColors.grey500,
+                  ),
                 ),
               ],
             ),
           ),
+          SizedBox(width: 10.w),
           Text(
-            time,
+            _relativeTime(item.enrolledAt),
             style: AppTextStyles.interRegular14.copyWith(
               fontSize: 11.sp,
-              color: AppColors.grey400,
+              color: AppColors.grey500,
             ),
           ),
         ],
       ),
     );
+  }
+
+  static String _relativeTime(DateTime value) {
+    final difference = DateTime.now().difference(value);
+    if (difference.isNegative || difference.inMinutes < 1) return 'Just now';
+    if (difference.inMinutes < 60) return '${difference.inMinutes}m ago';
+    if (difference.inHours < 24) return '${difference.inHours}h ago';
+    if (difference.inDays < 7) return '${difference.inDays}d ago';
+    return '${value.day}/${value.month}/${value.year}';
   }
 }

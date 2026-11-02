@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:nts_psc_app/core/models/course_community_models.dart';
 import 'package:nts_psc_app/core/networks/mock_community_data.dart';
+import 'package:nts_psc_app/core/networks/supabase_client.dart';
 
 class CourseCommunityState {
   final List<CourseReviewModel> reviews;
@@ -20,7 +21,7 @@ class CourseCommunityState {
   });
 
   RatingDistributionModel get ratingDistribution =>
-      MockCommunityData.getRatingDistribution(reviews);
+      RatingDistributionModel.fromReviews(reviews);
 
   CourseCommunityState copyWith({
     List<CourseReviewModel>? reviews,
@@ -42,8 +43,15 @@ class CourseCommunityState {
 }
 
 class CourseCommunityController extends Notifier<CourseCommunityState> {
+  void _requireMockMode() {
+    if (AppConfig.isSupabaseEnabled) {
+      throw StateError('Community actions are not available yet.');
+    }
+  }
+
   @override
   CourseCommunityState build() {
+    if (AppConfig.isSupabaseEnabled) return const CourseCommunityState();
     return CourseCommunityState(
       reviews: MockCommunityData.getInitialReviews(),
       resources: MockCommunityData.getInitialResources(),
@@ -58,10 +66,13 @@ class CourseCommunityController extends Notifier<CourseCommunityState> {
     required double rating,
     required String comment,
   }) {
+    _requireMockMode();
     final newReview = CourseReviewModel(
       id: 'rev_${DateTime.now().millisecondsSinceEpoch}',
       courseId: courseId,
-      studentName: studentName.trim().isEmpty ? 'Enrolled Candidate' : studentName,
+      studentName: studentName.trim().isEmpty
+          ? 'Enrolled Candidate'
+          : studentName,
       studentAvatar: 'assets/images/user1.png',
       rating: rating,
       date: 'Just now',
@@ -71,12 +82,11 @@ class CourseCommunityController extends Notifier<CourseCommunityState> {
       isVerified: true,
     );
 
-    state = state.copyWith(
-      reviews: [newReview, ...state.reviews],
-    );
+    state = state.copyWith(reviews: [newReview, ...state.reviews]);
   }
 
   void toggleHelpful(String reviewId) {
+    _requireMockMode();
     state = state.copyWith(
       reviews: state.reviews.map((rev) {
         if (rev.id == reviewId) {
@@ -95,6 +105,7 @@ class CourseCommunityController extends Notifier<CourseCommunityState> {
     required String reviewId,
     required String replyText,
   }) {
+    _requireMockMode();
     state = state.copyWith(
       reviews: state.reviews.map((rev) {
         if (rev.id == reviewId) {
@@ -109,6 +120,7 @@ class CourseCommunityController extends Notifier<CourseCommunityState> {
   }
 
   void toggleResourceDownload(String resourceId) {
+    _requireMockMode();
     state = state.copyWith(
       resources: state.resources.map((res) {
         if (res.id == resourceId) {
@@ -126,6 +138,7 @@ class CourseCommunityController extends Notifier<CourseCommunityState> {
     required String fileType,
     required String fileSize,
   }) {
+    _requireMockMode();
     final newRes = CourseResourceModel(
       id: 'res_${DateTime.now().millisecondsSinceEpoch}',
       courseId: courseId,
@@ -137,9 +150,7 @@ class CourseCommunityController extends Notifier<CourseCommunityState> {
       isDownloaded: false,
     );
 
-    state = state.copyWith(
-      resources: [newRes, ...state.resources],
-    );
+    state = state.copyWith(resources: [newRes, ...state.resources]);
   }
 
   void broadcastAnnouncement({
@@ -150,6 +161,7 @@ class CourseCommunityController extends Notifier<CourseCommunityState> {
     required String message,
     required bool isUrgent,
   }) {
+    _requireMockMode();
     final newAnn = CourseAnnouncementModel(
       id: 'ann_${DateTime.now().millisecondsSinceEpoch}',
       courseId: courseId,
@@ -161,13 +173,11 @@ class CourseCommunityController extends Notifier<CourseCommunityState> {
       isUrgent: isUrgent,
     );
 
-    state = state.copyWith(
-      announcements: [newAnn, ...state.announcements],
-    );
+    state = state.copyWith(announcements: [newAnn, ...state.announcements]);
   }
 }
 
 final courseCommunityProvider =
     NotifierProvider<CourseCommunityController, CourseCommunityState>(
-  CourseCommunityController.new,
-);
+      CourseCommunityController.new,
+    );

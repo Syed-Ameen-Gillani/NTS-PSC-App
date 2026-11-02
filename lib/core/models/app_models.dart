@@ -1,44 +1,6 @@
 import 'user_role.dart';
-
-class LessonModel {
-  final String id;
-  final String title;
-  final int durationMinutes;
-  final String videoUrl;
-  final String notes;
-  final bool isCompleted;
-  final bool isLocked;
-
-  LessonModel({
-    required this.id,
-    required this.title,
-    required this.durationMinutes,
-    this.videoUrl = '',
-    this.notes = '',
-    this.isCompleted = false,
-    this.isLocked = false,
-  });
-
-  LessonModel copyWith({
-    String? id,
-    String? title,
-    int? durationMinutes,
-    String? videoUrl,
-    String? notes,
-    bool? isCompleted,
-    bool? isLocked,
-  }) {
-    return LessonModel(
-      id: id ?? this.id,
-      title: title ?? this.title,
-      durationMinutes: durationMinutes ?? this.durationMinutes,
-      videoUrl: videoUrl ?? this.videoUrl,
-      notes: notes ?? this.notes,
-      isCompleted: isCompleted ?? this.isCompleted,
-      isLocked: isLocked ?? this.isLocked,
-    );
-  }
-}
+import 'lesson_model.dart';
+export 'lesson_model.dart';
 
 class CourseModuleModel {
   final String id;
@@ -53,12 +15,18 @@ class CourseModuleModel {
 }
 
 class CourseModel {
+  final bool? learningComplete;
+  final int remainingAssessments;
   final String id;
   final String title;
   final String author;
   final double rating;
   final String price;
+  final int? priceAmount;
+  final String currency;
+  final bool hasEntitlement;
   final String imagePath;
+  final String? coverUrl;
   final bool isFeatured;
   final double? progress;
   final String description;
@@ -69,29 +37,41 @@ class CourseModel {
   final List<CourseModuleModel> modules;
 
   CourseModel({
+    this.learningComplete,
+    this.remainingAssessments = 0,
     required this.id,
     required this.title,
     required this.author,
     required this.rating,
     required this.price,
+    this.priceAmount,
+    this.currency = 'PKR',
+    this.hasEntitlement = false,
     required this.imagePath,
+    this.coverUrl,
     this.isFeatured = false,
     this.progress,
     this.description = '',
     this.instructorId = '',
     this.category = 'General',
-    this.enrolledCount = 120,
+    this.enrolledCount = 0,
     this.isPublished = true,
     this.modules = const [],
   });
 
   CourseModel copyWith({
+    bool? learningComplete,
+    int? remainingAssessments,
     String? id,
     String? title,
     String? author,
     double? rating,
     String? price,
+    int? priceAmount,
+    String? currency,
+    bool? hasEntitlement,
     String? imagePath,
+    String? coverUrl,
     bool? isFeatured,
     double? progress,
     String? description,
@@ -102,12 +82,18 @@ class CourseModel {
     List<CourseModuleModel>? modules,
   }) {
     return CourseModel(
+      learningComplete: learningComplete ?? this.learningComplete,
+      remainingAssessments: remainingAssessments ?? this.remainingAssessments,
       id: id ?? this.id,
       title: title ?? this.title,
       author: author ?? this.author,
       rating: rating ?? this.rating,
       price: price ?? this.price,
+      priceAmount: priceAmount ?? this.priceAmount,
+      currency: currency ?? this.currency,
+      hasEntitlement: hasEntitlement ?? this.hasEntitlement,
       imagePath: imagePath ?? this.imagePath,
+      coverUrl: coverUrl ?? this.coverUrl,
       isFeatured: isFeatured ?? this.isFeatured,
       progress: progress ?? this.progress,
       description: description ?? this.description,
@@ -140,6 +126,7 @@ class TeacherModel {
   final String subject;
   final String imagePath;
   final String qualification;
+  final String bio;
   final double rating;
   final int studentCount;
 
@@ -149,6 +136,7 @@ class TeacherModel {
     required this.subject,
     required this.imagePath,
     this.qualification = 'Master in Subject',
+    this.bio = '',
     this.rating = 4.8,
     this.studentCount = 2400,
   });
@@ -179,7 +167,11 @@ class QuizModel {
   final String? score; // e.g. '16/20' or null if not attempted
   final int durationMinutes;
   final int passingScore;
+  final String difficulty;
   final List<QuizQuestionModel> questions;
+  final bool isPublished;
+  final String? courseId;
+  final String? attemptId;
 
   QuizModel({
     required this.id,
@@ -190,7 +182,11 @@ class QuizModel {
     this.score,
     this.durationMinutes = 15,
     this.passingScore = 60,
+    this.difficulty = 'Medium',
     this.questions = const [],
+    this.isPublished = true,
+    this.courseId,
+    this.attemptId,
   });
 
   QuizModel copyWith({
@@ -202,7 +198,11 @@ class QuizModel {
     String? score,
     int? durationMinutes,
     int? passingScore,
+    String? difficulty,
     List<QuizQuestionModel>? questions,
+    bool? isPublished,
+    String? courseId,
+    String? attemptId,
   }) {
     return QuizModel(
       id: id ?? this.id,
@@ -213,12 +213,18 @@ class QuizModel {
       score: score ?? this.score,
       durationMinutes: durationMinutes ?? this.durationMinutes,
       passingScore: passingScore ?? this.passingScore,
+      difficulty: difficulty ?? this.difficulty,
       questions: questions ?? this.questions,
+      isPublished: isPublished ?? this.isPublished,
+      courseId: courseId ?? this.courseId,
+      attemptId: attemptId ?? this.attemptId,
     );
   }
 }
 
 class QuizSubmissionResultModel {
+  final int passingScore;
+  final String? attemptId;
   final String quizId;
   final String quizTitle;
   final int score;
@@ -227,6 +233,8 @@ class QuizSubmissionResultModel {
   final List<QuizQuestionModel> questions;
 
   QuizSubmissionResultModel({
+    this.attemptId,
+    this.passingScore = 60,
     required this.quizId,
     required this.quizTitle,
     required this.score,
@@ -235,8 +243,9 @@ class QuizSubmissionResultModel {
     required this.questions,
   });
 
-  double get percentage => totalQuestions > 0 ? (score / totalQuestions) * 100 : 0.0;
-  bool get isPassed => percentage >= 60.0;
+  double get percentage =>
+      totalQuestions > 0 ? (score / totalQuestions) * 100 : 0.0;
+  bool get isPassed => totalQuestions > 0 && percentage >= passingScore;
 }
 
 class UserModel {
@@ -252,6 +261,8 @@ class UserModel {
   final String? subject;
   final String? qualification;
   final String? bio;
+  final String? phone;
+  final String? location;
   final double totalEarnings;
 
   UserModel({
@@ -267,6 +278,8 @@ class UserModel {
     this.subject,
     this.qualification,
     this.bio,
+    this.phone,
+    this.location,
     this.totalEarnings = 0.0,
   });
 
@@ -283,6 +296,8 @@ class UserModel {
     String? subject,
     String? qualification,
     String? bio,
+    String? phone,
+    String? location,
     double? totalEarnings,
   }) {
     return UserModel(
@@ -298,6 +313,8 @@ class UserModel {
       subject: subject ?? this.subject,
       qualification: qualification ?? this.qualification,
       bio: bio ?? this.bio,
+      phone: phone ?? this.phone,
+      location: location ?? this.location,
       totalEarnings: totalEarnings ?? this.totalEarnings,
     );
   }
@@ -475,24 +492,4 @@ class StudentRosterModel {
       lastNudgedAt: lastNudgedAt ?? this.lastNudgedAt,
     );
   }
-}
-
-class PayoutRecordModel {
-  final String id;
-  final String transactionId;
-  final String amount;
-  final String method;
-  final String accountNumber;
-  final String date;
-  final String status; // 'Completed', 'Processing', 'Failed'
-
-  PayoutRecordModel({
-    required this.id,
-    required this.transactionId,
-    required this.amount,
-    required this.method,
-    required this.accountNumber,
-    required this.date,
-    required this.status,
-  });
 }

@@ -1,3 +1,4 @@
+import 'package:nts_psc_app/presentation/widgets/app_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:nts_psc_app/core/theme/app_colors.dart';
@@ -21,7 +22,7 @@ class RegistrationSuccessModal extends StatelessWidget {
     final Color cardSurfaceColor = Theme.of(context).scaffoldBackgroundColor;
     final Color textColor = AppColors.onBackground;
 
-    return Scaffold(
+    return AppScaffold(
       // 1. SCREEN BACKGROUND: Use the theme's default background color (light gray-blue)
       backgroundColor: screenBgColor, 
       body: Center(

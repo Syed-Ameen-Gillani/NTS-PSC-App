@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:nts_psc_app/core/theme/app_colors.dart';
+import 'package:nts_psc_app/core/utils/keyboard_dismissal.dart';
 
 class CustomTextFormField extends StatefulWidget {
   final TextEditingController? controller;
@@ -21,6 +22,7 @@ class CustomTextFormField extends StatefulWidget {
   final int? maxLines;
   final int? maxLength;
   final TextInputAction? textInputAction;
+  final ValueChanged<String>? onFieldSubmitted;
   final bool enabled;
   final AutovalidateMode? autovalidateMode;
   final Color? fillColor;
@@ -49,6 +51,7 @@ class CustomTextFormField extends StatefulWidget {
     this.maxLines = 1,
     this.maxLength,
     this.textInputAction,
+    this.onFieldSubmitted,
     this.enabled = true,
     this.autovalidateMode,
     this.fillColor,
@@ -69,6 +72,7 @@ class _CustomTextFormFieldState extends State<CustomTextFormField> {
   @override
   Widget build(BuildContext context) {
     return TextFormField(
+      onTapOutside: dismissKeyboardOnTapOutside,
       controller: widget.controller,
       focusNode: widget.focusNode,
       obscureText: widget.isPassword ? _obscureText : false,
@@ -82,6 +86,7 @@ class _CustomTextFormFieldState extends State<CustomTextFormField> {
       maxLines: widget.maxLines,
       maxLength: widget.maxLength,
       textInputAction: widget.textInputAction,
+      onFieldSubmitted: widget.onFieldSubmitted,
       enabled: widget.enabled,
       autovalidateMode: widget.autovalidateMode,
       style: TextStyle(

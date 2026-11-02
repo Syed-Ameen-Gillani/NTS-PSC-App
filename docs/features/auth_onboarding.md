@@ -23,7 +23,8 @@ The Authentication and Onboarding modules act as the entry point to the applicat
    - Collects Full Name, Email Address, and Password.
    - Utilizes `CustomTextFormField` with internal `FormValidators` to ensure robust data entry constraints (e.g., > 8 char password).
    - Integrates Social Sign-up stubs (Google, Apple).
-   - Employs a `CustomToast` to deliver a "Welcome" success message upon account creation.
+   - Email registration shows "Account created. Please sign in." and opens the matching student or teacher login screen.
+   - `AuthController.signup` signs out the automatically created session and leaves authentication state empty. Dashboard access requires a separate login; OAuth sign-in behavior is unchanged.
 
 2. **Forgot Password (`forgot_password_screen.dart`)**
    - Captures email input to dispatch password reset instructions.

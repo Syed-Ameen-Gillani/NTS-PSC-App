@@ -11,6 +11,7 @@
 .svn/
 .swiftpm/
 migrate_working_dir/
+/tmp/pdfs/
 
 # IntelliJ related
 *.iml
@@ -32,6 +33,13 @@ migrate_working_dir/
 .pub-cache/
 .pub/
 /build/
+.env
+.env.*
+!.env.example
+/android/app/google-services.json
+/ios/Runner/GoogleService-Info.plist
+*service-account*.json
+/assets/config/supabase_public.json
 
 # Symbolication related
 app.*.symbols

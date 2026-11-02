@@ -3,17 +3,21 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:nts_psc_app/core/theme/app_colors.dart';
 import 'package:nts_psc_app/core/theme/app_text_styles.dart';
 import 'package:nts_psc_app/core/models/app_models.dart';
+import 'package:nts_psc_app/config/routes/app_routes.dart';
+import 'package:go_router/go_router.dart';
 
 class BrowseCategoryGrid extends StatelessWidget {
   final String title;
   final String actionText;
   final List<CategoryModel> categories;
+  final bool showAction;
 
   const BrowseCategoryGrid({
     super.key,
     required this.title,
     required this.actionText,
     required this.categories,
+    this.showAction = true,
   });
 
   IconData _getIcon(String iconType) {
@@ -44,21 +48,28 @@ class BrowseCategoryGrid extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text(
-                title,
-                style: AppTextStyles.interBold24.copyWith(
-                  fontSize: 18.sp,
-                  color: AppColors.onBackground,
-                  height: 1.2,
+              Flexible(
+                child: Text(
+                  title,
+                  style: AppTextStyles.interBold24.copyWith(
+                    fontSize: 18.sp,
+                    color: AppColors.onBackground,
+                    height: 1.2,
+                  ),
                 ),
               ),
-              Text(
-                actionText,
-                style: AppTextStyles.interMedium16.copyWith(
-                  fontSize: 14.sp,
-                  color: AppColors.primary,
+              if (showAction)
+                TextButton(
+                  onPressed: () =>
+                      context.pushNamed(AppRoute.categoryCourses.name),
+                  child: Text(
+                    actionText,
+                    style: AppTextStyles.interMedium16.copyWith(
+                      fontSize: 14.sp,
+                      color: AppColors.primary,
+                    ),
+                  ),
                 ),
-              ),
             ],
           ),
         ),
@@ -72,47 +83,62 @@ class BrowseCategoryGrid extends StatelessWidget {
               crossAxisCount: 2,
               mainAxisSpacing: 8.w, // gap: 8px
               crossAxisSpacing: 8.w, // gap: 8px
-              childAspectRatio: 163.5 / 126, // width / height
+              mainAxisExtent:
+                  142.h +
+                  (MediaQuery.textScalerOf(context).scale(14.sp) - 14.sp) * 14,
             ),
             itemCount: categories.length,
             itemBuilder: (context, index) {
               final category = categories[index];
-              return Container(
-                padding: EdgeInsets.all(16.w), // padding: 16px
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF8F9FA), // bg: #F8F9FA
-                  borderRadius: BorderRadius.circular(16.r),
-                  border: Border.all(color: const Color(0xFFDADCE0), width: 1.w), // border color
+              return InkWell(
+                onTap: () => context.pushNamed(
+                  AppRoute.categoryCourses.name,
+                  extra: category,
                 ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    CircleAvatar(
-                      radius: 20.r,
-                      backgroundColor: AppColors.primary.withOpacity(0.1),
-                      child: Icon(
-                        _getIcon(category.iconType),
-                        color: AppColors.primary,
-                        size: 20.w,
+                borderRadius: BorderRadius.circular(16.r),
+                child: Container(
+                  padding: EdgeInsets.all(16.w), // padding: 16px
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8F9FA), // bg: #F8F9FA
+                    borderRadius: BorderRadius.circular(16.r),
+                    border: Border.all(
+                      color: const Color(0xFFDADCE0),
+                      width: 1.w,
+                    ), // border color
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      CircleAvatar(
+                        radius: 20.r,
+                        backgroundColor: AppColors.primary.withValues(
+                          alpha: 0.1,
+                        ),
+                        child: Icon(
+                          _getIcon(category.iconType),
+                          color: AppColors.primary,
+                          size: 20.w,
+                        ),
                       ),
-                    ),
-                    SizedBox(height: 8.h),
-                    Text(
-                      category.name,
-                      style: AppTextStyles.interBold24.copyWith(
-                        fontSize: 14.sp,
-                        color: AppColors.onBackground,
+                      SizedBox(height: 8.h),
+                      Text(
+                        category.name,
+                        textAlign: TextAlign.center,
+                        style: AppTextStyles.interBold24.copyWith(
+                          fontSize: 14.sp,
+                          color: AppColors.onBackground,
+                        ),
                       ),
-                    ),
-                    SizedBox(height: 2.h),
-                    Text(
-                      '${category.courseCount} courses',
-                      style: AppTextStyles.interRegular14.copyWith(
-                        fontSize: 12.sp,
-                        color: AppColors.grey500,
+                      SizedBox(height: 2.h),
+                      Text(
+                        '${category.courseCount} courses',
+                        style: AppTextStyles.interRegular14.copyWith(
+                          fontSize: 12.sp,
+                          color: AppColors.grey500,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               );
             },

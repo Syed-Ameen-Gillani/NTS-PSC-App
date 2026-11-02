@@ -1,5 +1,7 @@
--- Supabase Database Schema for NTS-PSC-App (Hope to Skills Model)
--- Run this script in the Supabase SQL Editor to initialize all tables and policies.
+-- LEGACY PROTOTYPE - DO NOT RUN ON A REAL SUPABASE PROJECT.
+-- This script predates assignments, private attachments, quiz publication rules,
+-- and the ownership/RLS design in supabase.md. Versioned migrations under
+-- supabase/migrations/ will be the authoritative schema.
 
 -- 1. Enable UUID Extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";

@@ -1,4 +1,5 @@
 
+import 'package:nts_psc_app/presentation/widgets/app_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:nts_psc_app/core/constants/app_assets.dart';
@@ -16,7 +17,7 @@ class OnboardingScreen4 extends StatelessWidget {
     const String description =
         'Easy and fast learning at any time\n  to help you improve various skills';
 
-    return Scaffold(
+    return AppScaffold(
       backgroundColor: kBackgroundColor,
       body: Stack(
         children: [
@@ -33,9 +34,10 @@ class OnboardingScreen4 extends StatelessWidget {
 
           // Page Indicator - Fixed Position
           Positioned(
-            top: 592.h,
-            left: 155.w,
-            child: const PageIndicator(currentPage: 1, totalPages: 3),
+            bottom: 80.h,
+            left: 0,
+            right: 0,
+            child: const Center(child: PageIndicator(currentPage: 1, totalPages: 3)),
           ),
         ],
       ),

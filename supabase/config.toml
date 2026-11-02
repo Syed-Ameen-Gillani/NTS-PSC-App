@@ -1,0 +1,18 @@
+project_id = "nts-psc-app"
+
+[auth]
+site_url = "com.ntspsc.app://auth-callback/"
+additional_redirect_urls = ["com.ntspsc.app://auth-callback/"]
+
+[auth.email]
+enable_confirmations = false
+
+[db.seed]
+enabled = true
+sql_paths = ["./seed.sql"]
+
+[functions.lesson-transcript-callback]
+verify_jwt = false
+
+[functions.send-push]
+verify_jwt = false

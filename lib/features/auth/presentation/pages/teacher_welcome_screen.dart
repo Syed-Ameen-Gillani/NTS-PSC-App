@@ -1,3 +1,4 @@
+import 'package:nts_psc_app/presentation/widgets/app_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -18,7 +19,7 @@ class TeacherWelcomeScreen extends ConsumerWidget {
     final imageHeight = 0.45.sh;
     final floatingIconSize = 64.w;
 
-    return Scaffold(
+    return AppScaffold(
       backgroundColor: Colors.white,
       body: Stack(
         children: [
@@ -40,7 +41,7 @@ class TeacherWelcomeScreen extends ConsumerWidget {
             left: 0,
             right: 0,
             bottom: 0,
-            child: Container(
+            child: SingleChildScrollView(child: Container(
               color: Colors.white,
               padding: EdgeInsets.only(
                 top: (floatingIconSize / 2) + 16.h,
@@ -120,7 +121,7 @@ class TeacherWelcomeScreen extends ConsumerWidget {
                   ),
                 ],
               ),
-            ),
+            )),
           ),
 
           // 3. Floating Icon Badge
@@ -135,7 +136,7 @@ class TeacherWelcomeScreen extends ConsumerWidget {
                 borderRadius: BorderRadius.circular(16.r),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.12),
+                    color: Colors.black.withValues(alpha: 0.12),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),

@@ -1,3 +1,4 @@
+import 'package:nts_psc_app/presentation/widgets/app_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:nts_psc_app/core/constants/app_assets.dart';
@@ -14,7 +15,7 @@ class OnboardingScreen3 extends StatelessWidget {
     const String description =
         'Free courses for you to find your\n way to learning';
 
-    return Scaffold(
+    return AppScaffold(
       body: SafeArea(
         child: Stack(
           children: [
@@ -31,9 +32,10 @@ class OnboardingScreen3 extends StatelessWidget {
 
             // Page Indicator - Fixed Position
             Positioned(
-              top: 592.h,
-              left: 155.w,
-              child: const PageIndicator(currentPage: 0, totalPages: 3),
+              bottom: 80.h,
+              left: 0,
+              right: 0,
+              child: const Center(child: PageIndicator(currentPage: 0, totalPages: 3)),
             ),
           ],
         ),

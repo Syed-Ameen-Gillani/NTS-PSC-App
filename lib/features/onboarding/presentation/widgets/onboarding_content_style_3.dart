@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:nts_psc_app/core/constants/app_assets.dart';
@@ -21,7 +23,7 @@ class OnboardingContentStyle3 extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 20.w),
-      child: Column(
+      child: SingleChildScrollView(child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(height: 80.h),
@@ -39,7 +41,7 @@ class OnboardingContentStyle3 extends StatelessWidget {
             ),
           ),
 
-          SizedBox(height: 220.h),
+          SizedBox(height: math.min(220.h, MediaQuery.sizeOf(context).height * 0.18)),
 
           // Text
           Text(
@@ -66,8 +68,6 @@ class OnboardingContentStyle3 extends StatelessWidget {
               ),
             ),
           ),
-
-          const Spacer(),
 
           // Bottom area: full-width Stack to position arrow and button precisely
           SizedBox(
@@ -117,7 +117,7 @@ class OnboardingContentStyle3 extends StatelessWidget {
             ),
           ),
         ],
-      ),
+      )),
     );
   }
 }

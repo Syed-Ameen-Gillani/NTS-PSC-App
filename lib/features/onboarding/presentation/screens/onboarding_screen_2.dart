@@ -1,4 +1,5 @@
 
+import 'package:nts_psc_app/presentation/widgets/app_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:nts_psc_app/core/constants/app_assets.dart';
@@ -18,7 +19,7 @@ class OnboardingScreen2 extends StatelessWidget {
         'Amet minim mollit non deserunt ullamco est sit aliqua dolor do amet sint. Velit officia consequat duis enim velit mollit.';
     
 
-    return Scaffold(
+    return AppScaffold(
       backgroundColor: kBackgroundColor,
       body: Column(
         children: [

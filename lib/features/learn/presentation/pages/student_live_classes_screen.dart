@@ -1,3 +1,4 @@
+import 'package:nts_psc_app/presentation/widgets/app_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -14,18 +15,25 @@ class StudentLiveClassesScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final teacherState = ref.watch(teacherControllerProvider);
 
-    return Scaffold(
+    return AppScaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: AppColors.onBackground, size: 20),
+          icon: const Icon(
+            Icons.arrow_back_ios_new,
+            color: AppColors.onBackground,
+            size: 20,
+          ),
           onPressed: () => context.pop(),
         ),
         title: Text(
           'Live Masterclasses',
-          style: AppTextStyles.interBold24.copyWith(fontSize: 18.sp, color: AppColors.onBackground),
+          style: AppTextStyles.interBold24.copyWith(
+            fontSize: 18.sp,
+            color: AppColors.onBackground,
+          ),
         ),
         centerTitle: true,
         bottom: PreferredSize(
@@ -61,35 +69,63 @@ class StudentLiveClassesScreen extends ConsumerWidget {
                         Row(
                           children: [
                             Container(
-                              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 8.w,
+                                vertical: 4.h,
+                              ),
                               decoration: BoxDecoration(
                                 color: Colors.white24,
                                 borderRadius: BorderRadius.circular(4.r),
                               ),
                               child: Row(
                                 children: [
-                                  Icon(Icons.circle, color: Colors.white, size: 8.w),
+                                  Icon(
+                                    Icons.circle,
+                                    color: Colors.white,
+                                    size: 8.w,
+                                  ),
                                   SizedBox(width: 4.w),
-                                  Text('LIVE BATCHES',
-                                      style: AppTextStyles.interSemiBold16.copyWith(color: Colors.white, fontSize: 10.sp)),
+                                  Text(
+                                    'LIVE BATCHES',
+                                    style: AppTextStyles.interSemiBold16
+                                        .copyWith(
+                                          color: Colors.white,
+                                          fontSize: 10.sp,
+                                        ),
+                                  ),
                                 ],
                               ),
                             ),
                           ],
                         ),
                         SizedBox(height: 10.h),
-                        Text('Interactive Mock Paper Sessions',
-                            style: AppTextStyles.interBold24.copyWith(fontSize: 18.sp, color: Colors.white)),
+                        Text(
+                          'Interactive Mock Paper Sessions',
+                          style: AppTextStyles.interBold24.copyWith(
+                            fontSize: 18.sp,
+                            color: Colors.white,
+                          ),
+                        ),
                         SizedBox(height: 4.h),
-                        Text('Join live video sessions with expert faculty to solve high-yield past papers in real-time.',
-                            style: AppTextStyles.interRegular14.copyWith(fontSize: 12.sp, color: Colors.white70)),
+                        Text(
+                          'Join live video sessions with expert faculty to solve high-yield past papers in real-time.',
+                          style: AppTextStyles.interRegular14.copyWith(
+                            fontSize: 12.sp,
+                            color: Colors.white70,
+                          ),
+                        ),
                       ],
                     ),
                   ),
                   SizedBox(height: 24.h),
 
-                  Text('Upcoming & Live Streams (${liveSessions.length})',
-                      style: AppTextStyles.interBold24.copyWith(fontSize: 17.sp, color: AppColors.onBackground)),
+                  Text(
+                    'Upcoming & Live Streams (${liveSessions.length})',
+                    style: AppTextStyles.interBold24.copyWith(
+                      fontSize: 17.sp,
+                      color: AppColors.onBackground,
+                    ),
+                  ),
                   SizedBox(height: 12.h),
 
                   ListView.separated(
@@ -105,7 +141,9 @@ class StudentLiveClassesScreen extends ConsumerWidget {
                           color: const Color(0xFFF8F9FA),
                           borderRadius: BorderRadius.circular(16.r),
                           border: Border.all(
-                            color: session.isLive ? Colors.red.shade300 : AppColors.grey300,
+                            color: session.isLive
+                                ? Colors.red.shade300
+                                : AppColors.grey300,
                             width: session.isLive ? 1.5.w : 1.w,
                           ),
                         ),
@@ -116,77 +154,164 @@ class StudentLiveClassesScreen extends ConsumerWidget {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Container(
-                                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 8.w,
+                                    vertical: 4.h,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: session.isLive
                                         ? const Color(0xFFFFEBEE)
-                                        : (session.isCompleted ? AppColors.grey300 : const Color(0xFFE3F2FD)),
+                                        : (session.isCompleted
+                                              ? AppColors.grey300
+                                              : const Color(0xFFE3F2FD)),
                                     borderRadius: BorderRadius.circular(20.r),
                                   ),
                                   child: Text(
-                                    session.isLive ? '● LIVE NOW' : (session.isCompleted ? 'COMPLETED' : 'UPCOMING'),
-                                    style: AppTextStyles.interSemiBold16.copyWith(
-                                      fontSize: 10.sp,
-                                      color: session.isLive
-                                          ? Colors.red
-                                          : (session.isCompleted ? AppColors.grey500 : AppColors.primary),
-                                    ),
+                                    session.isLive
+                                        ? '● LIVE NOW'
+                                        : (session.isCompleted
+                                              ? 'COMPLETED'
+                                              : 'UPCOMING'),
+                                    style: AppTextStyles.interSemiBold16
+                                        .copyWith(
+                                          fontSize: 10.sp,
+                                          color: session.isLive
+                                              ? Colors.red
+                                              : (session.isCompleted
+                                                    ? AppColors.grey500
+                                                    : AppColors.primary),
+                                        ),
                                   ),
                                 ),
-                                Text(
-                                  session.scheduledDate,
-                                  style: AppTextStyles.interMedium16.copyWith(fontSize: 12.sp, color: AppColors.grey500),
+                                Flexible(
+                                  child: Text(
+                                    session.scheduledDate,
+                                    textAlign: TextAlign.end,
+                                    style: AppTextStyles.interMedium16.copyWith(
+                                      fontSize: 12.sp,
+                                      color: AppColors.grey500,
+                                    ),
+                                  ),
                                 ),
                               ],
                             ),
                             SizedBox(height: 10.h),
-                            Text(session.title, style: AppTextStyles.interBold24.copyWith(fontSize: 15.sp)),
+                            Text(
+                              session.title,
+                              style: AppTextStyles.interBold24.copyWith(
+                                fontSize: 15.sp,
+                              ),
+                            ),
                             SizedBox(height: 4.h),
-                            Text(session.courseTitle,
-                                style: AppTextStyles.interRegular14.copyWith(fontSize: 12.sp, color: AppColors.primary)),
+                            Text(
+                              session.courseTitle,
+                              style: AppTextStyles.interRegular14.copyWith(
+                                fontSize: 12.sp,
+                                color: AppColors.primary,
+                              ),
+                            ),
                             if (session.description.isNotEmpty) ...[
                               SizedBox(height: 6.h),
-                              Text(session.description,
-                                  style: AppTextStyles.interRegular14.copyWith(fontSize: 12.sp, color: AppColors.grey500)),
+                              Text(
+                                session.description,
+                                style: AppTextStyles.interRegular14.copyWith(
+                                  fontSize: 12.sp,
+                                  color: AppColors.grey500,
+                                ),
+                              ),
                             ],
                             SizedBox(height: 14.h),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            Wrap(
+                              alignment: WrapAlignment.spaceBetween,
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              spacing: 8,
                               children: [
                                 Row(
                                   children: [
-                                    Icon(Icons.timer_outlined, size: 14.w, color: AppColors.grey500),
+                                    Icon(
+                                      Icons.timer_outlined,
+                                      size: 14.w,
+                                      color: AppColors.grey500,
+                                    ),
                                     SizedBox(width: 4.w),
-                                    Text('${session.durationMinutes} mins',
-                                        style: AppTextStyles.interRegular14.copyWith(fontSize: 12.sp, color: AppColors.grey500)),
+                                    Text(
+                                      '${session.durationMinutes} mins',
+                                      style: AppTextStyles.interRegular14
+                                          .copyWith(
+                                            fontSize: 12.sp,
+                                            color: AppColors.grey500,
+                                          ),
+                                    ),
                                   ],
                                 ),
                                 if (session.isLive)
                                   ElevatedButton.icon(
                                     onPressed: () {
-                                      CustomToast.showSuccess(context, message: 'Joining live classroom stream...');
+                                      CustomToast.showSuccess(
+                                        context,
+                                        message:
+                                            'Joining live classroom stream...',
+                                      );
                                     },
-                                    icon: Icon(Icons.videocam, color: Colors.white, size: 16.w),
-                                    label: Text('Join Live Room',
-                                        style: AppTextStyles.interSemiBold16.copyWith(color: Colors.white, fontSize: 12.sp)),
+                                    icon: Icon(
+                                      Icons.videocam,
+                                      color: Colors.white,
+                                      size: 16.w,
+                                    ),
+                                    label: Text(
+                                      'Join Live Room',
+                                      style: AppTextStyles.interSemiBold16
+                                          .copyWith(
+                                            color: Colors.white,
+                                            fontSize: 12.sp,
+                                          ),
+                                    ),
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: Colors.red,
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
-                                      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(
+                                          20.r,
+                                        ),
+                                      ),
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 14.w,
+                                        vertical: 8.h,
+                                      ),
                                       elevation: 0,
                                     ),
                                   )
                                 else if (!session.isCompleted)
                                   OutlinedButton.icon(
                                     onPressed: () {
-                                      CustomToast.showSuccess(context, message: 'Session reminder set for ${session.scheduledDate}!');
+                                      CustomToast.showSuccess(
+                                        context,
+                                        message:
+                                            'Session reminder set for ${session.scheduledDate}!',
+                                      );
                                     },
-                                    icon: Icon(Icons.notifications_active_outlined, size: 14.w, color: AppColors.primary),
-                                    label: Text('Set Reminder',
-                                        style: AppTextStyles.interSemiBold16.copyWith(fontSize: 12.sp, color: AppColors.primary)),
+                                    icon: Icon(
+                                      Icons.notifications_active_outlined,
+                                      size: 14.w,
+                                      color: AppColors.primary,
+                                    ),
+                                    label: Text(
+                                      'Set Reminder',
+                                      style: AppTextStyles.interSemiBold16
+                                          .copyWith(
+                                            fontSize: 12.sp,
+                                            color: AppColors.primary,
+                                          ),
+                                    ),
                                     style: OutlinedButton.styleFrom(
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
-                                      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(
+                                          20.r,
+                                        ),
+                                      ),
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 12.w,
+                                        vertical: 6.h,
+                                      ),
                                     ),
                                   ),
                               ],
@@ -201,7 +326,8 @@ class StudentLiveClassesScreen extends ConsumerWidget {
             );
           },
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (_, __) => const Center(child: Text('Error loading live masterclasses')),
+          error: (_, __) =>
+              const Center(child: Text('Error loading live masterclasses')),
         ),
       ),
     );

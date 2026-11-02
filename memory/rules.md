@@ -16,6 +16,7 @@ These rules must be strictly adhered to by all developers and AI agents working 
 - **Immutability**: Prefer immutable state classes and `const` constructors wherever possible to prevent unnecessary rebuilds.
 
 ## UI & Styling
+- **Design Consistency**: Every new screen or UI component must match the existing app design, typography, font family, spacing, colors, and interaction patterns. Reuse the current theme tokens and nearby components before introducing new styles.
 - **ScreenUtil for Responsiveness**: Always use `flutter_screenutil` extensions (`.h` for height/vertical padding, `.w` for width/horizontal padding, `.sp` for fonts, `.r` for radii). NEVER hardcode pixel values.
 - **Centralized Theme**: Always use predefined tokens from `AppColors` and `AppTextStyles` (Inter font family). Never hardcode hex colors or text styles inline.
 - **Reusability**: Prefer reusable widgets (e.g., `CustomButton`, `CustomTextFormField`) over reinventing the wheel.

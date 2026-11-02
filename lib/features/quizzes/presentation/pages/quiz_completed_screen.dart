@@ -1,3 +1,4 @@
+import 'package:nts_psc_app/presentation/widgets/app_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -6,21 +7,61 @@ import 'package:nts_psc_app/core/models/app_models.dart';
 import 'package:nts_psc_app/core/theme/app_colors.dart';
 import 'package:nts_psc_app/core/theme/app_text_styles.dart';
 import 'package:nts_psc_app/config/routes/app_routes.dart';
+import 'package:nts_psc_app/core/networks/supabase_client.dart';
+import 'package:nts_psc_app/features/quizzes/presentation/controllers/quizzes_controller.dart';
 import 'package:nts_psc_app/presentation/widgets/custom_button.dart';
+import 'package:nts_psc_app/features/quizzes/presentation/widgets/quiz_retry_button.dart';
 
 class QuizCompletedScreen extends ConsumerWidget {
   final QuizSubmissionResultModel? result;
+  final String? attemptId;
 
-  const QuizCompletedScreen({super.key, this.result});
+  const QuizCompletedScreen({super.key, this.result, this.attemptId});
+
+  void _continueLearning(BuildContext context) {
+    if (context.canPop()) {
+      context.pop();
+    } else {
+      context.goNamed(AppRoute.main.name);
+    }
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    if (AppConfig.isSupabaseEnabled) {
+      final id = attemptId ?? result?.attemptId;
+      if (id == null) {
+        return const AppScaffold(
+          body: Center(child: Text('Result unavailable')),
+        );
+      }
+      return ref
+          .watch(quizAttemptResultProvider(id))
+          .when(
+            data: (saved) => saved == null
+                ? const AppScaffold(
+                    body: Center(child: Text('Result unavailable')),
+                  )
+                : _buildResult(context, saved),
+            loading: () => const AppScaffold(
+              body: Center(child: CircularProgressIndicator()),
+            ),
+            error: (_, __) => const AppScaffold(
+              body: Center(child: Text('Could not load result')),
+            ),
+          );
+    }
+    return _buildResult(context, result);
+  }
+
+  Widget _buildResult(BuildContext context, QuizSubmissionResultModel? result) {
+    final savedAttemptId = result?.attemptId;
     final total = result?.totalQuestions ?? 4;
     final score = result?.score ?? 3;
     final percentage = total > 0 ? ((score / total) * 100).toInt() : 0;
-    final isPassed = percentage >= 60;
+    final isPassed = result?.isPassed ?? false;
 
-    return Scaffold(
+    return AppScaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
@@ -29,7 +70,7 @@ class QuizCompletedScreen extends ConsumerWidget {
         actions: [
           IconButton(
             icon: Icon(Icons.close, color: AppColors.grey900, size: 24.w),
-            onPressed: () => context.goNamed(AppRoute.main.name),
+            onPressed: () => _continueLearning(context),
           ),
           SizedBox(width: 8.w),
         ],
@@ -43,10 +84,7 @@ class QuizCompletedScreen extends ConsumerWidget {
         centerTitle: true,
         bottom: PreferredSize(
           preferredSize: Size.fromHeight(1.h),
-          child: Container(
-            color: const Color(0xFFE2E8F0),
-            height: 1.h,
-          ),
+          child: Container(color: const Color(0xFFE2E8F0), height: 1.h),
         ),
       ),
       body: SafeArea(
@@ -60,7 +98,9 @@ class QuizCompletedScreen extends ConsumerWidget {
                 width: 96.w,
                 height: 96.w,
                 decoration: BoxDecoration(
-                  color: isPassed ? const Color(0xFFFFF7E6) : const Color(0xFFFFEBEE),
+                  color: isPassed
+                      ? const Color(0xFFFFF7E6)
+                      : const Color(0xFFFFEBEE),
                   shape: BoxShape.circle,
                 ),
                 child: Center(
@@ -84,7 +124,7 @@ class QuizCompletedScreen extends ConsumerWidget {
               SizedBox(height: 12.h),
               Text(
                 result != null
-                    ? 'You have completed "${result!.quizTitle}" with $percentage% accuracy.'
+                    ? 'You have completed "${result.quizTitle}" with $percentage% accuracy.'
                     : 'You have successfully completed the competitive practice challenge.',
                 textAlign: TextAlign.center,
                 style: AppTextStyles.interRegular14.copyWith(
@@ -100,7 +140,10 @@ class QuizCompletedScreen extends ConsumerWidget {
                 decoration: BoxDecoration(
                   color: const Color(0xFFF8F9FA),
                   borderRadius: BorderRadius.circular(24.r),
-                  border: Border.all(color: const Color(0xFFDADCE0), width: 1.w),
+                  border: Border.all(
+                    color: const Color(0xFFDADCE0),
+                    width: 1.w,
+                  ),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -143,26 +186,36 @@ class QuizCompletedScreen extends ConsumerWidget {
               CustomButton(
                 text: 'Review Answers & Explanations',
                 color: AppColors.primary,
-                trailingIcon: const Icon(Icons.arrow_forward, color: Colors.white, size: 18),
+                trailingIcon: const Icon(
+                  Icons.arrow_forward,
+                  color: Colors.white,
+                  size: 18,
+                ),
                 onPressed: () {
                   context.pushNamed(
                     AppRoute.quizReview.name,
+                    queryParameters: savedAttemptId == null
+                        ? const {}
+                        : {'attemptId': savedAttemptId},
                     extra: result,
                   );
                 },
               ),
               SizedBox(height: 14.h),
+              if (result != null) QuizRetryButton(quizId: result.quizId),
               SizedBox(
                 width: double.infinity,
                 height: 52.h,
                 child: OutlinedButton(
-                  onPressed: () => context.goNamed(AppRoute.main.name),
+                  onPressed: () => _continueLearning(context),
                   style: OutlinedButton.styleFrom(
                     side: BorderSide(color: AppColors.grey300, width: 1.w),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50.r)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(50.r),
+                    ),
                   ),
                   child: Text(
-                    'Return to Dashboard',
+                    'Continue learning',
                     style: AppTextStyles.interSemiBold16.copyWith(
                       fontSize: 15.sp,
                       color: AppColors.onBackground,
@@ -177,23 +230,27 @@ class QuizCompletedScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildSpecRow(IconData icon, String text, Color iconColor, Color bgColor) {
+  Widget _buildSpecRow(
+    IconData icon,
+    String text,
+    Color iconColor,
+    Color bgColor,
+  ) {
     return Row(
       children: [
         Container(
           padding: EdgeInsets.all(8.w),
-          decoration: BoxDecoration(
-            color: bgColor,
-            shape: BoxShape.circle,
-          ),
+          decoration: BoxDecoration(color: bgColor, shape: BoxShape.circle),
           child: Icon(icon, color: iconColor, size: 20.w),
         ),
         SizedBox(width: 12.w),
-        Text(
-          text,
-          style: AppTextStyles.interMedium16.copyWith(
-            fontSize: 15.sp,
-            color: AppColors.grey700,
+        Expanded(
+          child: Text(
+            text,
+            style: AppTextStyles.interMedium16.copyWith(
+              fontSize: 15.sp,
+              color: AppColors.grey700,
+            ),
           ),
         ),
       ],

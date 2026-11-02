@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:nts_psc_app/core/theme/app_colors.dart';
 import 'package:nts_psc_app/core/theme/app_text_styles.dart';
+import 'package:nts_psc_app/core/utils/keyboard_dismissal.dart';
 import 'package:nts_psc_app/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:nts_psc_app/features/home/presentation/controllers/course_community_controller.dart';
 import 'package:nts_psc_app/presentation/widgets/custom_toast.dart';
@@ -133,6 +134,7 @@ class _WriteReviewSheetState extends ConsumerState<WriteReviewSheet> {
             ),
             SizedBox(height: 8.h),
             TextField(
+              onTapOutside: dismissKeyboardOnTapOutside,
               controller: _commentController,
               maxLines: 4,
               decoration: InputDecoration(

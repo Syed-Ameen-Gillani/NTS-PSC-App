@@ -1,0 +1,1 @@
+{"flutter":{"platforms":{"android":{"default":{"projectId":"nts-psc-mobile","appId":"1:844381243351:android:5c1df32b263c7523f52d92","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"nts-psc-mobile","configurations":{"android":"1:844381243351:android:5c1df32b263c7523f52d92","ios":"1:844381243351:ios:b0ffca1d383999c3f52d92"}}}}}}

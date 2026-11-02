@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
+  static const videoBackground = Colors.black;
+  static const videoForeground = Colors.white;
+  static const videoScrim = Color(0xB3000000);
   // Primary brand colors
-  static const Color primary = Color(0xFF1E75F1); // Updated to vibrant blue from screenshot
+  static const Color primary = Color(
+    0xFF1E75F1,
+  ); // Updated to vibrant blue from screenshot
   static const Color primaryLight = Color(0xFF64A2FD);
   static const Color accent = Color(0xFFFF9D42);
 
@@ -13,7 +18,9 @@ class AppColors {
 
   // Text / content
   static const Color onPrimary = Colors.white;
-  static const Color onBackground = Color(0xFF111827); // Darker text for headers
+  static const Color onBackground = Color(
+    0xFF111827,
+  ); // Darker text for headers
   static const Color onSurface = Color(0xFF1F2937);
 
   // Neutral / greys
@@ -26,6 +33,10 @@ class AppColors {
   static const Color grey300 = Color(0xFFE5E7EB); // Border color
   static const Color grey200 = Color(0xFFE2E8F0); // Subtle border
   static const Color grey100 = Color(0xFFF9FAFB); // Custom text field bg
+
+  // Settings grouped-card surface and border. Reused for neutral avatars.
+  static const Color settingsCardBackground = Color(0xFFF8F9FA);
+  static const Color settingsCardBorder = Color(0xFFDADCE0);
 
   // Status Colors
   static const Color error = Color(0xFFB00020);

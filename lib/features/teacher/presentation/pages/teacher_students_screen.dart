@@ -1,14 +1,17 @@
+import 'package:nts_psc_app/presentation/widgets/app_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:nts_psc_app/core/models/app_models.dart';
+import 'package:nts_psc_app/core/networks/supabase_client.dart';
 import 'package:nts_psc_app/core/theme/app_colors.dart';
 import 'package:nts_psc_app/core/theme/app_text_styles.dart';
 import 'package:nts_psc_app/features/teacher/presentation/controllers/teacher_controller.dart';
+import 'package:nts_psc_app/features/teacher/presentation/pages/teacher_live_learners_screen.dart';
 import 'package:nts_psc_app/features/teacher/presentation/widgets/student_analytics_header.dart';
 import 'package:nts_psc_app/features/teacher/presentation/widgets/student_performance_sheet.dart';
-import 'package:nts_psc_app/presentation/widgets/custom_text_field.dart';
+import 'package:nts_psc_app/presentation/widgets/custom_search_bar.dart';
 
 class TeacherStudentsScreen extends ConsumerStatefulWidget {
   final String? initialCourseTitle;
@@ -16,7 +19,8 @@ class TeacherStudentsScreen extends ConsumerStatefulWidget {
   const TeacherStudentsScreen({super.key, this.initialCourseTitle});
 
   @override
-  ConsumerState<TeacherStudentsScreen> createState() => _TeacherStudentsScreenState();
+  ConsumerState<TeacherStudentsScreen> createState() =>
+      _TeacherStudentsScreenState();
 }
 
 class _TeacherStudentsScreenState extends ConsumerState<TeacherStudentsScreen> {
@@ -39,20 +43,32 @@ class _TeacherStudentsScreenState extends ConsumerState<TeacherStudentsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (AppConfig.isSupabaseEnabled) {
+      return TeacherLiveLearnersScreen(
+        initialCourseTitle: widget.initialCourseTitle,
+      );
+    }
     final teacherState = ref.watch(teacherControllerProvider);
 
-    return Scaffold(
+    return AppScaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: AppColors.onBackground, size: 20),
+          icon: const Icon(
+            Icons.arrow_back_ios_new,
+            color: AppColors.onBackground,
+            size: 20,
+          ),
           onPressed: () => context.pop(),
         ),
         title: Text(
           'Learner Analytics & Roster',
-          style: AppTextStyles.interBold24.copyWith(fontSize: 18.sp, color: AppColors.onBackground),
+          style: AppTextStyles.interBold24.copyWith(
+            fontSize: 18.sp,
+            color: AppColors.onBackground,
+          ),
         ),
         centerTitle: true,
         bottom: PreferredSize(
@@ -72,13 +88,17 @@ class _TeacherStudentsScreenState extends ConsumerState<TeacherStudentsScreen> {
             // Filter students
             final filteredStudents = state.students.where((st) {
               final query = _searchQuery.toLowerCase();
-              final matchesSearch = st.name.toLowerCase().contains(query) ||
+              final matchesSearch =
+                  st.name.toLowerCase().contains(query) ||
                   st.email.toLowerCase().contains(query) ||
                   st.courseTitle.toLowerCase().contains(query);
 
-              final matchesCourse = _selectedCourse == 'All Courses' || st.courseTitle == _selectedCourse;
+              final matchesCourse =
+                  _selectedCourse == 'All Courses' ||
+                  st.courseTitle == _selectedCourse;
 
-              final matchesStatus = _selectedStatus == 'All' || st.status == _selectedStatus;
+              final matchesStatus =
+                  _selectedStatus == 'All' || st.status == _selectedStatus;
 
               return matchesSearch && matchesCourse && matchesStatus;
             }).toList();
@@ -87,10 +107,9 @@ class _TeacherStudentsScreenState extends ConsumerState<TeacherStudentsScreen> {
               padding: EdgeInsets.all(20.w),
               children: [
                 // Search Bar
-                CustomTextFormField(
+                AppSearchField(
                   controller: _searchController,
                   hintText: 'Search learners by name or email...',
-                  prefixIcon: Icons.search,
                   onChanged: (val) => setState(() => _searchQuery = val),
                 ),
                 SizedBox(height: 14.h),
@@ -106,17 +125,22 @@ class _TeacherStudentsScreenState extends ConsumerState<TeacherStudentsScreen> {
                         child: ChoiceChip(
                           label: Text(course),
                           selected: isSelected,
-                          onSelected: (_) => setState(() => _selectedCourse = course),
+                          onSelected: (_) =>
+                              setState(() => _selectedCourse = course),
                           selectedColor: AppColors.primary,
                           backgroundColor: const Color(0xFFF8F9FA),
                           labelStyle: AppTextStyles.interMedium16.copyWith(
                             fontSize: 11.sp,
-                            color: isSelected ? Colors.white : AppColors.grey700,
+                            color: isSelected
+                                ? Colors.white
+                                : AppColors.grey700,
                           ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(20.r),
                             side: BorderSide(
-                              color: isSelected ? AppColors.primary : AppColors.grey300,
+                              color: isSelected
+                                  ? AppColors.primary
+                                  : AppColors.grey300,
                             ),
                           ),
                           showCheckmark: false,
@@ -131,40 +155,63 @@ class _TeacherStudentsScreenState extends ConsumerState<TeacherStudentsScreen> {
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: Row(
-                    children: ['All', 'On Track', 'Needs Attention', 'Completed'].map((status) {
-                      final isSelected = _selectedStatus == status;
-                      final count = status == 'All'
-                          ? state.students.where((s) => _selectedCourse == 'All Courses' || s.courseTitle == _selectedCourse).length
-                          : state.students.where((s) => (_selectedCourse == 'All Courses' || s.courseTitle == _selectedCourse) && s.status == status).length;
+                    children:
+                        ['All', 'On Track', 'Needs Attention', 'Completed'].map(
+                          (status) {
+                            final isSelected = _selectedStatus == status;
+                            final count = status == 'All'
+                                ? state.students
+                                      .where(
+                                        (s) =>
+                                            _selectedCourse == 'All Courses' ||
+                                            s.courseTitle == _selectedCourse,
+                                      )
+                                      .length
+                                : state.students
+                                      .where(
+                                        (s) =>
+                                            (_selectedCourse == 'All Courses' ||
+                                                s.courseTitle ==
+                                                    _selectedCourse) &&
+                                            s.status == status,
+                                      )
+                                      .length;
 
-                      return Padding(
-                        padding: EdgeInsets.only(right: 8.w),
-                        child: FilterChip(
-                          label: Text('$status ($count)'),
-                          selected: isSelected,
-                          onSelected: (_) => setState(() => _selectedStatus = status),
-                          selectedColor: status == 'Needs Attention'
-                              ? const Color(0xFFFEF3C7)
-                              : AppColors.primary.withValues(alpha: 0.12),
-                          backgroundColor: Colors.white,
-                          labelStyle: AppTextStyles.interSemiBold16.copyWith(
-                            fontSize: 11.sp,
-                            color: isSelected
-                                ? (status == 'Needs Attention' ? const Color(0xFFB45309) : AppColors.primary)
-                                : AppColors.grey500,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16.r),
-                            side: BorderSide(
-                              color: isSelected
-                                  ? (status == 'Needs Attention' ? const Color(0xFFD97706) : AppColors.primary)
-                                  : AppColors.grey300,
-                            ),
-                          ),
-                          showCheckmark: false,
-                        ),
-                      );
-                    }).toList(),
+                            return Padding(
+                              padding: EdgeInsets.only(right: 8.w),
+                              child: FilterChip(
+                                label: Text('$status ($count)'),
+                                selected: isSelected,
+                                onSelected: (_) =>
+                                    setState(() => _selectedStatus = status),
+                                selectedColor: status == 'Needs Attention'
+                                    ? const Color(0xFFFEF3C7)
+                                    : AppColors.primary.withValues(alpha: 0.12),
+                                backgroundColor: Colors.white,
+                                labelStyle: AppTextStyles.interSemiBold16
+                                    .copyWith(
+                                      fontSize: 11.sp,
+                                      color: isSelected
+                                          ? (status == 'Needs Attention'
+                                                ? const Color(0xFFB45309)
+                                                : AppColors.primary)
+                                          : AppColors.grey500,
+                                    ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16.r),
+                                  side: BorderSide(
+                                    color: isSelected
+                                        ? (status == 'Needs Attention'
+                                              ? const Color(0xFFD97706)
+                                              : AppColors.primary)
+                                        : AppColors.grey300,
+                                  ),
+                                ),
+                                showCheckmark: false,
+                              ),
+                            );
+                          },
+                        ).toList(),
                   ),
                 ),
                 SizedBox(height: 16.h),
@@ -180,7 +227,10 @@ class _TeacherStudentsScreenState extends ConsumerState<TeacherStudentsScreen> {
                     Expanded(
                       child: Text(
                         'Enrolled Learners (${filteredStudents.length})',
-                        style: AppTextStyles.interBold24.copyWith(fontSize: 15.sp, color: AppColors.onBackground),
+                        style: AppTextStyles.interBold24.copyWith(
+                          fontSize: 15.sp,
+                          color: AppColors.onBackground,
+                        ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -188,7 +238,10 @@ class _TeacherStudentsScreenState extends ConsumerState<TeacherStudentsScreen> {
                     SizedBox(width: 8.w),
                     Text(
                       'Tap card for diagnostics',
-                      style: AppTextStyles.interRegular14.copyWith(fontSize: 11.sp, color: AppColors.grey500),
+                      style: AppTextStyles.interRegular14.copyWith(
+                        fontSize: 11.sp,
+                        color: AppColors.grey500,
+                      ),
                     ),
                   ],
                 ),
@@ -201,22 +254,32 @@ class _TeacherStudentsScreenState extends ConsumerState<TeacherStudentsScreen> {
                     alignment: Alignment.center,
                     child: Column(
                       children: [
-                        Icon(Icons.people_outline, size: 48.w, color: AppColors.grey400),
+                        Icon(
+                          Icons.people_outline,
+                          size: 48.w,
+                          color: AppColors.grey400,
+                        ),
                         SizedBox(height: 12.h),
                         Text(
                           'No learners found matching filters.',
-                          style: AppTextStyles.interMedium16.copyWith(color: AppColors.grey500, fontSize: 13.sp),
+                          style: AppTextStyles.interMedium16.copyWith(
+                            color: AppColors.grey500,
+                            fontSize: 13.sp,
+                          ),
                         ),
                       ],
                     ),
                   )
                 else
-                  ...filteredStudents.map((student) => _buildStudentCard(context, student)),
+                  ...filteredStudents.map(
+                    (student) => _buildStudentCard(context, student),
+                  ),
               ],
             );
           },
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (_, __) => const Center(child: Text('Error loading learner analytics')),
+          error: (_, __) =>
+              const Center(child: Text('Error loading learner analytics')),
         ),
       ),
     );
@@ -268,7 +331,11 @@ class _TeacherStudentsScreenState extends ConsumerState<TeacherStudentsScreen> {
                       backgroundColor: AppColors.primary,
                       child: Text(
                         student.name.isNotEmpty ? student.name[0] : 'S',
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14.sp),
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14.sp,
+                        ),
                       ),
                     ),
                     SizedBox(width: 12.w),
@@ -276,18 +343,21 @@ class _TeacherStudentsScreenState extends ConsumerState<TeacherStudentsScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
+                          Wrap(
+                            spacing: 6.w,
+                            runSpacing: 2.h,
                             children: [
-                              Flexible(
-                                child: Text(
-                                  student.name,
-                                  style: AppTextStyles.interSemiBold16.copyWith(fontSize: 14.sp),
-                                  overflow: TextOverflow.ellipsis,
+                              Text(
+                                student.name,
+                                style: AppTextStyles.interSemiBold16.copyWith(
+                                  fontSize: 14.sp,
                                 ),
                               ),
-                              SizedBox(width: 6.w),
                               Container(
-                                padding: EdgeInsets.symmetric(horizontal: 7.w, vertical: 2.h),
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 7.w,
+                                  vertical: 2.h,
+                                ),
                                 decoration: BoxDecoration(
                                   color: statusBgColor,
                                   borderRadius: BorderRadius.circular(10.r),
@@ -305,22 +375,32 @@ class _TeacherStudentsScreenState extends ConsumerState<TeacherStudentsScreen> {
                           SizedBox(height: 2.h),
                           Text(
                             student.email,
-                            style: AppTextStyles.interRegular14.copyWith(fontSize: 11.sp, color: AppColors.grey500),
+                            style: AppTextStyles.interRegular14.copyWith(
+                              fontSize: 11.sp,
+                              color: AppColors.grey500,
+                            ),
                           ),
                         ],
                       ),
                     ),
                     Container(
-                      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 8.w,
+                        vertical: 4.h,
+                      ),
                       decoration: BoxDecoration(
-                        color: student.averageQuizScore >= 60 ? const Color(0xFFD1FAE5) : const Color(0xFFFEF3C7),
+                        color: student.averageQuizScore >= 60
+                            ? const Color(0xFFD1FAE5)
+                            : const Color(0xFFFEF3C7),
                         borderRadius: BorderRadius.circular(14.r),
                       ),
                       child: Text(
                         '${student.averageQuizScore}% Quiz',
                         style: AppTextStyles.interSemiBold16.copyWith(
                           fontSize: 10.sp,
-                          color: student.averageQuizScore >= 60 ? const Color(0xFF065F46) : const Color(0xFFB45309),
+                          color: student.averageQuizScore >= 60
+                              ? const Color(0xFF065F46)
+                              : const Color(0xFFB45309),
                         ),
                       ),
                     ),
@@ -331,7 +411,10 @@ class _TeacherStudentsScreenState extends ConsumerState<TeacherStudentsScreen> {
                 // Course title
                 Text(
                   student.courseTitle,
-                  style: AppTextStyles.interMedium16.copyWith(fontSize: 11.sp, color: AppColors.primary),
+                  style: AppTextStyles.interMedium16.copyWith(
+                    fontSize: 11.sp,
+                    color: AppColors.primary,
+                  ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -347,7 +430,9 @@ class _TeacherStudentsScreenState extends ConsumerState<TeacherStudentsScreen> {
                           value: student.progress,
                           backgroundColor: AppColors.grey300,
                           valueColor: AlwaysStoppedAnimation<Color>(
-                            isAtRisk ? const Color(0xFFD97706) : AppColors.primary,
+                            isAtRisk
+                                ? const Color(0xFFD97706)
+                                : AppColors.primary,
                           ),
                           minHeight: 6.h,
                         ),
@@ -356,7 +441,10 @@ class _TeacherStudentsScreenState extends ConsumerState<TeacherStudentsScreen> {
                     SizedBox(width: 10.w),
                     Text(
                       '${student.completedLessons}/${student.totalLessons} Lessons (${(student.progress * 100).toInt()}%)',
-                      style: AppTextStyles.interMedium16.copyWith(fontSize: 11.sp, color: AppColors.grey700),
+                      style: AppTextStyles.interMedium16.copyWith(
+                        fontSize: 11.sp,
+                        color: AppColors.grey700,
+                      ),
                     ),
                   ],
                 ),
@@ -369,12 +457,19 @@ class _TeacherStudentsScreenState extends ConsumerState<TeacherStudentsScreen> {
                     Expanded(
                       child: Row(
                         children: [
-                          Icon(Icons.access_time, size: 12.w, color: AppColors.grey500),
+                          Icon(
+                            Icons.access_time,
+                            size: 12.w,
+                            color: AppColors.grey500,
+                          ),
                           SizedBox(width: 4.w),
                           Flexible(
                             child: Text(
                               'Active ${student.lastActive}',
-                              style: AppTextStyles.interRegular14.copyWith(fontSize: 10.sp, color: AppColors.grey500),
+                              style: AppTextStyles.interRegular14.copyWith(
+                                fontSize: 10.sp,
+                                color: AppColors.grey500,
+                              ),
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
@@ -388,7 +483,11 @@ class _TeacherStudentsScreenState extends ConsumerState<TeacherStudentsScreen> {
                         if (student.lastNudgedAt != null)
                           Padding(
                             padding: EdgeInsets.only(right: 6.w),
-                            child: Icon(Icons.notifications_active, size: 14.w, color: AppColors.success),
+                            child: Icon(
+                              Icons.notifications_active,
+                              size: 14.w,
+                              color: AppColors.success,
+                            ),
                           ),
                         Text(
                           'View Diagnostics →',

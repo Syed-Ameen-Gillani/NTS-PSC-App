@@ -1,0 +1,1 @@
+enum CourseViewMode { automatic, learnerPreview }

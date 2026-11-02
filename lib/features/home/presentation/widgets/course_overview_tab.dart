@@ -4,23 +4,28 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:nts_psc_app/core/models/app_models.dart';
 import 'package:nts_psc_app/core/theme/app_colors.dart';
 import 'package:nts_psc_app/core/theme/app_text_styles.dart';
-import 'package:nts_psc_app/features/auth/presentation/controllers/auth_controller.dart';
+import 'package:nts_psc_app/core/networks/supabase_client.dart';
 import 'package:nts_psc_app/features/home/presentation/controllers/course_community_controller.dart';
-import 'package:nts_psc_app/features/home/presentation/widgets/course_certificate_dialog.dart';
 import 'package:nts_psc_app/features/home/presentation/widgets/course_resources_sheet.dart';
 
 class CourseOverviewTab extends ConsumerWidget {
   final CourseModel course;
   final bool isTeacher;
+  final bool isReadOnlyPreview;
 
   const CourseOverviewTab({
     super.key,
     required this.course,
     required this.isTeacher,
+    this.isReadOnlyPreview = false,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final lessonCount = course.modules.fold<int>(
+      0,
+      (total, module) => total + module.lessons.length,
+    );
     final announcements = ref
         .watch(courseCommunityProvider)
         .announcements
@@ -47,7 +52,7 @@ class CourseOverviewTab extends ConsumerWidget {
           Text(
             course.description.isNotEmpty
                 ? course.description
-                : 'Complete syllabus preparation with expert guidance, past papers practice, and test simulations tailored for high scores in competitive examinations.',
+                : 'No description added yet.',
             style: AppTextStyles.interRegular16.copyWith(
               fontSize: 14.sp,
               color: AppColors.grey700,
@@ -56,17 +61,23 @@ class CourseOverviewTab extends ConsumerWidget {
           ),
           SizedBox(height: 20.h),
           Text(
-            'What You Will Learn',
+            'Course Topics',
             style: AppTextStyles.interBold24.copyWith(
               fontSize: 18.sp,
               color: AppColors.onBackground,
             ),
           ),
           SizedBox(height: 12.h),
-          _buildLearningPoint('Complete coverage of Customs Act 1969 (Sections 1 to 223)'),
-          _buildLearningPoint('High-frequency MCQs in Pakistan Affairs & Current Affairs'),
-          _buildLearningPoint('Everyday Science physical, biological, and environmental concepts'),
-          _buildLearningPoint('Mock tests with real-time scoring and answer explanations'),
+          if (course.modules.isEmpty)
+            Text(
+              'No topics added yet.',
+              style: AppTextStyles.interRegular14.copyWith(
+                color: AppColors.grey700,
+              ),
+            )
+          else
+            for (final module in course.modules)
+              _buildLearningPoint(module.title),
           SizedBox(height: 20.h),
           Text(
             'Course Statistics',
@@ -80,40 +91,40 @@ class CourseOverviewTab extends ConsumerWidget {
             spacing: 8.w,
             runSpacing: 8.h,
             children: [
-              _buildStatChip(Icons.people_outline, '${course.enrolledCount}+ Students'),
-              _buildStatChip(Icons.star_rounded, '${course.rating} Rating'),
-              _buildStatChip(Icons.play_circle_outline, '18 Lectures'),
+              _buildStatChip(
+                Icons.people_outline,
+                '${course.enrolledCount} ${course.enrolledCount == 1 ? 'Student' : 'Students'}',
+              ),
+              _buildStatChip(
+                Icons.star_rounded,
+                course.rating > 0
+                    ? '${course.rating} Rating'
+                    : 'No ratings yet',
+              ),
+              _buildStatChip(
+                Icons.play_circle_outline,
+                '$lessonCount ${lessonCount == 1 ? 'Lesson' : 'Lessons'}',
+              ),
             ],
           ),
-          SizedBox(height: 16.h),
-          _buildActionBanner(
-            icon: Icons.folder_shared_outlined,
-            title: 'Course Handouts & Past Papers',
-            subtitle: 'Download official PDF gazettes and lecture summaries',
-            buttonLabel: 'Files',
-            onTap: () => CourseResourcesSheet.show(
-              context,
-              courseId: course.id,
-              courseTitle: course.title,
-              isTeacher: isTeacher,
+          if (!AppConfig.isSupabaseEnabled) ...[
+            SizedBox(height: 16.h),
+            IgnorePointer(
+              ignoring: isReadOnlyPreview,
+              child: _buildActionBanner(
+                icon: Icons.folder_shared_outlined,
+                title: 'Course Handouts & Past Papers',
+                subtitle: 'View course files',
+                buttonLabel: 'Files',
+                onTap: () => CourseResourcesSheet.show(
+                  context,
+                  courseId: course.id,
+                  courseTitle: course.title,
+                  isTeacher: isTeacher,
+                ),
+              ),
             ),
-          ),
-          SizedBox(height: 12.h),
-          _buildActionBanner(
-            icon: Icons.workspace_premium_outlined,
-            title: 'Verified Certificate of Completion',
-            subtitle: 'Official credential with verification hash upon passing',
-            buttonLabel: 'Preview',
-            onTap: () {
-              final studentName = ref.read(authControllerProvider).value?.user?.name ?? 'Syed Ameen';
-              CourseCertificateDialog.show(
-                context,
-                studentName: studentName,
-                courseTitle: course.title,
-                instructorName: course.author,
-              );
-            },
-          ),
+          ],
           SizedBox(height: 80.h),
         ],
       ),
@@ -133,7 +144,11 @@ class CourseOverviewTab extends ConsumerWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.campaign_rounded, color: AppColors.primary, size: 18.w),
+              Icon(
+                Icons.campaign_rounded,
+                color: AppColors.primary,
+                size: 18.w,
+              ),
               SizedBox(width: 8.w),
               Expanded(
                 child: Text(

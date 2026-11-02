@@ -1,3 +1,4 @@
+import 'package:nts_psc_app/presentation/widgets/app_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -42,7 +43,7 @@ class _AddCardScreenState extends ConsumerState<AddCardScreen> {
   String _getCardType(String number) {
     final cleanNumber = number.replaceAll(RegExp(r'\s+|-'), '');
     if (cleanNumber.isEmpty) return 'unknown';
-    
+
     if (cleanNumber.startsWith('4')) {
       return 'visa';
     } else if (cleanNumber.length >= 2) {
@@ -63,8 +64,8 @@ class _AddCardScreenState extends ConsumerState<AddCardScreen> {
   void _onSaveCard() {
     if (_formKey.currentState!.validate()) {
       CustomToast.show(
-        context, 
-        message: 'Card added successfully', 
+        context,
+        message: 'Card added successfully',
         icon: Icons.check_circle_outline,
       );
       context.pop();
@@ -89,13 +90,17 @@ class _AddCardScreenState extends ConsumerState<AddCardScreen> {
       );
     }
 
-    return Scaffold(
+    return AppScaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: AppColors.onBackground, size: 20),
+          icon: const Icon(
+            Icons.arrow_back_ios_new,
+            color: AppColors.onBackground,
+            size: 20,
+          ),
           onPressed: () => context.pop(),
         ),
         title: Text(
@@ -108,10 +113,7 @@ class _AddCardScreenState extends ConsumerState<AddCardScreen> {
         titleSpacing: 0,
         bottom: PreferredSize(
           preferredSize: Size.fromHeight(1.h),
-          child: Container(
-            color: const Color(0xFFE2E8F0),
-            height: 1.h,
-          ),
+          child: Container(color: const Color(0xFFE2E8F0), height: 1.h),
         ),
       ),
       body: SafeArea(
@@ -130,12 +132,13 @@ class _AddCardScreenState extends ConsumerState<AddCardScreen> {
                   ),
                 ),
                 SizedBox(height: 24.h),
-                
+
                 _buildFieldLabel('Card Number'),
                 SizedBox(height: 8.h),
                 CustomTextFormField(
                   controller: _cardNumberController,
                   hintText: '0000 0000 0000 0000',
+                  textInputAction: TextInputAction.next,
                   fillColor: const Color(0xFFF8F9FA),
                   borderColor: const Color(0xFFE2E8F0),
                   keyboardType: TextInputType.number,
@@ -152,14 +155,17 @@ class _AddCardScreenState extends ConsumerState<AddCardScreen> {
                       ref.read(cardTypeProvider.notifier).state = type;
                     }
                     final cleanNumber = val.replaceAll(RegExp(r'\s+|-'), '');
-                    if (cleanNumber.length == 16 && _cardNumberAutoValidate != AutovalidateMode.always) {
+                    if (cleanNumber.length == 16 &&
+                        _cardNumberAutoValidate != AutovalidateMode.always) {
                       setState(() {
                         _cardNumberAutoValidate = AutovalidateMode.always;
                       });
                     }
                   },
                   validator: (val) {
-                    if (val == null || val.isEmpty) return 'Card number is required';
+                    if (val == null || val.isEmpty) {
+                      return 'Card number is required';
+                    }
                     final cleanNumber = val.replaceAll(RegExp(r'\s+|-'), '');
                     if (cleanNumber.length < 13 || cleanNumber.length > 19) {
                       return 'Invalid card number length';
@@ -174,12 +180,13 @@ class _AddCardScreenState extends ConsumerState<AddCardScreen> {
                   },
                 ),
                 SizedBox(height: 16.h),
-                
+
                 _buildFieldLabel('Cardholder Name'),
                 SizedBox(height: 8.h),
                 CustomTextFormField(
                   controller: _cardholderNameController,
                   hintText: 'e.g. Ahmed Ali',
+                  textInputAction: TextInputAction.next,
                   fillColor: const Color(0xFFF8F9FA),
                   borderColor: const Color(0xFFE2E8F0),
                   keyboardType: TextInputType.name,
@@ -187,12 +194,14 @@ class _AddCardScreenState extends ConsumerState<AddCardScreen> {
                     FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z\s]')),
                   ],
                   validator: (val) {
-                    if (val == null || val.trim().isEmpty) return 'Cardholder name is required';
+                    if (val == null || val.trim().isEmpty) {
+                      return 'Cardholder name is required';
+                    }
                     return null;
                   },
                 ),
                 SizedBox(height: 16.h),
-                
+
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -205,6 +214,7 @@ class _AddCardScreenState extends ConsumerState<AddCardScreen> {
                           CustomTextFormField(
                             controller: _expiryDateController,
                             hintText: 'MM/YY',
+                            textInputAction: TextInputAction.next,
                             fillColor: const Color(0xFFF8F9FA),
                             borderColor: const Color(0xFFE2E8F0),
                             keyboardType: TextInputType.datetime,
@@ -215,7 +225,9 @@ class _AddCardScreenState extends ConsumerState<AddCardScreen> {
                               _ExpiryDateFormatter(),
                             ],
                             onChanged: (val) {
-                              if (val.length == 5 && _expiryAutoValidate != AutovalidateMode.always) {
+                              if (val.length == 5 &&
+                                  _expiryAutoValidate !=
+                                      AutovalidateMode.always) {
                                 setState(() {
                                   _expiryAutoValidate = AutovalidateMode.always;
                                 });
@@ -223,20 +235,24 @@ class _AddCardScreenState extends ConsumerState<AddCardScreen> {
                             },
                             validator: (val) {
                               if (val == null || val.isEmpty) return 'Required';
-                              final regex = RegExp(r'^(0[1-9]|1[0-2])\/?([0-9]{2}|[0-9]{4})$');
+                              final regex = RegExp(
+                                r'^(0[1-9]|1[0-2])\/?([0-9]{2}|[0-9]{4})$',
+                              );
                               if (!regex.hasMatch(val)) return 'Invalid format';
-                              
+
                               if (val.length == 5) {
                                 final parts = val.split('/');
                                 final month = int.tryParse(parts[0]);
                                 final yearPart = int.tryParse(parts[1]);
-                                
+
                                 if (month != null && yearPart != null) {
                                   final now = DateTime.now();
                                   final currentYear = now.year % 100;
                                   final currentMonth = now.month;
-                                  
-                                  if (yearPart < currentYear || (yearPart == currentYear && month < currentMonth)) {
+
+                                  if (yearPart < currentYear ||
+                                      (yearPart == currentYear &&
+                                          month < currentMonth)) {
                                     return 'Card expired';
                                   }
                                 }
@@ -257,6 +273,7 @@ class _AddCardScreenState extends ConsumerState<AddCardScreen> {
                           CustomTextFormField(
                             controller: _cvvController,
                             hintText: '123',
+                            textInputAction: TextInputAction.done,
                             fillColor: const Color(0xFFF8F9FA),
                             borderColor: const Color(0xFFE2E8F0),
                             keyboardType: TextInputType.number,
@@ -264,11 +281,17 @@ class _AddCardScreenState extends ConsumerState<AddCardScreen> {
                               FilteringTextInputFormatter.digitsOnly,
                               LengthLimitingTextInputFormatter(3),
                             ],
-                            suffixIcon: Icon(Icons.help_outline, color: AppColors.grey500, size: 20.w),
+                            suffixIcon: Icon(
+                              Icons.help_outline,
+                              color: AppColors.grey500,
+                              size: 20.w,
+                            ),
                             validator: (val) {
                               if (val == null || val.isEmpty) return 'Required';
                               if (val.length != 3) return 'Invalid CVV';
-                              if (int.tryParse(val) == null) return 'Only digits';
+                              if (int.tryParse(val) == null) {
+                                return 'Only digits';
+                              }
                               return null;
                             },
                           ),
@@ -278,7 +301,7 @@ class _AddCardScreenState extends ConsumerState<AddCardScreen> {
                   ],
                 ),
                 SizedBox(height: 24.h),
-                
+
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -317,13 +340,10 @@ class _AddCardScreenState extends ConsumerState<AddCardScreen> {
         ),
       ),
       bottomNavigationBar: Padding(
-        padding: EdgeInsets.all(24.w).copyWith(
-          bottom: 24.h + MediaQuery.of(context).padding.bottom,
-        ),
-        child: CustomButton(
-          text: 'Save Card',
-          onPressed: _onSaveCard, 
-        ),
+        padding: EdgeInsets.all(
+          24.w,
+        ).copyWith(bottom: 24.h + MediaQuery.of(context).padding.bottom),
+        child: CustomButton(text: 'Save Card', onPressed: _onSaveCard),
       ),
     );
   }
@@ -391,7 +411,7 @@ class _AddCardScreenState extends ConsumerState<AddCardScreen> {
               width: 12.w,
               height: 12.w,
               decoration: BoxDecoration(
-                color: const Color(0xFFF79E1B).withOpacity(0.9),
+                color: const Color(0xFFF79E1B).withValues(alpha: 0.9),
                 shape: BoxShape.circle,
               ),
             ),
@@ -405,7 +425,9 @@ class _AddCardScreenState extends ConsumerState<AddCardScreen> {
 class _CardNumberFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(
-      TextEditingValue oldValue, TextEditingValue newValue) {
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
     var text = newValue.text;
     if (newValue.selection.baseOffset == 0) {
       return newValue;
@@ -420,15 +442,18 @@ class _CardNumberFormatter extends TextInputFormatter {
     }
     var string = buffer.toString();
     return newValue.copyWith(
-        text: string,
-        selection: TextSelection.collapsed(offset: string.length));
+      text: string,
+      selection: TextSelection.collapsed(offset: string.length),
+    );
   }
 }
 
 class _ExpiryDateFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(
-      TextEditingValue oldValue, TextEditingValue newValue) {
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
     var text = newValue.text;
     if (newValue.selection.baseOffset == 0) {
       return newValue;
@@ -443,7 +468,8 @@ class _ExpiryDateFormatter extends TextInputFormatter {
     }
     var string = buffer.toString();
     return newValue.copyWith(
-        text: string,
-        selection: TextSelection.collapsed(offset: string.length));
+      text: string,
+      selection: TextSelection.collapsed(offset: string.length),
+    );
   }
 }

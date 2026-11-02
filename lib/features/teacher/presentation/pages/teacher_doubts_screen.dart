@@ -1,3 +1,4 @@
+import 'package:nts_psc_app/presentation/widgets/app_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -96,7 +97,7 @@ class _TeacherDoubtsScreenState extends ConsumerState<TeacherDoubtsScreen> {
   Widget build(BuildContext context) {
     final teacherState = ref.watch(teacherControllerProvider);
 
-    return Scaffold(
+    return AppScaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
@@ -209,7 +210,7 @@ class _TeacherDoubtsScreenState extends ConsumerState<TeacherDoubtsScreen> {
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
-                                      Row(
+                                      Expanded(child: Row(
                                         children: [
                                           CircleAvatar(
                                             radius: 14.r,
@@ -220,10 +221,12 @@ class _TeacherDoubtsScreenState extends ConsumerState<TeacherDoubtsScreen> {
                                             ),
                                           ),
                                           SizedBox(width: 8.w),
-                                          Text(doubt.studentName,
-                                              style: AppTextStyles.interSemiBold16.copyWith(fontSize: 13.sp)),
+                                          Flexible(child: Text(doubt.studentName,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: AppTextStyles.interSemiBold16.copyWith(fontSize: 13.sp))),
                                         ],
-                                      ),
+                                      )),
                                       Text(doubt.createdAt,
                                           style: AppTextStyles.interRegular14
                                               .copyWith(fontSize: 11.sp, color: AppColors.grey400)),

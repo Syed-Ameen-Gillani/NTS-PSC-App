@@ -25,7 +25,7 @@ class PageIndicator extends StatelessWidget {
           decoration: BoxDecoration(
             color: index == currentPage
                 ? kPrimaryBlue
-                : kPrimaryBlue.withOpacity(0.3),
+                : kPrimaryBlue.withValues(alpha: 0.3),
             borderRadius: BorderRadius.circular(2.r),
           ),
         ),

@@ -10,9 +10,10 @@ The Profile feature in the NTS-PSC-App handles user settings, account management
    - Displays a structured list of navigation tiles for: Edit Profile, Payment Methods, Notifications, Security, App Language, About Us.
 
 2. **EditProfileScreen (`edit_profile_screen.dart`)**
-   - Allows users to modify their Full Name, Email Address, Phone Number, and Location.
-   - Includes an avatar upload UI.
-   - Uses `CustomTextFormField` and `CustomButton` with a `CustomToast.showSuccess` for success validation.
+   - Allows students and teachers to modify their name, phone, location, and role-specific details. Email is visible but read-only.
+   - Supports JPEG, PNG, and WebP profile photos up to 5 MB through the owner-scoped `profile-avatars` Supabase bucket.
+   - Locks all controls and app/system back navigation behind a modal progress indicator while changes are saving.
+   - Uses `CustomTextFormField`, `CustomButton`, and the unified toast feedback system.
 
 3. **Payment Methods (`payment_methods_screen.dart`, `add_card_screen.dart`, `add_wallet_screen.dart`)**
    - **List Screen**: Shows saved Credit/Debit cards (Mastercard, Visa) and Mobile Wallets (Easypaisa, JazzCash). Includes a customized 3-dot dropdown menu to edit or delete methods.
@@ -24,8 +25,9 @@ The Profile feature in the NTS-PSC-App handles user settings, account management
    - Certain sensitive options (like Change Password, 2FA, Theme, Download Data) are currently hidden/commented out based on product requirements.
 
 5. **Notifications (`notifications_screen.dart`)**
-   - Managed via `notifications_provider.dart`.
-   - Allows toggling Delivery Methods (Push, Email) and Notification Types (Course Updates, Messages, Exam Results, Promotions) using `CupertinoSwitch`.
+   - Preferences are persisted through `notifications_provider.dart` and the notification data repository.
+   - Includes the durable notification inbox, OS permission status/settings recovery, a master Push switch, and category preferences for Course Updates, Messages, Exam Results, and Promotions.
+   - Turning Push off preserves category choices and disables their controls until the master switch is restored.
    - SMS Notifications are currently disabled/hidden.
 
 6. **Delete Account (`delete_account_screen.dart`)**

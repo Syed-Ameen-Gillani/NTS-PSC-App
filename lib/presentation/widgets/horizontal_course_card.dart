@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:nts_psc_app/presentation/widgets/dashboard_course_cover.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:nts_psc_app/config/routes/app_routes.dart';
@@ -17,15 +18,12 @@ class HorizontalCourseCard extends StatelessWidget {
 
     return InkWell(
       onTap: () {
-        context.pushNamed(
-          AppRoute.courseDetail.name,
-          extra: course,
-        );
+        context.pushNamed(AppRoute.courseDetail.name, extra: course);
       },
       borderRadius: BorderRadius.circular(16.r),
       child: Container(
         width: double.infinity,
-        height: 120.h,
+        height: MediaQuery.textScalerOf(context).scale(120.h),
         decoration: BoxDecoration(
           color: const Color(0xFFF8F9FA),
           borderRadius: BorderRadius.circular(16.r),
@@ -34,12 +32,14 @@ class HorizontalCourseCard extends StatelessWidget {
         child: Row(
           children: [
             ClipRRect(
-              borderRadius: BorderRadius.horizontal(left: Radius.circular(16.r)),
-              child: Image.asset(
-                course.imagePath,
+              borderRadius: BorderRadius.horizontal(
+                left: Radius.circular(16.r),
+              ),
+              child: DashboardCourseCover(
+                imagePath: course.imagePath,
+                coverUrl: course.coverUrl,
                 width: 130.w,
                 height: double.infinity,
-                fit: BoxFit.cover,
               ),
             ),
             Expanded(
@@ -70,11 +70,15 @@ class HorizontalCourseCard extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          'Progress',
-                          style: AppTextStyles.interRegular14.copyWith(
-                            fontSize: 12.sp,
-                            color: AppColors.grey500,
+                        Expanded(
+                          child: Text(
+                            'Lesson progress',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTextStyles.interRegular14.copyWith(
+                              fontSize: 12.sp,
+                              color: AppColors.grey500,
+                            ),
                           ),
                         ),
                         Text(

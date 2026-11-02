@@ -1,3 +1,4 @@
+import 'package:nts_psc_app/presentation/widgets/app_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -14,7 +15,7 @@ class PaymentMethodsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Scaffold(
+    return AppScaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
@@ -108,20 +109,22 @@ class PaymentMethodsScreen extends ConsumerWidget {
             decoration: BoxDecoration(
               color: const Color(0xFFF8FBFF),
               borderRadius: BorderRadius.circular(50.r),
-              border: Border.all(color: AppColors.primary.withOpacity(0.3), width: 1.w),
+              border: Border.all(color: AppColors.primary.withValues(alpha: 0.3), width: 1.w),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(Icons.add, color: AppColors.primary, size: 20.w),
                 SizedBox(width: 8.w),
-                Text(
+                Flexible(child: Text(
                   'Add New Payment Method',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: AppTextStyles.interSemiBold16.copyWith(
                     color: AppColors.primary,
                     fontSize: 16.sp,
                   ),
-                ),
+                )),
               ],
             ),
           ),
@@ -270,7 +273,7 @@ class PaymentMethodsScreen extends ConsumerWidget {
           ),
           Positioned(
             right: 0,
-            child: Container(width: 16.w, height: 16.w, decoration: BoxDecoration(color: const Color(0xFFF79E1B).withOpacity(0.8), shape: BoxShape.circle)),
+            child: Container(width: 16.w, height: 16.w, decoration: BoxDecoration(color: const Color(0xFFF79E1B).withValues(alpha: 0.8), shape: BoxShape.circle)),
           ),
         ],
       ),

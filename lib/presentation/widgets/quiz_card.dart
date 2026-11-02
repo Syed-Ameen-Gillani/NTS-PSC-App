@@ -5,6 +5,7 @@ import 'package:nts_psc_app/config/routes/app_routes.dart';
 import 'package:nts_psc_app/core/theme/app_colors.dart';
 import 'package:nts_psc_app/core/theme/app_text_styles.dart';
 import 'package:nts_psc_app/core/models/app_models.dart';
+import 'package:nts_psc_app/core/networks/supabase_client.dart';
 
 class QuizCard extends StatelessWidget {
   final QuizModel quiz;
@@ -19,6 +20,13 @@ class QuizCard extends StatelessWidget {
 
     return InkWell(
       onTap: () {
+        if (AppConfig.isSupabaseEnabled && quiz.attemptId != null) {
+          context.pushNamed(
+            AppRoute.quizCompleted.name,
+            queryParameters: {'attemptId': quiz.attemptId!},
+          );
+          return;
+        }
         context.pushNamed(
           AppRoute.activeQuiz.name,
           extra: quiz,
@@ -64,8 +72,11 @@ class QuizCard extends StatelessWidget {
                   SizedBox(height: 16.h),
                   Divider(color: const Color(0xFFDADCE0), height: 1.h, thickness: 1.h),
                   SizedBox(height: 16.h),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  Wrap(
+                    alignment: WrapAlignment.spaceBetween,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 8.w,
+                    runSpacing: 6.h,
                     children: [
                       Row(
                         children: [
@@ -125,34 +136,6 @@ class QuizCard extends StatelessWidget {
                 ],
               ),
             ),
-            if (quiz.isAiGenerated)
-              Positioned(
-                top: -1,
-                right: -1,
-                child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF7E22CE),
-                    borderRadius: BorderRadius.only(
-                      topRight: Radius.circular(16.r),
-                      bottomLeft: Radius.circular(12.r),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.auto_awesome, color: Colors.white, size: 12.w),
-                      SizedBox(width: 4.w),
-                      Text(
-                        'AI Generated',
-                        style: AppTextStyles.interSemiBold16.copyWith(
-                          fontSize: 10.sp,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
           ],
         ),
       ),

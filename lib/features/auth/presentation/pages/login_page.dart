@@ -1,3 +1,5 @@
+import 'package:nts_psc_app/presentation/widgets/app_scaffold.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -10,12 +12,17 @@ import 'package:nts_psc_app/config/routes/app_routes.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:nts_psc_app/core/utils/form_validators.dart';
 import 'package:nts_psc_app/features/auth/presentation/controllers/auth_controller.dart';
+import 'package:nts_psc_app/features/auth/presentation/utils/auth_error_messages.dart';
 import 'package:nts_psc_app/presentation/widgets/custom_button.dart';
 import 'package:nts_psc_app/presentation/widgets/custom_text_field.dart';
 import 'package:nts_psc_app/presentation/widgets/custom_toast.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:nts_psc_app/features/auth/presentation/widgets/social_sign_in_action.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
-  const LoginPage({super.key});
+  const LoginPage({super.key, this.initialRole});
+
+  final UserRole? initialRole;
 
   @override
   ConsumerState<LoginPage> createState() => _LoginPageState();
@@ -31,7 +38,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   void initState() {
     super.initState();
     // Default to the role chosen in previous screens, or student
-    _selectedRole = ref.read(authControllerProvider).value?.selectedRole ?? UserRole.student;
+    _selectedRole =
+        widget.initialRole ??
+        ref.read(authControllerProvider).value?.selectedRole ??
+        UserRole.student;
   }
 
   @override
@@ -57,11 +67,15 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             child: GestureDetector(
               onTap: () {
                 setState(() => _selectedRole = UserRole.student);
-                ref.read(authControllerProvider.notifier).selectRole(UserRole.student);
+                ref
+                    .read(authControllerProvider.notifier)
+                    .selectRole(UserRole.student);
               },
               child: Container(
                 decoration: BoxDecoration(
-                  color: _selectedRole == UserRole.student ? AppColors.primary : Colors.transparent,
+                  color: _selectedRole == UserRole.student
+                      ? AppColors.primary
+                      : Colors.transparent,
                   borderRadius: BorderRadius.circular(50.r),
                 ),
                 alignment: Alignment.center,
@@ -69,7 +83,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   'Student',
                   style: AppTextStyles.interSemiBold16.copyWith(
                     fontSize: 14.sp,
-                    color: _selectedRole == UserRole.student ? Colors.white : AppColors.grey500,
+                    color: _selectedRole == UserRole.student
+                        ? Colors.white
+                        : AppColors.grey500,
                   ),
                 ),
               ),
@@ -79,11 +95,15 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             child: GestureDetector(
               onTap: () {
                 setState(() => _selectedRole = UserRole.teacher);
-                ref.read(authControllerProvider.notifier).selectRole(UserRole.teacher);
+                ref
+                    .read(authControllerProvider.notifier)
+                    .selectRole(UserRole.teacher);
               },
               child: Container(
                 decoration: BoxDecoration(
-                  color: _selectedRole == UserRole.teacher ? AppColors.primary : Colors.transparent,
+                  color: _selectedRole == UserRole.teacher
+                      ? AppColors.primary
+                      : Colors.transparent,
                   borderRadius: BorderRadius.circular(50.r),
                 ),
                 alignment: Alignment.center,
@@ -91,7 +111,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   'Teacher',
                   style: AppTextStyles.interSemiBold16.copyWith(
                     fontSize: 14.sp,
-                    color: _selectedRole == UserRole.teacher ? Colors.white : AppColors.grey500,
+                    color: _selectedRole == UserRole.teacher
+                        ? Colors.white
+                        : AppColors.grey500,
                   ),
                 ),
               ),
@@ -121,7 +143,13 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       width: double.infinity,
       height: 56.h,
       child: OutlinedButton(
-        onPressed: () {},
+        onPressed: () => startSocialSignIn(
+          context,
+          ref,
+          iconAsset == AppAssets.google
+              ? OAuthProvider.google
+              : OAuthProvider.apple,
+        ),
         style: OutlinedButton.styleFrom(
           padding: EdgeInsets.symmetric(vertical: 16.h),
           backgroundColor: Colors.white,
@@ -138,11 +166,15 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 ? SvgPicture.asset(iconAsset, width: 24.w, height: 24.w)
                 : Image.asset(iconAsset, width: 24.w, height: 24.w),
             SizedBox(width: 12.w),
-            Text(
-              text,
-              style: AppTextStyles.interSemiBold16.copyWith(
-                color: AppColors.onBackground,
-                fontSize: 16.sp,
+            Flexible(
+              child: Text(
+                text,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTextStyles.interSemiBold16.copyWith(
+                  color: AppColors.onBackground,
+                  fontSize: 16.sp,
+                ),
               ),
             ),
           ],
@@ -153,7 +185,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AppScaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
         child: SingleChildScrollView(
@@ -163,15 +195,15 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SizedBox(height: 32.h),
-
                 // Role selector pill
                 _buildRoleSelector(),
-                SizedBox(height: 28.h),
+                SizedBox(height: 20.h),
 
                 // Title
                 Text(
-                  _selectedRole == UserRole.teacher ? 'Teacher Portal' : 'Welcome Back',
+                  _selectedRole == UserRole.teacher
+                      ? 'Teacher Portal'
+                      : 'Welcome Back',
                   style: AppTextStyles.interBold30.copyWith(
                     color: AppColors.onBackground,
                     fontSize: 30.sp,
@@ -200,6 +232,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   hintText: 'e.g. ahmed@example.com',
                   prefixIcon: Icons.mail_outline,
                   keyboardType: TextInputType.emailAddress,
+                  textInputAction: TextInputAction.next,
                   validator: FormValidators.validateEmail,
                 ),
                 SizedBox(height: 24.h),
@@ -208,7 +241,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _buildFieldLabel('Password'),
+                    Flexible(child: _buildFieldLabel('Password')),
                     GestureDetector(
                       onTap: () {
                         context.pushNamed(AppRoute.forgotPassword.name);
@@ -226,13 +259,49 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     ),
                   ],
                 ),
+
                 CustomTextFormField(
                   controller: _passwordController,
                   hintText: 'Enter your password',
                   prefixIcon: Icons.lock_outline,
                   isPassword: true,
+                  textInputAction: TextInputAction.done,
                   validator: FormValidators.validatePassword,
                 ),
+                SizedBox(height: 10.h),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Wrap(
+                    alignment: WrapAlignment.end,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      Text(
+                        "Don't have an account? ",
+                        style: AppTextStyles.interMedium16.copyWith(
+                          color: AppColors.grey500,
+                          fontSize: 14.sp,
+                        ),
+                      ),
+                      InkWell(
+                        onTap: () {
+                          if (_selectedRole == UserRole.teacher) {
+                            context.pushNamed(AppRoute.teacherSignup.name);
+                          } else {
+                            context.pushNamed(AppRoute.signup.name);
+                          }
+                        },
+                        child: Text(
+                          'Sign Up',
+                          style: AppTextStyles.interBold24.copyWith(
+                            color: AppColors.primary,
+                            fontSize: 14.sp,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
                 SizedBox(height: 36.h),
 
                 // Log In Button
@@ -249,16 +318,35 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                               if (_formKey.currentState?.validate() ?? false) {
                                 final success = await ref
                                     .read(authControllerProvider.notifier)
-                                    .login(_emailController.text.trim(), _passwordController.text, _selectedRole);
+                                    .login(
+                                      _emailController.text.trim(),
+                                      _passwordController.text,
+                                      _selectedRole,
+                                    );
 
-                                if (success && context.mounted) {
+                                if (!context.mounted) return;
+                                if (success) {
                                   if (_selectedRole == UserRole.teacher) {
-                                    CustomToast.showSuccess(context, message: 'Welcome to Educora Teacher Studio!');
+                                    CustomToast.showSuccess(
+                                      context,
+                                      message: 'Welcome back.',
+                                    );
                                     context.goNamed(AppRoute.teacherMain.name);
                                   } else {
-                                    CustomToast.showSuccess(context, message: 'Welcome back!');
+                                    CustomToast.showSuccess(
+                                      context,
+                                      message: 'Welcome back.',
+                                    );
                                     context.goNamed(AppRoute.main.name);
                                   }
+                                } else {
+                                  final error = ref
+                                      .read(authControllerProvider)
+                                      .error;
+                                  CustomToast.showError(
+                                    context,
+                                    message: loginErrorMessage(error),
+                                  );
                                 }
                               }
                             },
@@ -271,7 +359,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 // Divider
                 Row(
                   children: [
-                    Expanded(child: Divider(color: AppColors.grey300, thickness: 1.h)),
+                    Expanded(
+                      child: Divider(color: AppColors.grey300, thickness: 1.h),
+                    ),
                     Padding(
                       padding: EdgeInsets.symmetric(horizontal: 16.w),
                       child: Text(
@@ -283,47 +373,26 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         ),
                       ),
                     ),
-                    Expanded(child: Divider(color: AppColors.grey300, thickness: 1.h)),
+                    Expanded(
+                      child: Divider(color: AppColors.grey300, thickness: 1.h),
+                    ),
                   ],
                 ),
                 SizedBox(height: 24.h),
 
                 // Social Buttons
-                _buildSocialButton(text: 'Continue with Google', iconAsset: AppAssets.google),
-                SizedBox(height: 16.h),
-                _buildSocialButton(text: 'Continue with Apple', iconAsset: AppAssets.appleSvg),
-                SizedBox(height: 32.h),
-
-                // Footer Sign Up Link
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      "Don't have an account? ",
-                      style: AppTextStyles.interMedium16.copyWith(
-                        color: AppColors.grey500,
-                        fontSize: 14.sp,
-                      ),
-                    ),
-                    InkWell(
-                      onTap: () {
-                        if (_selectedRole == UserRole.teacher) {
-                          context.pushReplacementNamed(AppRoute.teacherSignup.name);
-                        } else {
-                          context.pushReplacementNamed(AppRoute.signup.name);
-                        }
-                      },
-                      child: Text(
-                        'Sign Up',
-                        style: AppTextStyles.interBold24.copyWith(
-                          color: AppColors.primary,
-                          fontSize: 14.sp,
-                        ),
-                      ),
-                    ),
-                  ],
+                _buildSocialButton(
+                  text: 'Continue with Google',
+                  iconAsset: AppAssets.google,
                 ),
-                SizedBox(height: 24.h),
+                if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) ...[
+                  SizedBox(height: 16.h),
+                  _buildSocialButton(
+                    text: 'Continue with Apple',
+                    iconAsset: AppAssets.appleSvg,
+                  ),
+                ],
+                SizedBox(height: 32.h),
               ],
             ),
           ),

@@ -1,3 +1,4 @@
+import 'package:nts_psc_app/presentation/widgets/app_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:nts_psc_app/core/constants/app_assets.dart';
@@ -17,7 +18,7 @@ class OnboardingScreen5 extends StatelessWidget {
         'Study according to the study plan, make study more motivated.';
    
 
-    return Scaffold(
+    return AppScaffold(
       backgroundColor: kBackgroundColor,
       body: Stack(
         children: [
@@ -32,17 +33,18 @@ class OnboardingScreen5 extends StatelessWidget {
 
           // Page Indicator
           Positioned(
-            top: 592.h,
-            left: 155.w,
-            child: const PageIndicator(currentPage: 2, totalPages: 3),
+            bottom: 104.h,
+            left: 0,
+            right: 0,
+            child: const Center(child: PageIndicator(currentPage: 2, totalPages: 3)),
           ),
 
           // Sign Up Button - Fixed Position
           Positioned(
-            top: 679.h,
-            left: 30.w,
+            bottom: 24.h,
+            left: 24.w,
+            right: 0.5.sw + 8.w,
             child: CustomButton(
-              width: 160.w,
               height: 50.h,
               text: 'Sign up',
               onPressed: () {
@@ -54,10 +56,10 @@ class OnboardingScreen5 extends StatelessWidget {
 
           // Log In Button - Fixed Position
           Positioned(
-            top: 679.h,
-            left: 210.w,
+            bottom: 24.h,
+            left: 0.5.sw + 8.w,
+            right: 24.w,
             child: SizedBox(
-              width: 160.w,
               height: 50.h,
               child: ElevatedButton(
                 onPressed: () {

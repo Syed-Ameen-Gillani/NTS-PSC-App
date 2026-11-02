@@ -1,8 +1,10 @@
+import 'package:nts_psc_app/presentation/widgets/app_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:nts_psc_app/core/theme/app_colors.dart';
 import 'package:nts_psc_app/core/theme/app_text_styles.dart';
+import 'package:nts_psc_app/core/utils/keyboard_dismissal.dart';
 import 'package:nts_psc_app/presentation/widgets/custom_toast.dart';
 
 class RateAppScreen extends StatefulWidget {
@@ -18,7 +20,7 @@ class _RateAppScreenState extends State<RateAppScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AppScaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
@@ -122,6 +124,7 @@ class _RateAppScreenState extends State<RateAppScreen> {
           ),
           SizedBox(height: 12.h),
           TextField(
+            onTapOutside: dismissKeyboardOnTapOutside,
             maxLines: 5,
             decoration: InputDecoration(
               hintText: 'What do you love? What could we do better?',

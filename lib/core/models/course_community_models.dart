@@ -59,6 +59,25 @@ class CourseReviewModel {
 }
 
 class RatingDistributionModel {
+  factory RatingDistributionModel.fromReviews(Iterable<CourseReviewModel> reviews) {
+    final counts = List<int>.filled(5, 0);
+    var total = 0;
+    var sum = 0.0;
+    for (final review in reviews) {
+      if (!review.rating.isFinite || review.rating < 1 || review.rating > 5) {
+        continue;
+      }
+      counts[review.rating.round() - 1]++;
+      sum += review.rating;
+      total++;
+    }
+    return RatingDistributionModel(
+      averageRating: total == 0 ? 0 : double.parse((sum / total).toStringAsFixed(1)),
+      totalReviews: total, fiveStars: counts[4], fourStars: counts[3],
+      threeStars: counts[2], twoStars: counts[1], oneStars: counts[0],
+    );
+  }
+
   final double averageRating;
   final int totalReviews;
   final int fiveStars;

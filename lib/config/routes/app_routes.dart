@@ -11,14 +11,15 @@ enum AppRoute {
   login,
   signup,
   forgotPassword,
+  resetPassword,
   main,
   accountSettings,
   editProfile,
   appLanguage,
   generateAiQuiz,
-  quizReady,
   activeQuiz,
   quizCompleted,
+  courseCertificate,
   quizReview,
   deleteAccount,
   paymentMethods,
@@ -26,6 +27,7 @@ enum AppRoute {
   addCard,
   addWallet,
   notifications,
+  notificationInbox,
   aboutUs,
   termsOfService,
   privacyPolicy,
@@ -33,23 +35,43 @@ enum AppRoute {
   testAlerts,
   // New Student Learning Routes
   courseDetail,
+  categoryCourses,
+  newCourses,
+  courseSearch,
   courseEnroll,
   lessonPlayer,
+  videoFullscreen,
+  offlineDownloads,
+  offlineLesson,
+  lessonReading,
   publicTeacherProfile,
+  instructors,
   studentLiveClasses,
+  studentAssignment,
   // New Teacher Routes
   teacherWelcome,
   teacherLogin,
   teacherSignup,
   teacherMain,
   teacherCreateCourse,
+  teacherCreateLesson,
   teacherCreateQuiz,
+  teacherQuizQuestion,
   teacherAnalytics,
   teacherManageCourse,
+  teacherLessonMedia,
+  teacherLessonActivities,
+  curriculumResources,
+  teacherCourseAssignments,
+  teacherCreateAssignment,
+  teacherReviewAssignment,
   teacherDoubts,
   teacherLiveClasses,
   teacherStudents,
   teacherPayouts,
+  teacherQuizStudio,
+  teacherQuizAnalysis,
+  teacherAssessmentList,
 }
 
 extension AppRouteExtension on AppRoute {
@@ -79,6 +101,8 @@ extension AppRouteExtension on AppRoute {
         return '/signup';
       case AppRoute.forgotPassword:
         return '/forgot_password';
+      case AppRoute.resetPassword:
+        return '/reset_password';
       case AppRoute.main:
         return '/main';
       case AppRoute.accountSettings:
@@ -89,10 +113,10 @@ extension AppRouteExtension on AppRoute {
         return '/app_language';
       case AppRoute.generateAiQuiz:
         return '/generate_ai_quiz';
-      case AppRoute.quizReady:
-        return '/quiz_ready';
       case AppRoute.activeQuiz:
         return '/active_quiz';
+      case AppRoute.courseCertificate:
+        return '/course_certificate';
       case AppRoute.quizCompleted:
         return '/quiz_completed';
       case AppRoute.quizReview:
@@ -109,6 +133,8 @@ extension AppRouteExtension on AppRoute {
         return '/add_wallet';
       case AppRoute.notifications:
         return '/notifications';
+      case AppRoute.notificationInbox:
+        return '/notification_inbox';
       case AppRoute.aboutUs:
         return '/about_us';
       case AppRoute.termsOfService:
@@ -121,14 +147,32 @@ extension AppRouteExtension on AppRoute {
         return '/test_alerts';
       case AppRoute.courseDetail:
         return '/course_detail';
+      case AppRoute.categoryCourses:
+        return '/category_courses';
+      case AppRoute.newCourses:
+        return '/new_courses';
+      case AppRoute.courseSearch:
+        return '/course_search';
       case AppRoute.courseEnroll:
         return '/course_enroll';
       case AppRoute.lessonPlayer:
         return '/lesson_player';
+      case AppRoute.videoFullscreen:
+        return '/video_fullscreen';
+      case AppRoute.offlineDownloads:
+        return '/offline_downloads';
+      case AppRoute.lessonReading:
+        return '/lesson_reading';
+      case AppRoute.offlineLesson:
+        return '/offline_lesson';
       case AppRoute.publicTeacherProfile:
         return '/public_teacher_profile';
+      case AppRoute.instructors:
+        return '/instructors';
       case AppRoute.studentLiveClasses:
         return '/student_live_classes';
+      case AppRoute.studentAssignment:
+        return '/student_assignment';
       case AppRoute.teacherWelcome:
         return '/teacher_welcome';
       case AppRoute.teacherLogin:
@@ -139,12 +183,28 @@ extension AppRouteExtension on AppRoute {
         return '/teacher_main';
       case AppRoute.teacherCreateCourse:
         return '/teacher_create_course';
+      case AppRoute.teacherCreateLesson:
+        return '/teacher_create_lesson';
       case AppRoute.teacherCreateQuiz:
         return '/teacher_create_quiz';
+      case AppRoute.teacherQuizQuestion:
+        return '/teacher_quiz_question';
       case AppRoute.teacherAnalytics:
         return '/teacher_analytics';
       case AppRoute.teacherManageCourse:
         return '/teacher_manage_course';
+      case AppRoute.teacherLessonActivities:
+        return '/teacher_lesson_activities';
+      case AppRoute.teacherLessonMedia:
+        return '/teacher_lesson_media';
+      case AppRoute.curriculumResources:
+        return '/curriculum_resources';
+      case AppRoute.teacherCourseAssignments:
+        return '/teacher_course_assignments';
+      case AppRoute.teacherCreateAssignment:
+        return '/teacher_create_assignment';
+      case AppRoute.teacherReviewAssignment:
+        return '/teacher_review_assignment';
       case AppRoute.teacherDoubts:
         return '/teacher_doubts';
       case AppRoute.teacherLiveClasses:
@@ -153,6 +213,12 @@ extension AppRouteExtension on AppRoute {
         return '/teacher_students';
       case AppRoute.teacherPayouts:
         return '/teacher_payouts';
+      case AppRoute.teacherQuizStudio:
+        return '/teacher_quiz_studio';
+      case AppRoute.teacherQuizAnalysis:
+        return '/teacher_quiz_analysis';
+      case AppRoute.teacherAssessmentList:
+        return '/teacher_assessment_list';
     }
   }
 }

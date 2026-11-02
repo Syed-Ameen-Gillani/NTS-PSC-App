@@ -44,7 +44,7 @@ class BottomNavBar extends ConsumerWidget {
       },
       // padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
       cornerRadius: BorderRadius.zero,
-      shadowColor: Colors.black.withOpacity(0.05),
+      shadowColor: Colors.black.withValues(alpha: 0.05),
       elevation: 10,
     );
   }

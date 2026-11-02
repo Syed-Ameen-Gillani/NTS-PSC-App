@@ -6,6 +6,7 @@ import 'package:nts_psc_app/core/models/app_models.dart';
 import 'package:nts_psc_app/core/repositories/lesson_player_repository_provider.dart';
 import 'package:nts_psc_app/core/theme/app_colors.dart';
 import 'package:nts_psc_app/core/theme/app_text_styles.dart';
+import 'package:nts_psc_app/core/utils/keyboard_dismissal.dart';
 import 'package:nts_psc_app/features/home/presentation/widgets/course_resources_sheet.dart';
 import 'package:nts_psc_app/features/learn/presentation/controllers/my_learning_controller.dart';
 import 'package:nts_psc_app/presentation/widgets/custom_button.dart';
@@ -15,11 +16,7 @@ class LessonNotesTab extends ConsumerStatefulWidget {
   final CourseModel course;
   final LessonModel lesson;
 
-  const LessonNotesTab({
-    super.key,
-    required this.course,
-    required this.lesson,
-  });
+  const LessonNotesTab({super.key, required this.course, required this.lesson});
 
   @override
   ConsumerState<LessonNotesTab> createState() => _LessonNotesTabState();
@@ -91,14 +88,16 @@ class _LessonNotesTabState extends ConsumerState<LessonNotesTab> {
       lessonId: widget.lesson.id,
     );
 
-    ref.read(myLearningControllerProvider.notifier).markLessonCompleted(
-      widget.course.id,
-      widget.lesson.id,
-    );
+    ref
+        .read(myLearningControllerProvider.notifier)
+        .markLessonCompleted(widget.course.id, widget.lesson.id);
 
     if (mounted) {
       setState(() => _isLessonCompleted = true);
-      CustomToast.showSuccess(context, message: 'Lesson completed! Course progress updated.');
+      CustomToast.showSuccess(
+        context,
+        message: 'Lesson completed! Course progress updated.',
+      );
     }
   }
 
@@ -129,14 +128,26 @@ class _LessonNotesTabState extends ConsumerState<LessonNotesTab> {
                     courseTitle: widget.course.title,
                   );
                 },
-                icon: Icon(Icons.folder_shared_outlined, size: 14.w, color: AppColors.primary),
+                icon: Icon(
+                  Icons.folder_shared_outlined,
+                  size: 14.w,
+                  color: AppColors.primary,
+                ),
                 label: Text(
                   'Course Files',
-                  style: AppTextStyles.interSemiBold16.copyWith(fontSize: 11.sp, color: AppColors.primary),
+                  style: AppTextStyles.interSemiBold16.copyWith(
+                    fontSize: 11.sp,
+                    color: AppColors.primary,
+                  ),
                 ),
                 style: OutlinedButton.styleFrom(
-                  padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 10.w,
+                    vertical: 4.h,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20.r),
+                  ),
                 ),
               ),
             ],
@@ -183,7 +194,9 @@ class _LessonNotesTabState extends ConsumerState<LessonNotesTab> {
                     Flexible(
                       child: Text(
                         'Personal Notebook',
-                        style: AppTextStyles.interBold24.copyWith(fontSize: 14.sp),
+                        style: AppTextStyles.interBold24.copyWith(
+                          fontSize: 14.sp,
+                        ),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
@@ -201,11 +214,23 @@ class _LessonNotesTabState extends ConsumerState<LessonNotesTab> {
                       child: const CircularProgressIndicator(strokeWidth: 2),
                     ),
                     SizedBox(width: 4.w),
-                    Text('Saving...', style: AppTextStyles.interRegular14.copyWith(fontSize: 10.sp, color: AppColors.grey500)),
+                    Text(
+                      'Saving...',
+                      style: AppTextStyles.interRegular14.copyWith(
+                        fontSize: 10.sp,
+                        color: AppColors.grey500,
+                      ),
+                    ),
                   ] else if (_isNoteSaved) ...[
                     Icon(Icons.check_circle, size: 12.w, color: Colors.green),
                     SizedBox(width: 4.w),
-                    Text('Saved', style: AppTextStyles.interRegular14.copyWith(fontSize: 10.sp, color: Colors.green.shade700)),
+                    Text(
+                      'Saved',
+                      style: AppTextStyles.interRegular14.copyWith(
+                        fontSize: 10.sp,
+                        color: Colors.green.shade700,
+                      ),
+                    ),
                   ],
                 ],
               ),
@@ -219,13 +244,18 @@ class _LessonNotesTabState extends ConsumerState<LessonNotesTab> {
               border: Border.all(color: AppColors.grey300),
             ),
             child: TextField(
+              onTapOutside: dismissKeyboardOnTapOutside,
               controller: _noteController,
               onChanged: _onNoteChanged,
               maxLines: 4,
               style: AppTextStyles.interRegular14.copyWith(fontSize: 12.sp),
               decoration: InputDecoration(
-                hintText: 'Type your personal notes, constitutional section references, and exam mnemonics here... (auto-saved)',
-                hintStyle: AppTextStyles.interRegular14.copyWith(fontSize: 12.sp, color: AppColors.grey400),
+                hintText:
+                    'Type your personal notes, constitutional section references, and exam mnemonics here... (auto-saved)',
+                hintStyle: AppTextStyles.interRegular14.copyWith(
+                  fontSize: 12.sp,
+                  color: AppColors.grey400,
+                ),
                 contentPadding: EdgeInsets.all(12.w),
                 border: InputBorder.none,
               ),
@@ -235,13 +265,17 @@ class _LessonNotesTabState extends ConsumerState<LessonNotesTab> {
 
           // Completion Button
           CustomButton(
-            text: _isLessonCompleted ? '✓ Lesson Completed' : 'Mark Lesson as Completed',
+            text: _isLessonCompleted
+                ? '✓ Lesson Completed'
+                : 'Mark Lesson as Completed',
             onPressed: () {
               if (!_isLessonCompleted) {
                 _handleMarkCompleted();
               }
             },
-            color: _isLessonCompleted ? Colors.green.shade600 : AppColors.primary,
+            color: _isLessonCompleted
+                ? Colors.green.shade600
+                : AppColors.primary,
           ),
         ],
       ),

@@ -7,12 +7,14 @@ class CategoryFilterChips extends StatefulWidget {
   final List<String> filters;
   final int initialSelectedIndex;
   final ValueChanged<int>? onSelected;
+  final bool includeHorizontalPadding;
 
   const CategoryFilterChips({
     super.key,
     this.filters = const ['All', 'AJK PSC', 'FPSC', 'NTS', 'CSS'],
     this.initialSelectedIndex = 0,
     this.onSelected,
+    this.includeHorizontalPadding = true,
   });
 
   @override
@@ -29,17 +31,28 @@ class _CategoryFilterChipsState extends State<CategoryFilterChips> {
   }
 
   @override
+  void didUpdateWidget(CategoryFilterChips oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialSelectedIndex != _selectedIndex) {
+      _selectedIndex = widget.initialSelectedIndex;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return SizedBox(
       height: 36.h,
       child: ListView.separated(
-        padding: EdgeInsets.symmetric(horizontal: 24.w),
+        padding: widget.includeHorizontalPadding
+            ? EdgeInsets.symmetric(horizontal: 24.w)
+            : EdgeInsets.zero,
         scrollDirection: Axis.horizontal,
         itemCount: widget.filters.length,
         separatorBuilder: (context, index) => SizedBox(width: 8.w),
         itemBuilder: (context, index) {
           final isSelected = _selectedIndex == index;
           return GestureDetector(
+            behavior: HitTestBehavior.opaque,
             onTap: () {
               setState(() {
                 _selectedIndex = index;
@@ -55,7 +68,9 @@ class _CategoryFilterChipsState extends State<CategoryFilterChips> {
                 color: isSelected ? AppColors.primary : const Color(0xFFF8F9FA),
                 borderRadius: BorderRadius.circular(100.r),
                 border: Border.all(
-                  color: isSelected ? AppColors.primary : const Color(0xFFDADCE0),
+                  color: isSelected
+                      ? AppColors.primary
+                      : const Color(0xFFDADCE0),
                   width: 1.w,
                 ),
               ),

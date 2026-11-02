@@ -81,8 +81,9 @@ class MockCommunityData {
     double sum = 0;
     for (final r in reviews) {
       sum += r.rating;
-      if (r.rating >= 4.5) five++;
-      else if (r.rating >= 3.5) four++;
+      if (r.rating >= 4.5) {
+        five++;
+      } else if (r.rating >= 3.5) four++;
       else if (r.rating >= 2.5) three++;
       else if (r.rating >= 1.5) two++;
       else one++;

@@ -59,7 +59,10 @@ class InVideoQuizDialog extends ConsumerWidget {
                 children: [
                   // Coursera Knowledge Check badge
                   Container(
-                    padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 10.w,
+                      vertical: 4.h,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFFFFF8E1), // Amber light
                       borderRadius: BorderRadius.circular(16.r),
@@ -68,7 +71,11 @@ class InVideoQuizDialog extends ConsumerWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.lightbulb, size: 14.w, color: const Color(0xFFE65100)),
+                        Icon(
+                          Icons.lightbulb,
+                          size: 14.w,
+                          color: const Color(0xFFE65100),
+                        ),
                         SizedBox(width: 4.w),
                         Text(
                           'KNOWLEDGE CHECK • ${activeQuiz.timestampDisplay}',
@@ -83,7 +90,9 @@ class InVideoQuizDialog extends ConsumerWidget {
                   IconButton(
                     icon: const Icon(Icons.close, color: AppColors.grey500),
                     onPressed: () {
-                      ref.read(inVideoQuizControllerProvider.notifier).dismissQuiz();
+                      ref
+                          .read(inVideoQuizControllerProvider.notifier)
+                          .dismissQuiz();
                       Navigator.of(context).pop();
                     },
                   ),
@@ -140,26 +149,38 @@ class InVideoQuizDialog extends ConsumerWidget {
                   child: InkWell(
                     onTap: hasSubmitted && isCorrect
                         ? null
-                        : () => ref.read(inVideoQuizControllerProvider.notifier).selectOption(index),
+                        : () => ref
+                              .read(inVideoQuizControllerProvider.notifier)
+                              .selectOption(index),
                     borderRadius: BorderRadius.circular(12.r),
                     child: Container(
-                      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 14.w,
+                        vertical: 12.h,
+                      ),
                       decoration: BoxDecoration(
                         color: bgColor,
                         borderRadius: BorderRadius.circular(12.r),
-                        border: Border.all(color: borderColor, width: isSelected ? 1.5 : 1),
+                        border: Border.all(
+                          color: borderColor,
+                          width: isSelected ? 1.5 : 1,
+                        ),
                       ),
                       child: Row(
                         children: [
                           CircleAvatar(
                             radius: 12.r,
-                            backgroundColor: isSelected ? AppColors.primary : AppColors.grey200,
+                            backgroundColor: isSelected
+                                ? AppColors.primary
+                                : AppColors.grey200,
                             child: Text(
                               letter,
                               style: TextStyle(
                                 fontSize: 11.sp,
                                 fontWeight: FontWeight.bold,
-                                color: isSelected ? Colors.white : AppColors.grey700,
+                                color: isSelected
+                                    ? Colors.white
+                                    : AppColors.grey700,
                               ),
                             ),
                           ),
@@ -187,10 +208,14 @@ class InVideoQuizDialog extends ConsumerWidget {
                   width: double.infinity,
                   padding: EdgeInsets.all(14.w),
                   decoration: BoxDecoration(
-                    color: isCorrect ? const Color(0xFFE8F5E9) : const Color(0xFFFFF3E0),
+                    color: isCorrect
+                        ? const Color(0xFFE8F5E9)
+                        : const Color(0xFFFFF3E0),
                     borderRadius: BorderRadius.circular(12.r),
                     border: Border.all(
-                      color: isCorrect ? Colors.green.shade400 : Colors.orange.shade400,
+                      color: isCorrect
+                          ? Colors.green.shade400
+                          : Colors.orange.shade400,
                     ),
                   ),
                   child: Column(
@@ -200,15 +225,21 @@ class InVideoQuizDialog extends ConsumerWidget {
                         children: [
                           Icon(
                             isCorrect ? Icons.check_circle : Icons.info_outline,
-                            color: isCorrect ? Colors.green.shade700 : Colors.orange.shade800,
+                            color: isCorrect
+                                ? Colors.green.shade700
+                                : Colors.orange.shade800,
                             size: 18.w,
                           ),
                           SizedBox(width: 8.w),
                           Text(
-                            isCorrect ? 'Correct! Well done.' : 'Not quite right',
+                            isCorrect
+                                ? 'Correct! Well done.'
+                                : 'Not quite right',
                             style: AppTextStyles.interBold24.copyWith(
                               fontSize: 13.sp,
-                              color: isCorrect ? Colors.green.shade800 : Colors.orange.shade900,
+                              color: isCorrect
+                                  ? Colors.green.shade800
+                                  : Colors.orange.shade900,
                             ),
                           ),
                         ],
@@ -234,16 +265,22 @@ class InVideoQuizDialog extends ConsumerWidget {
                   text: 'Check Answer',
                   onPressed: () {
                     if (selectedIdx != null) {
-                      ref.read(inVideoQuizControllerProvider.notifier).submitAnswer();
+                      ref
+                          .read(inVideoQuizControllerProvider.notifier)
+                          .submitAnswer();
                     }
                   },
-                  color: selectedIdx != null ? AppColors.primary : AppColors.grey400,
+                  color: selectedIdx != null
+                      ? AppColors.primary
+                      : AppColors.grey400,
                 ),
               ] else if (isCorrect) ...[
                 CustomButton(
                   text: 'Continue Video ▶',
                   onPressed: () {
-                    ref.read(inVideoQuizControllerProvider.notifier).resumeVideo();
+                    ref
+                        .read(inVideoQuizControllerProvider.notifier)
+                        .resumeVideo();
                     Navigator.of(context).pop();
                   },
                   color: Colors.green.shade600,
@@ -255,14 +292,21 @@ class InVideoQuizDialog extends ConsumerWidget {
                     Expanded(
                       child: OutlinedButton.icon(
                         icon: const Icon(Icons.replay_10, size: 16),
-                        label: Text('Rewind 15s', style: TextStyle(fontSize: 12.sp)),
+                        label: Text(
+                          'Rewind 15s',
+                          style: TextStyle(fontSize: 12.sp),
+                        ),
                         onPressed: () {
-                          ref.read(inVideoQuizControllerProvider.notifier).rewindAndRewatch();
+                          ref
+                              .read(inVideoQuizControllerProvider.notifier)
+                              .rewindAndRewatch();
                           Navigator.of(context).pop();
                         },
                         style: OutlinedButton.styleFrom(
                           padding: EdgeInsets.symmetric(vertical: 12.h),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12.r),
+                          ),
                         ),
                       ),
                     ),
@@ -270,16 +314,24 @@ class InVideoQuizDialog extends ConsumerWidget {
                     Expanded(
                       child: ElevatedButton(
                         onPressed: selectedIdx != null
-                            ? () => ref.read(inVideoQuizControllerProvider.notifier).submitAnswer()
+                            ? () => ref
+                                  .read(inVideoQuizControllerProvider.notifier)
+                                  .submitAnswer()
                             : null,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
                           padding: EdgeInsets.symmetric(vertical: 12.h),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12.r),
+                          ),
                         ),
                         child: Text(
                           'Try Again',
-                          style: TextStyle(fontSize: 12.sp, color: Colors.white, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ),

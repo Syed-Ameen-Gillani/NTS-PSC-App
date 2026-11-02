@@ -1,3 +1,4 @@
+import 'package:nts_psc_app/presentation/widgets/app_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:nts_psc_app/config/routes/app_routes.dart';
@@ -31,9 +32,9 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 24.w),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8F9FA),
+        color: AppColors.settingsCardBackground,
         borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(color: const Color(0xFFDADCE0), width: 1.w),
+        border: Border.all(color: AppColors.settingsCardBorder, width: 1.w),
       ),
       child: Column(children: children),
     );
@@ -128,7 +129,7 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AppScaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
@@ -194,7 +195,6 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
               //     ),
               //   ],
               // ),
-
               _buildSectionHeader('PREFERENCES'),
               _buildGroupedContainer(
                 children: [

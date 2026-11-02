@@ -1,3 +1,4 @@
+import 'package:nts_psc_app/presentation/widgets/app_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -14,10 +15,11 @@ class WelcomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Exact sizing requirements
-    final imageHeight = 0.45.sh; // Reduced to 45% to prevent overflow and give more room to content
+    final imageHeight = 0.45
+        .sh; // Reduced to 45% to prevent overflow and give more room to content
     final floatingIconSize = 64.w; // Square size for the floating book icon
 
-    return Scaffold(
+    return AppScaffold(
       backgroundColor: Colors.white,
       body: Stack(
         children: [
@@ -28,7 +30,8 @@ class WelcomeScreen extends StatelessWidget {
             right: 0,
             height: imageHeight,
             child: Image.asset(
-              AppAssets.course1, // The specific background image from the screenshot
+              AppAssets
+                  .course1, // The specific background image from the screenshot
               fit: BoxFit.cover,
             ),
           ),
@@ -39,89 +42,98 @@ class WelcomeScreen extends StatelessWidget {
             left: 0,
             right: 0,
             bottom: 0,
-            child: Container(
-              color: Colors.white,
-              padding: EdgeInsets.only(
-                top: (floatingIconSize / 2) + 16.h, // Slightly reduced padding
-                left: 24.w,
-                right: 24.w,
-                bottom: 16.h,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Headings
-                  Text(
-                    'Master Your Exams',
-                    style: AppTextStyles.interBold24.copyWith(
-                      color: AppColors.onBackground,
-                      fontSize: 28.sp,
-                      height: 1.2,
-                      letterSpacing: -0.5,
+            child: SingleChildScrollView(
+              child: Container(
+                color: Colors.white,
+                padding: EdgeInsets.only(
+                  top:
+                      (floatingIconSize / 2) + 16.h, // Slightly reduced padding
+                  left: 24.w,
+                  right: 24.w,
+                  bottom: 16.h,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Headings
+                    Text(
+                      'Master Your Exams',
+                      style: AppTextStyles.interBold24.copyWith(
+                        color: AppColors.onBackground,
+                        fontSize: 28.sp,
+                        height: 1.2,
+                        letterSpacing: -0.5,
+                      ),
                     ),
-                  ),
-                  Text(
-                    'Anytime, Anywhere.',
-                    style: AppTextStyles.interBold24.copyWith(
-                      color: AppColors.primary,
-                      fontSize: 28.sp,
-                      height: 1.2,
-                      letterSpacing: -0.5,
+                    Text(
+                      'Anytime, Anywhere.',
+                      style: AppTextStyles.interBold24.copyWith(
+                        color: AppColors.primary,
+                        fontSize: 28.sp,
+                        height: 1.2,
+                        letterSpacing: -0.5,
+                      ),
                     ),
-                  ),
 
-                  SizedBox(height: 12.h), // Tight spacing to keep text together
-
-                  // Subtitle
-                  Text(
-                    'Join thousands of students preparing for FPSC, NTS, CSS, and AJK PSC with expert teachers and comprehensive mock tests.',
-                    style: AppTextStyles.interRegular14.copyWith(
-                      color: AppColors.grey500,
-                      fontSize: 15.sp,
-                      height: 1.5,
+                    SizedBox(
+                      height: 12.h,
+                    ), // Tight spacing to keep text together
+                    // Subtitle
+                    Text(
+                      'Join thousands of students preparing for FPSC, NTS, CSS, and AJK PSC with expert teachers and comprehensive mock tests.',
+                      style: AppTextStyles.interRegular14.copyWith(
+                        color: AppColors.grey500,
+                        fontSize: 15.sp,
+                        height: 1.5,
+                      ),
                     ),
-                  ),
 
-                  SizedBox(height: 32.h),
+                    SizedBox(height: 32.h),
 
-                  // Log In Button
-                  CustomButton(
-                    text: 'Log In',
-                    onPressed: () {
-                      context.pushReplacementNamed(AppRoute.login.name);
-                    },
-                    color: AppColors.primary,
-                  ),
-
-                  SizedBox(height: 16.h),
-
-                  // Continue as Guest Button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56.h,
-                    child: OutlinedButton(
+                    // Log In Button
+                    CustomButton(
+                      text: 'Log In',
                       onPressed: () {
-                        context.goNamed(AppRoute.main.name);
+                        context.pushNamed(AppRoute.login.name);
                       },
-                      style: OutlinedButton.styleFrom(
-                        padding: EdgeInsets.symmetric(vertical: 16.h),
-                        backgroundColor: AppColors.grey100.withValues(alpha: 0.5),
-                        side: BorderSide(color: AppColors.grey300, width: 1.w),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(50.r),
+                      color: AppColors.primary,
+                    ),
+
+                    SizedBox(height: 16.h),
+
+                    // Continue as Guest Button
+                    SizedBox(
+                      width: double.infinity,
+                      height: 56.h,
+                      child: OutlinedButton(
+                        onPressed: () {
+                          context.goNamed(AppRoute.main.name);
+                        },
+                        style: OutlinedButton.styleFrom(
+                          padding: EdgeInsets.symmetric(vertical: 16.h),
+                          backgroundColor: AppColors.grey100.withValues(
+                            alpha: 0.5,
+                          ),
+                          side: BorderSide(
+                            color: AppColors.grey300,
+                            width: 1.w,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(50.r),
+                          ),
+                          elevation: 0,
                         ),
-                        elevation: 0,
-                      ),
-                      child: Text(
-                        'Continue as Guest',
-                        style: AppTextStyles.interSemiBold16.copyWith(
-                          color: AppColors.onBackground,
-                          fontSize: 16.sp,
+                        child: Text(
+                          'Continue as Guest',
+                          style: AppTextStyles.interSemiBold16.copyWith(
+                            color: AppColors.onBackground,
+                            fontSize: 16.sp,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),

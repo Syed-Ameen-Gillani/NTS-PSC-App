@@ -1,3 +1,4 @@
+import 'package:nts_psc_app/presentation/widgets/app_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -49,16 +50,24 @@ class _AddWalletScreenState extends ConsumerState<AddWalletScreen> {
   Widget build(BuildContext context) {
     final isEasypaisa = widget.walletType == WalletType.easypaisa;
     final brandName = isEasypaisa ? 'Easypaisa' : 'JazzCash';
-    final brandColor = isEasypaisa ? const Color(0xFF10B981) : const Color(0xFFF59E0B);
-    final lightBrandColor = isEasypaisa ? const Color(0xFFEFFFF6) : const Color(0xFFFFF4E5);
+    final brandColor = isEasypaisa
+        ? const Color(0xFF10B981)
+        : const Color(0xFFF59E0B);
+    final lightBrandColor = isEasypaisa
+        ? const Color(0xFFEFFFF6)
+        : const Color(0xFFFFF4E5);
 
-    return Scaffold(
+    return AppScaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: AppColors.onBackground, size: 20),
+          icon: const Icon(
+            Icons.arrow_back_ios_new,
+            color: AppColors.onBackground,
+            size: 20,
+          ),
           onPressed: () => context.pop(),
         ),
         title: Text(
@@ -71,10 +80,7 @@ class _AddWalletScreenState extends ConsumerState<AddWalletScreen> {
         titleSpacing: 0,
         bottom: PreferredSize(
           preferredSize: Size.fromHeight(1.h),
-          child: Container(
-            color: const Color(0xFFE2E8F0),
-            height: 1.h,
-          ),
+          child: Container(color: const Color(0xFFE2E8F0), height: 1.h),
         ),
       ),
       body: SafeArea(
@@ -100,7 +106,11 @@ class _AddWalletScreenState extends ConsumerState<AddWalletScreen> {
                           color: Colors.white,
                           shape: BoxShape.circle,
                         ),
-                        child: Icon(Icons.phone_android, color: brandColor, size: 24.w),
+                        child: Icon(
+                          Icons.phone_android,
+                          color: brandColor,
+                          size: 24.w,
+                        ),
                       ),
                       SizedBox(width: 16.w),
                       Expanded(
@@ -129,12 +139,13 @@ class _AddWalletScreenState extends ConsumerState<AddWalletScreen> {
                   ),
                 ),
                 SizedBox(height: 32.h),
-                
+
                 _buildFieldLabel('Mobile Number'),
                 SizedBox(height: 8.h),
                 CustomTextFormField(
                   controller: _mobileController,
                   hintText: '03XX XXXXXXX',
+                  textInputAction: TextInputAction.next,
                   fillColor: const Color(0xFFF8F9FA),
                   borderColor: const Color(0xFFE2E8F0),
                   keyboardType: TextInputType.phone,
@@ -146,27 +157,35 @@ class _AddWalletScreenState extends ConsumerState<AddWalletScreen> {
                   ],
                   onChanged: (val) {
                     final cleanNumber = val.replaceAll(' ', '');
-                    if (cleanNumber.length == 11 && _mobileAutoValidate != AutovalidateMode.always) {
+                    if (cleanNumber.length == 11 &&
+                        _mobileAutoValidate != AutovalidateMode.always) {
                       setState(() {
                         _mobileAutoValidate = AutovalidateMode.always;
                       });
                     }
                   },
                   validator: (val) {
-                    if (val == null || val.isEmpty) return 'Mobile number is required';
+                    if (val == null || val.isEmpty) {
+                      return 'Mobile number is required';
+                    }
                     final cleanNumber = val.replaceAll(' ', '');
-                    if (cleanNumber.length != 11) return 'Must be exactly 11 digits long';
-                    if (!cleanNumber.startsWith('03')) return 'Must start with 03';
+                    if (cleanNumber.length != 11) {
+                      return 'Must be exactly 11 digits long';
+                    }
+                    if (!cleanNumber.startsWith('03')) {
+                      return 'Must start with 03';
+                    }
                     return null;
                   },
                 ),
                 SizedBox(height: 16.h),
-                
+
                 _buildFieldLabel('Account Holder Name'),
                 SizedBox(height: 8.h),
                 CustomTextFormField(
                   controller: _nameController,
                   hintText: 'e.g. Ahmed Ali',
+                  textInputAction: TextInputAction.done,
                   prefixIcon: Icons.person_outline,
                   fillColor: const Color(0xFFF8F9FA),
                   borderColor: const Color(0xFFE2E8F0),
@@ -175,16 +194,22 @@ class _AddWalletScreenState extends ConsumerState<AddWalletScreen> {
                     FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z\s]')),
                   ],
                   validator: (val) {
-                    if (val == null || val.trim().isEmpty) return 'Account holder name is required';
+                    if (val == null || val.trim().isEmpty) {
+                      return 'Account holder name is required';
+                    }
                     return null;
                   },
                 ),
                 SizedBox(height: 24.h),
-                
+
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.info_outline, color: AppColors.grey500, size: 20.w),
+                    Icon(
+                      Icons.info_outline,
+                      color: AppColors.grey500,
+                      size: 20.w,
+                    ),
                     SizedBox(width: 12.w),
                     Expanded(
                       child: Text(
@@ -203,12 +228,12 @@ class _AddWalletScreenState extends ConsumerState<AddWalletScreen> {
         ),
       ),
       bottomNavigationBar: Padding(
-        padding: EdgeInsets.all(24.w).copyWith(
-          bottom: 24.h + MediaQuery.of(context).padding.bottom,
-        ),
+        padding: EdgeInsets.all(
+          24.w,
+        ).copyWith(bottom: 24.h + MediaQuery.of(context).padding.bottom),
         child: CustomButton(
           text: 'Send Link Request',
-          onPressed: _onConnectWallet, 
+          onPressed: _onConnectWallet,
         ),
       ),
     );
@@ -228,7 +253,9 @@ class _AddWalletScreenState extends ConsumerState<AddWalletScreen> {
 class _MobileNumberFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(
-      TextEditingValue oldValue, TextEditingValue newValue) {
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
     var text = newValue.text;
     if (newValue.selection.baseOffset == 0) {
       return newValue;
@@ -243,7 +270,8 @@ class _MobileNumberFormatter extends TextInputFormatter {
     }
     var string = buffer.toString();
     return newValue.copyWith(
-        text: string,
-        selection: TextSelection.collapsed(offset: string.length));
+      text: string,
+      selection: TextSelection.collapsed(offset: string.length),
+    );
   }
 }

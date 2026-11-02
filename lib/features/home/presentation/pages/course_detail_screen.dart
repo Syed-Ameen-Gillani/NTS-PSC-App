@@ -1,33 +1,45 @@
+import 'package:nts_psc_app/features/home/presentation/controllers/course_reviews_controller.dart';
+import 'package:nts_psc_app/presentation/widgets/app_scaffold.dart';
 import 'package:flutter/material.dart';
+import 'package:nts_psc_app/presentation/widgets/dashboard_course_cover.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:nts_psc_app/config/routes/app_routes.dart';
 import 'package:nts_psc_app/core/models/app_models.dart';
 import 'package:nts_psc_app/core/models/user_role.dart';
+import 'package:nts_psc_app/core/networks/supabase_client.dart';
 import 'package:nts_psc_app/core/theme/app_colors.dart';
 import 'package:nts_psc_app/core/theme/app_text_styles.dart';
 import 'package:nts_psc_app/features/auth/presentation/controllers/auth_controller.dart';
-import 'package:nts_psc_app/features/home/presentation/controllers/course_community_controller.dart';
 import 'package:nts_psc_app/features/home/presentation/pages/course_enroll_modal.dart';
+import 'package:nts_psc_app/features/home/domain/course_view_mode.dart';
+import 'package:nts_psc_app/features/learn/domain/lesson_player_mode.dart';
+import 'package:nts_psc_app/features/learn/presentation/controllers/lesson_access_provider.dart';
 import 'package:nts_psc_app/features/home/presentation/widgets/course_overview_tab.dart';
-import 'package:nts_psc_app/features/home/presentation/widgets/course_certificate_dialog.dart';
 import 'package:nts_psc_app/features/home/presentation/widgets/course_curriculum_tab.dart';
 import 'package:nts_psc_app/features/home/presentation/widgets/course_instructor_tab.dart';
 import 'package:nts_psc_app/features/home/presentation/widgets/course_resources_sheet.dart';
 import 'package:nts_psc_app/features/home/presentation/widgets/course_reviews_tab.dart';
+import 'package:nts_psc_app/features/home/presentation/widgets/course_detail_tabs_header.dart';
 import 'package:nts_psc_app/presentation/widgets/custom_button.dart';
 
 class CourseDetailScreen extends ConsumerStatefulWidget {
   final CourseModel? course;
+  final CourseViewMode viewMode;
 
-  const CourseDetailScreen({super.key, this.course});
+  const CourseDetailScreen({
+    super.key,
+    this.course,
+    this.viewMode = CourseViewMode.automatic,
+  });
 
   @override
   ConsumerState<CourseDetailScreen> createState() => _CourseDetailScreenState();
 }
 
-class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen> with SingleTickerProviderStateMixin {
+class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   late CourseModel _course;
 
@@ -35,18 +47,7 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen> with Si
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
-    _course = widget.course ??
-        CourseModel(
-          id: 'c1',
-          title: 'FPSC Inspector Customs & Intelligence Officer',
-          author: 'Sir Tariq',
-          rating: 4.9,
-          price: 'Rs 2,500',
-          imagePath: 'assets/images/course4.jpg',
-          category: 'FPSC',
-          description:
-              'Master all essential subjects for the FPSC Inspector Customs examination. Includes in-depth modules on Customs Act 1969, Pakistan Affairs, Everyday Science, General Knowledge, and comprehensive mock tests.',
-        );
+    if (widget.course != null) _course = widget.course!;
   }
 
   @override
@@ -55,14 +56,42 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen> with Si
     super.dispose();
   }
 
-
-
   @override
   Widget build(BuildContext context) {
-    final isEnrolled = (_course.progress ?? 0) > 0;
-    final isTeacher = ref.watch(authControllerProvider).value?.selectedRole == UserRole.teacher;
+    if (widget.course == null) {
+      return const AppScaffold(body: Center(child: Text('Course not found')));
+    }
+    if (AppConfig.isSupabaseEnabled) {
+      // Use the same server-backed access/progress snapshot as the player.
+      // Keep the supplied course visible while the shared provider refreshes.
+      final currentCourse = ref
+          .watch(lessonAccessCourseProvider(widget.course!.id))
+          .value;
+      if (currentCourse != null) _course = currentCourse;
+      final reviews = ref
+          .watch(courseReviewsProvider((courseId: _course.id, rating: null)))
+          .value;
+      if (reviews != null) _course = _course.copyWith(rating: reviews.average);
+    }
+    final isEnrolled = AppConfig.isSupabaseEnabled
+        ? _course.hasEntitlement
+        : _course.progress != null;
+    final authState = ref.watch(authControllerProvider).value;
+    final user = authState?.user;
+    final isTeacherRole = AppConfig.isSupabaseEnabled
+        ? user?.role == UserRole.teacher
+        : authState?.selectedRole == UserRole.teacher;
+    final isOwner =
+        isTeacherRole &&
+        (AppConfig.isSupabaseEnabled
+            ? user?.id == _course.instructorId
+            : _course.instructorId.isEmpty || user?.id == _course.instructorId);
+    final isLearnerPreview =
+        widget.viewMode == CourseViewMode.learnerPreview && isOwner;
+    final isReadOnlyPreview = isLearnerPreview || (isTeacherRole && !isOwner);
+    final showInstructorControls = isOwner && !isLearnerPreview;
 
-    return Scaffold(
+    return AppScaffold(
       backgroundColor: Colors.white,
       body: NestedScrollView(
         headerSliverBuilder: (context, innerBoxIsScrolled) {
@@ -76,46 +105,62 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen> with Si
                 icon: Container(
                   padding: EdgeInsets.all(6.w),
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.4),
+                    color: Colors.black.withValues(alpha: 0.4),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 16),
+                  child: const Icon(
+                    Icons.arrow_back_ios_new,
+                    color: Colors.white,
+                    size: 16,
+                  ),
                 ),
                 onPressed: () => context.pop(),
               ),
               actions: [
-                IconButton(
-                  icon: Container(
-                    padding: EdgeInsets.all(6.w),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.4),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.folder_shared_outlined, color: Colors.white, size: 18),
-                  ),
-                  tooltip: 'Handouts & Notes',
-                  onPressed: () {
-                    CourseResourcesSheet.show(
-                      context,
-                      courseId: _course.id,
-                      courseTitle: _course.title,
-                      isTeacher: isTeacher,
-                    );
-                  },
-                ),
-                if (isTeacher)
+                if (showInstructorControls)
                   IconButton(
                     icon: Container(
                       padding: EdgeInsets.all(6.w),
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.4),
+                        color: Colors.black.withValues(alpha: 0.4),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.analytics_outlined, color: Colors.white, size: 18),
+                      child: const Icon(
+                        Icons.folder_shared_outlined,
+                        color: Colors.white,
+                        size: 18,
+                      ),
+                    ),
+                    tooltip: 'Handouts & Notes',
+                    onPressed: () {
+                      CourseResourcesSheet.show(
+                        context,
+                        courseId: _course.id,
+                        courseTitle: _course.title,
+                        isTeacher: showInstructorControls,
+                      );
+                    },
+                  ),
+                if (showInstructorControls)
+                  IconButton(
+                    icon: Container(
+                      padding: EdgeInsets.all(6.w),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.4),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.analytics_outlined,
+                        color: Colors.white,
+                        size: 18,
+                      ),
                     ),
                     tooltip: 'Learner Analytics',
                     onPressed: () {
-                      context.pushNamed(AppRoute.teacherStudents.name, extra: _course.title);
+                      context.pushNamed(
+                        AppRoute.teacherStudents.name,
+                        extra: _course.title,
+                      );
                     },
                   ),
                 SizedBox(width: 8.w),
@@ -124,9 +169,11 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen> with Si
                 background: Stack(
                   fit: StackFit.expand,
                   children: [
-                    Image.asset(
-                      _course.imagePath,
-                      fit: BoxFit.cover,
+                    DashboardCourseCover(
+                      imagePath: _course.imagePath,
+                      coverUrl: _course.coverUrl,
+                      width: double.infinity,
+                      height: double.infinity,
                     ),
                     Container(
                       decoration: BoxDecoration(
@@ -134,8 +181,8 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen> with Si
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
                           colors: [
-                            Colors.black.withOpacity(0.3),
-                            Colors.black.withOpacity(0.7),
+                            Colors.black.withValues(alpha: 0.3),
+                            Colors.black.withValues(alpha: 0.7),
                           ],
                         ),
                       ),
@@ -148,7 +195,10 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen> with Si
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Container(
-                            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 10.w,
+                              vertical: 4.h,
+                            ),
                             decoration: BoxDecoration(
                               color: AppColors.primary,
                               borderRadius: BorderRadius.circular(6.r),
@@ -180,15 +230,19 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen> with Si
             ),
             SliverPersistentHeader(
               pinned: true,
-              delegate: _TabBarDelegate(
+              delegate: CourseDetailTabsHeader(
                 TabBar(
                   controller: _tabController,
                   indicatorColor: AppColors.primary,
                   indicatorWeight: 3.h,
                   labelColor: AppColors.primary,
                   unselectedLabelColor: AppColors.grey500,
-                  labelStyle: AppTextStyles.interSemiBold16.copyWith(fontSize: 14.sp),
-                  unselectedLabelStyle: AppTextStyles.interMedium16.copyWith(fontSize: 14.sp),
+                  labelStyle: AppTextStyles.interSemiBold16.copyWith(
+                    fontSize: 14.sp,
+                  ),
+                  unselectedLabelStyle: AppTextStyles.interMedium16.copyWith(
+                    fontSize: 14.sp,
+                  ),
                   tabs: const [
                     Tab(text: 'Overview'),
                     Tab(text: 'Syllabus'),
@@ -203,12 +257,26 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen> with Si
         body: TabBarView(
           controller: _tabController,
           children: [
-            CourseOverviewTab(course: _course, isTeacher: isTeacher),
-            CourseCurriculumTab(course: _course, isTeacher: isTeacher),
+            CourseOverviewTab(
+              course: _course,
+              isTeacher: showInstructorControls,
+              isReadOnlyPreview: isReadOnlyPreview,
+            ),
+            CourseCurriculumTab(
+              course: _course,
+              isTeacher: showInstructorControls,
+              isInstructorPreview: isReadOnlyPreview,
+              onLessonReturned: () {
+                if (AppConfig.isSupabaseEnabled) {
+                  ref.invalidate(lessonAccessCourseProvider(_course.id));
+                }
+              },
+            ),
             CourseReviewsTab(
               courseId: _course.id,
               courseTitle: _course.title,
-              isTeacher: isTeacher,
+              isTeacher: showInstructorControls,
+              isReadOnlyPreview: isReadOnlyPreview,
             ),
             CourseInstructorTab(course: _course),
           ],
@@ -218,17 +286,19 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen> with Si
         padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 14.h),
         decoration: BoxDecoration(
           color: Colors.white,
-          border: Border(top: BorderSide(color: AppColors.grey300, width: 1.w)),
+          border: Border(
+            top: BorderSide(color: AppColors.grey300, width: 1.w),
+          ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 8,
               offset: const Offset(0, -2),
             ),
           ],
         ),
         child: SafeArea(
-          child: isTeacher
+          child: showInstructorControls
               ? Row(
                   children: [
                     Column(
@@ -236,16 +306,23 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen> with Si
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Container(
-                          padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 8.w,
+                            vertical: 3.h,
+                          ),
                           decoration: BoxDecoration(
-                            color: _course.isPublished ? const Color(0xFFECFDF5) : const Color(0xFFFEF3C7),
+                            color: _course.isPublished
+                                ? const Color(0xFFECFDF5)
+                                : const Color(0xFFFEF3C7),
                             borderRadius: BorderRadius.circular(6.r),
                           ),
                           child: Text(
                             _course.isPublished ? '● Published' : '○ Draft',
                             style: AppTextStyles.interSemiBold16.copyWith(
                               fontSize: 11.sp,
-                              color: _course.isPublished ? const Color(0xFF10B981) : const Color(0xFFD97706),
+                              color: _course.isPublished
+                                  ? const Color(0xFF10B981)
+                                  : const Color(0xFFD97706),
                             ),
                           ),
                         ),
@@ -265,7 +342,10 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen> with Si
                         text: 'Manage Curriculum',
                         color: AppColors.primary,
                         onPressed: () {
-                          context.pushNamed(AppRoute.teacherManageCourse.name, extra: _course);
+                          context.pushNamed(
+                            AppRoute.teacherManageCourse.name,
+                            extra: _course,
+                          );
                         },
                       ),
                     ),
@@ -295,29 +375,71 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen> with Si
                     ),
                     SizedBox(width: 24.w),
                     Expanded(
-                      child: CustomButton(
-                        text: isEnrolled ? 'Continue Learning' : 'Enroll Now',
-                        color: AppColors.primary,
-                        onPressed: () {
-                          if (isEnrolled) {
-                            context.pushNamed(
-                              AppRoute.lessonPlayer.name,
-                              extra: {
-                                'course': _course,
-                                'lesson': _course.modules.isNotEmpty && _course.modules.first.lessons.isNotEmpty
-                                    ? _course.modules.first.lessons.first
-                                    : LessonModel(id: 'l1', title: 'Introduction', durationMinutes: 15),
-                              },
-                            );
-                          } else {
-                            showModalBottomSheet(
-                              context: context,
-                              isScrollControlled: true,
-                              backgroundColor: Colors.transparent,
-                              builder: (_) => CourseEnrollModal(course: _course),
-                            );
-                          }
-                        },
+                      child: IgnorePointer(
+                        ignoring: isReadOnlyPreview,
+                        child: CustomButton(
+                          text: isEnrolled ? 'Continue Learning' : 'Enroll Now',
+                          color: AppColors.primary,
+                          onPressed: () async {
+                            if (isEnrolled) {
+                              final availableLessons = _course.modules
+                                  .expand((module) => module.lessons)
+                                  .where((lesson) => !lesson.isLocked)
+                                  .toList();
+                              final lesson =
+                                  availableLessons
+                                      .where((lesson) => !lesson.isCompleted)
+                                      .firstOrNull ??
+                                  availableLessons.firstOrNull;
+                              if (lesson == null) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('No lessons available yet.'),
+                                  ),
+                                );
+                                return;
+                              }
+                              await context.pushNamed(
+                                AppRoute.lessonPlayer.name,
+                                extra: {
+                                  'course': _course,
+                                  'lesson': lesson,
+                                  'mode': LessonPlayerMode.learning,
+                                },
+                              );
+                              if (context.mounted &&
+                                  AppConfig.isSupabaseEnabled) {
+                                ref.invalidate(
+                                  lessonAccessCourseProvider(_course.id),
+                                );
+                              }
+                            } else {
+                              final enrolled =
+                                  await showModalBottomSheet<CourseModel>(
+                                    context: context,
+                                    isScrollControlled: true,
+                                    backgroundColor: Colors.transparent,
+                                    builder: (_) =>
+                                        CourseEnrollModal(course: _course),
+                                  );
+                              if (AppConfig.isSupabaseEnabled &&
+                                  enrolled != null &&
+                                  context.mounted) {
+                                ScaffoldMessenger.of(context)
+                                  ..hideCurrentSnackBar()
+                                  ..showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Enrollment successful'),
+                                    ),
+                                  );
+                                _course = enrolled;
+                                ref.invalidate(
+                                  lessonAccessCourseProvider(enrolled.id),
+                                );
+                              }
+                            }
+                          },
+                        ),
                       ),
                     ),
                   ],
@@ -325,29 +447,5 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen> with Si
         ),
       ),
     );
-  }
-}
-
-class _TabBarDelegate extends SliverPersistentHeaderDelegate {
-  final TabBar tabBar;
-
-  _TabBarDelegate(this.tabBar);
-
-  @override
-  double get minExtent => tabBar.preferredSize.height;
-  @override
-  double get maxExtent => tabBar.preferredSize.height;
-
-  @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
-    return Container(
-      color: Colors.white,
-      child: tabBar,
-    );
-  }
-
-  @override
-  bool shouldRebuild(_TabBarDelegate oldDelegate) {
-    return false;
   }
 }

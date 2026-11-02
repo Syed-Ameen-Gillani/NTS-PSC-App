@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:nts_psc_app/core/models/app_models.dart';
 import 'package:nts_psc_app/core/models/user_role.dart';
 
@@ -23,4 +25,6 @@ abstract class AuthRepository {
   Future<void> signOut();
 
   Future<UserModel?> getCurrentUser();
+
+  Future<UserModel> updateProfile(UserModel user, {Uint8List? avatarBytes});
 }

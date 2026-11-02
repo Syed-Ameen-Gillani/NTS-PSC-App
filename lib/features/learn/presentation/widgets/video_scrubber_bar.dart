@@ -54,15 +54,20 @@ class VideoScrubberBar extends StatelessWidget {
             builder: (context, constraints) {
               final sliderWidth = constraints.maxWidth;
               final usableWidth = sliderWidth - 24.w;
-              final pipOffset = 12.w + (usableWidth * checkpointPipProgress.clamp(0.0, 1.0));
+              final pipOffset =
+                  12.w + (usableWidth * checkpointPipProgress.clamp(0.0, 1.0));
 
               return Stack(
                 alignment: Alignment.centerLeft,
                 children: [
                   SliderTheme(
                     data: SliderTheme.of(context).copyWith(
-                      thumbShape: RoundSliderThumbShape(enabledThumbRadius: 6.r),
-                      overlayShape: RoundSliderOverlayShape(overlayRadius: 14.r),
+                      thumbShape: RoundSliderThumbShape(
+                        enabledThumbRadius: 6.r,
+                      ),
+                      overlayShape: RoundSliderOverlayShape(
+                        overlayRadius: 14.r,
+                      ),
                       trackHeight: 3.h,
                       activeTrackColor: AppColors.primary,
                       inactiveTrackColor: Colors.white24,
@@ -85,12 +90,18 @@ class VideoScrubberBar extends StatelessWidget {
                         width: 10.w,
                         height: 10.w,
                         decoration: BoxDecoration(
-                          color: isCheckpointCompleted ? Colors.greenAccent : const Color(0xFFFFB300),
+                          color: isCheckpointCompleted
+                              ? Colors.greenAccent
+                              : const Color(0xFFFFB300),
                           shape: BoxShape.circle,
                           border: Border.all(color: Colors.white, width: 1.5),
                           boxShadow: [
                             BoxShadow(
-                              color: (isCheckpointCompleted ? Colors.green : Colors.orange).withValues(alpha: 0.8),
+                              color:
+                                  (isCheckpointCompleted
+                                          ? Colors.green
+                                          : Colors.orange)
+                                      .withValues(alpha: 0.8),
                               blurRadius: 4,
                             ),
                           ],

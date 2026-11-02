@@ -38,7 +38,9 @@ class InVideoQuizState {
     return InVideoQuizState(
       quizzes: quizzes ?? this.quizzes,
       activeQuiz: clearActiveQuiz ? null : (activeQuiz ?? this.activeQuiz),
-      selectedOptionIndex: clearSelectedOption ? null : (selectedOptionIndex ?? this.selectedOptionIndex),
+      selectedOptionIndex: clearSelectedOption
+          ? null
+          : (selectedOptionIndex ?? this.selectedOptionIndex),
       lastResult: clearLastResult ? null : (lastResult ?? this.lastResult),
       isSubmitting: isSubmitting ?? this.isSubmitting,
       completedQuizIds: completedQuizIds ?? this.completedQuizIds,
@@ -69,7 +71,8 @@ class InVideoQuizNotifier extends Notifier<InVideoQuizState> {
               timestampSeconds: 374,
               timestampDisplay: '06:14',
               topic: 'Executive Authority under AJK Constitution',
-              question: 'Under the AJK Interim Constitution Act 1974, in whom is the executive authority of the Government of Azad Jammu and Kashmir vested?',
+              question:
+                  'Under the AJK Interim Constitution Act 1974, in whom is the executive authority of the Government of Azad Jammu and Kashmir vested?',
               options: [
                 'The Chief Justice of the AJK High Court',
                 'The Federal Minister for Kashmir Affairs',
@@ -77,8 +80,10 @@ class InVideoQuizNotifier extends Notifier<InVideoQuizState> {
                 'The Speaker of the Legislative Assembly',
               ],
               correctOptionIndex: 2,
-              explanation: 'Under Section 12 of the AJK Interim Constitution Act 1974, executive authority vests in the President and is exercised by him directly or through the Prime Minister and the Council of Ministers.',
-              hint: 'Review Section 12 regarding the constitutional head and executive exercise.',
+              explanation:
+                  'Under Section 12 of the AJK Interim Constitution Act 1974, executive authority vests in the President and is exercised by him directly or through the Prime Minister and the Council of Ministers.',
+              hint:
+                  'Review Section 12 regarding the constitutional head and executive exercise.',
             ),
     );
 
@@ -113,7 +118,9 @@ class InVideoQuizNotifier extends Notifier<InVideoQuizState> {
     final newCompleted = Set<String>.from(state.completedQuizIds);
     if (result.isCorrect) {
       newCompleted.add(quiz.id);
-      ref.read(lessonPlaybackControllerProvider.notifier).markCheckpointCompleted(quiz.timestampSeconds);
+      ref
+          .read(lessonPlaybackControllerProvider.notifier)
+          .markCheckpointCompleted(quiz.timestampSeconds);
     }
 
     state = state.copyWith(
@@ -131,8 +138,13 @@ class InVideoQuizNotifier extends Notifier<InVideoQuizState> {
     final quiz = state.activeQuiz;
     dismissQuiz();
     if (quiz != null) {
-      final rewindTarget = (quiz.timestampSeconds - 15).clamp(0, quiz.timestampSeconds);
-      ref.read(lessonPlaybackControllerProvider.notifier).seekToSeconds(rewindTarget, allowSkipGuard: false);
+      final rewindTarget = (quiz.timestampSeconds - 15).clamp(
+        0,
+        quiz.timestampSeconds,
+      );
+      ref
+          .read(lessonPlaybackControllerProvider.notifier)
+          .seekToSeconds(rewindTarget, allowSkipGuard: false);
       ref.read(lessonPlaybackControllerProvider.notifier).play();
     }
   }
@@ -154,5 +166,5 @@ class InVideoQuizNotifier extends Notifier<InVideoQuizState> {
 
 final inVideoQuizControllerProvider =
     NotifierProvider<InVideoQuizNotifier, InVideoQuizState>(
-  InVideoQuizNotifier.new,
-);
+      InVideoQuizNotifier.new,
+    );

@@ -1,3 +1,4 @@
+import 'package:nts_psc_app/presentation/widgets/app_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -53,19 +54,19 @@ class _TeacherLiveClassesScreenState extends ConsumerState<TeacherLiveClassesScr
               SizedBox(height: 16.h),
               Text('Session Topic / Title', style: AppTextStyles.interSemiBold16.copyWith(fontSize: 13.sp)),
               SizedBox(height: 6.h),
-              CustomTextFormField(controller: titleController, hintText: 'e.g. Past Paper Solved Session 2025-2026'),
+              CustomTextFormField(controller: titleController, hintText: 'e.g. Past Paper Solved Session 2025-2026', textInputAction: TextInputAction.next),
               SizedBox(height: 12.h),
               Text('Target Course', style: AppTextStyles.interSemiBold16.copyWith(fontSize: 13.sp)),
               SizedBox(height: 6.h),
-              CustomTextFormField(controller: courseController, hintText: 'Course Name'),
+              CustomTextFormField(controller: courseController, hintText: 'Course Name', textInputAction: TextInputAction.next),
               SizedBox(height: 12.h),
               Text('Date & Time', style: AppTextStyles.interSemiBold16.copyWith(fontSize: 13.sp)),
               SizedBox(height: 6.h),
-              CustomTextFormField(controller: dateController, hintText: 'Date & Time'),
+              CustomTextFormField(controller: dateController, hintText: 'Date & Time', textInputAction: TextInputAction.next),
               SizedBox(height: 12.h),
               Text('Meeting / Stream URL (Zoom/Google Meet)', style: AppTextStyles.interSemiBold16.copyWith(fontSize: 13.sp)),
               SizedBox(height: 6.h),
-              CustomTextFormField(controller: linkController, hintText: 'https://...'),
+              CustomTextFormField(controller: linkController, hintText: 'https://...', textInputAction: TextInputAction.next),
               SizedBox(height: 12.h),
               Text('Session Agenda / Objectives', style: AppTextStyles.interSemiBold16.copyWith(fontSize: 13.sp)),
               SizedBox(height: 6.h),
@@ -104,7 +105,7 @@ class _TeacherLiveClassesScreenState extends ConsumerState<TeacherLiveClassesScr
   Widget build(BuildContext context) {
     final teacherState = ref.watch(teacherControllerProvider);
 
-    return Scaffold(
+    return AppScaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
@@ -231,10 +232,11 @@ class _TeacherLiveClassesScreenState extends ConsumerState<TeacherLiveClassesScr
                                     ],
                                   ),
                                 ),
-                                Text(
+                                Flexible(child: Text(
                                   session.scheduledDate,
+                                  textAlign: TextAlign.end,
                                   style: AppTextStyles.interMedium16.copyWith(fontSize: 12.sp, color: AppColors.grey500),
-                                ),
+                                )),
                               ],
                             ),
                             SizedBox(height: 10.h),
@@ -248,8 +250,10 @@ class _TeacherLiveClassesScreenState extends ConsumerState<TeacherLiveClassesScr
                                   style: AppTextStyles.interRegular14.copyWith(fontSize: 12.sp, color: AppColors.grey500)),
                             ],
                             SizedBox(height: 14.h),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            Wrap(
+                              alignment: WrapAlignment.spaceBetween,
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              spacing: 8,
                               children: [
                                 Row(
                                   children: [

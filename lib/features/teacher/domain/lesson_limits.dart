@@ -1,0 +1,1 @@
+const maxLessonsPerModule = 10;

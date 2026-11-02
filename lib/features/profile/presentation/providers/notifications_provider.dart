@@ -1,4 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:nts_psc_app/core/networks/supabase_client.dart';
+import 'package:nts_psc_app/features/auth/presentation/controllers/auth_controller.dart';
+import 'package:nts_psc_app/features/notifications/data/notification_repository.dart';
 
 class NotificationsState {
   final bool pushNotifications;
@@ -19,6 +22,17 @@ class NotificationsState {
     this.promotions = false,
   });
 
+  factory NotificationsState.fromRow(Map<String, dynamic> row) =>
+      NotificationsState(
+        pushNotifications: row['push_enabled'] as bool,
+        emailNotifications: row['email_enabled'] as bool,
+        smsNotifications: row['sms_enabled'] as bool,
+        courseUpdates: row['course_updates_enabled'] as bool,
+        messagesDiscussions: row['messages_discussions_enabled'] as bool,
+        examResults: row['exam_results_enabled'] as bool,
+        promotions: row['promotions_enabled'] as bool,
+      );
+
   NotificationsState copyWith({
     bool? pushNotifications,
     bool? emailNotifications,
@@ -38,43 +52,83 @@ class NotificationsState {
       promotions: promotions ?? this.promotions,
     );
   }
+
+  NotificationsState withPushNotifications(bool value) {
+    return copyWith(pushNotifications: value);
+  }
 }
 
-class NotificationsNotifier extends Notifier<NotificationsState> {
+class NotificationsNotifier extends AsyncNotifier<NotificationsState> {
   @override
-  NotificationsState build() {
-    return const NotificationsState();
+  Future<NotificationsState> build() async {
+    final userId = ref.watch(authControllerProvider).value?.user?.id;
+    if (!AppConfig.isSupabaseEnabled || userId == null) {
+      return const NotificationsState();
+    }
+    final row = await ref
+        .read(notificationRepositoryProvider)
+        .loadPreferences();
+    return NotificationsState.fromRow(row);
   }
 
-  void togglePushNotifications(bool value) {
-    state = state.copyWith(pushNotifications: value);
+  Future<void> _save(
+    Map<String, bool> values,
+    NotificationsState Function(NotificationsState) update,
+  ) async {
+    final current = state.value;
+    if (current == null) return;
+    if (!AppConfig.isSupabaseEnabled) {
+      state = AsyncData(update(current));
+      return;
+    }
+    final userId = ref.read(authControllerProvider).value?.user?.id;
+    if (userId == null) throw StateError('Sign in to update notifications.');
+    state = const AsyncLoading();
+    try {
+      await ref.read(notificationRepositoryProvider).savePreferences(values);
+      if (ref.read(authControllerProvider).value?.user?.id != userId) {
+        ref.invalidateSelf();
+        return;
+      }
+      state = AsyncData(update(current));
+    } catch (_) {
+      if (ref.read(authControllerProvider).value?.user?.id == userId) {
+        state = AsyncData(current);
+      }
+      rethrow;
+    }
   }
 
-  void toggleEmailNotifications(bool value) {
-    state = state.copyWith(emailNotifications: value);
-  }
+  Future<void> togglePushNotifications(bool value) => _save({
+    'push_enabled': value,
+  }, (state) => state.withPushNotifications(value));
 
-  void toggleSmsNotifications(bool value) {
-    state = state.copyWith(smsNotifications: value);
-  }
+  Future<void> toggleEmailNotifications(bool value) => _save({
+    'email_enabled': value,
+  }, (state) => state.copyWith(emailNotifications: value));
 
-  void toggleCourseUpdates(bool value) {
-    state = state.copyWith(courseUpdates: value);
-  }
+  Future<void> toggleSmsNotifications(bool value) => _save({
+    'sms_enabled': value,
+  }, (state) => state.copyWith(smsNotifications: value));
 
-  void toggleMessagesDiscussions(bool value) {
-    state = state.copyWith(messagesDiscussions: value);
-  }
+  Future<void> toggleCourseUpdates(bool value) => _save({
+    'course_updates_enabled': value,
+  }, (state) => state.copyWith(courseUpdates: value));
 
-  void toggleExamResults(bool value) {
-    state = state.copyWith(examResults: value);
-  }
+  Future<void> toggleMessagesDiscussions(bool value) => _save({
+    'messages_discussions_enabled': value,
+  }, (state) => state.copyWith(messagesDiscussions: value));
 
-  void togglePromotions(bool value) {
-    state = state.copyWith(promotions: value);
-  }
+  Future<void> toggleExamResults(bool value) => _save({
+    'exam_results_enabled': value,
+  }, (state) => state.copyWith(examResults: value));
+
+  Future<void> togglePromotions(bool value) => _save({
+    'promotions_enabled': value,
+  }, (state) => state.copyWith(promotions: value));
 }
 
-final notificationsProvider = NotifierProvider<NotificationsNotifier, NotificationsState>(() {
-  return NotificationsNotifier();
-});
+final notificationsProvider =
+    AsyncNotifierProvider<NotificationsNotifier, NotificationsState>(() {
+      return NotificationsNotifier();
+    });

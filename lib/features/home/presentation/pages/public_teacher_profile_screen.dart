@@ -1,13 +1,30 @@
+import 'package:nts_psc_app/presentation/widgets/app_scaffold.dart';
 import 'package:flutter/material.dart';
+import 'package:nts_psc_app/presentation/widgets/dashboard_course_cover.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:nts_psc_app/config/routes/app_routes.dart';
 import 'package:nts_psc_app/core/models/app_models.dart';
+import 'package:nts_psc_app/core/networks/supabase_client.dart';
+import 'package:nts_psc_app/core/repositories/supabase_course_repository.dart';
 import 'package:nts_psc_app/core/theme/app_colors.dart';
 import 'package:nts_psc_app/core/theme/app_text_styles.dart';
 import 'package:nts_psc_app/features/teacher/presentation/controllers/teacher_controller.dart';
-import 'package:nts_psc_app/presentation/widgets/custom_button.dart';
+import 'package:nts_psc_app/features/auth/presentation/controllers/auth_controller.dart';
+import 'package:nts_psc_app/presentation/widgets/app_avatar.dart';
+
+final publicTeacherCoursesProvider = FutureProvider.autoDispose
+    .family<List<CourseModel>, String>((ref, teacherId) async {
+      if (AppConfig.isSupabaseEnabled) {
+        ref.watch(
+          authControllerProvider.select((state) => state.value?.user?.id),
+        );
+        return (ref.read(courseRepositoryProvider) as SupabaseCourseRepository)
+            .getPublicCoursesByTeacher(teacherId);
+      }
+      return (await ref.watch(teacherControllerProvider.future)).courses;
+    });
 
 class PublicTeacherProfileScreen extends ConsumerWidget {
   final TeacherModel? teacher;
@@ -16,7 +33,13 @@ class PublicTeacherProfileScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final t = teacher ??
+    if (AppConfig.isSupabaseEnabled && teacher == null) {
+      return const AppScaffold(
+        body: Center(child: Text('Instructor not found')),
+      );
+    }
+    final t =
+        teacher ??
         TeacherModel(
           id: 't1',
           name: 'Sir Tariq Mahmood',
@@ -27,20 +50,27 @@ class PublicTeacherProfileScreen extends ConsumerWidget {
           studentCount: 1240,
         );
 
-    final teacherState = ref.watch(teacherControllerProvider);
+    final coursesState = ref.watch(publicTeacherCoursesProvider(t.id));
 
-    return Scaffold(
+    return AppScaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: AppColors.onBackground, size: 20),
+          icon: const Icon(
+            Icons.arrow_back_ios_new,
+            color: AppColors.onBackground,
+            size: 20,
+          ),
           onPressed: () => context.pop(),
         ),
         title: Text(
           'Faculty Profile',
-          style: AppTextStyles.interBold24.copyWith(fontSize: 18.sp, color: AppColors.onBackground),
+          style: AppTextStyles.interBold24.copyWith(
+            fontSize: 18.sp,
+            color: AppColors.onBackground,
+          ),
         ),
         centerTitle: true,
         bottom: PreferredSize(
@@ -59,116 +89,194 @@ class PublicTeacherProfileScreen extends ConsumerWidget {
                 children: [
                   Stack(
                     children: [
-                      CircleAvatar(
-                        radius: 48.r,
-                        backgroundImage: AssetImage(t.imagePath),
+                      AppAvatar(
+                        size: 96.w,
+                        imagePath: t.imagePath,
+                        name: t.name,
                       ),
-                      Positioned(
-                        bottom: 0,
-                        right: 0,
-                        child: Container(
-                          padding: EdgeInsets.all(4.w),
-                          decoration: const BoxDecoration(
-                            color: AppColors.primary,
-                            shape: BoxShape.circle,
+                      if (!AppConfig.isSupabaseEnabled)
+                        Positioned(
+                          bottom: 0,
+                          right: 0,
+                          child: Container(
+                            padding: EdgeInsets.all(4.w),
+                            decoration: const BoxDecoration(
+                              color: AppColors.primary,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.verified,
+                              color: Colors.white,
+                              size: 18.w,
+                            ),
                           ),
-                          child: Icon(Icons.verified, color: Colors.white, size: 18.w),
                         ),
-                      ),
                     ],
                   ),
                   SizedBox(height: 14.h),
-                  Text(t.name, style: AppTextStyles.interBold24.copyWith(fontSize: 22.sp)),
+                  Text(
+                    t.name,
+                    style: AppTextStyles.interBold24.copyWith(fontSize: 22.sp),
+                  ),
                   SizedBox(height: 4.h),
-                  Text(t.subject,
-                      style: AppTextStyles.interSemiBold16.copyWith(fontSize: 13.sp, color: AppColors.primary)),
+                  Text(
+                    t.subject,
+                    style: AppTextStyles.interSemiBold16.copyWith(
+                      fontSize: 13.sp,
+                      color: AppColors.primary,
+                    ),
+                  ),
                   SizedBox(height: 4.h),
-                  Text(t.qualification,
-                      style: AppTextStyles.interRegular14.copyWith(fontSize: 12.sp, color: AppColors.grey500)),
+                  if (t.qualification.isNotEmpty)
+                    Text(
+                      t.qualification,
+                      style: AppTextStyles.interRegular14.copyWith(
+                        fontSize: 12.sp,
+                        color: AppColors.grey500,
+                      ),
+                    ),
                 ],
               ),
             ),
             SizedBox(height: 24.h),
 
             // 3-Metric Row
-            Row(
-              children: [
-                Expanded(
-                  child: Container(
-                    padding: EdgeInsets.symmetric(vertical: 12.h),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF8F9FA),
-                      borderRadius: BorderRadius.circular(12.r),
-                      border: Border.all(color: AppColors.grey300),
-                    ),
-                    child: Column(
-                      children: [
-                        Text('${t.rating} ★',
-                            style: AppTextStyles.interBold24.copyWith(fontSize: 18.sp, color: Colors.amber.shade800)),
-                        SizedBox(height: 2.h),
-                        Text('Rating', style: AppTextStyles.interRegular14.copyWith(fontSize: 11.sp, color: AppColors.grey500)),
-                      ],
-                    ),
-                  ),
-                ),
-                SizedBox(width: 10.w),
-                Expanded(
-                  child: Container(
-                    padding: EdgeInsets.symmetric(vertical: 12.h),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF8F9FA),
-                      borderRadius: BorderRadius.circular(12.r),
-                      border: Border.all(color: AppColors.grey300),
-                    ),
-                    child: Column(
-                      children: [
-                        Text('${t.studentCount}+',
-                            style: AppTextStyles.interBold24.copyWith(fontSize: 18.sp, color: AppColors.primary)),
-                        SizedBox(height: 2.h),
-                        Text('Students', style: AppTextStyles.interRegular14.copyWith(fontSize: 11.sp, color: AppColors.grey500)),
-                      ],
+            if (!AppConfig.isSupabaseEnabled)
+              Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      padding: EdgeInsets.symmetric(vertical: 12.h),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8F9FA),
+                        borderRadius: BorderRadius.circular(12.r),
+                        border: Border.all(color: AppColors.grey300),
+                      ),
+                      child: Column(
+                        children: [
+                          Text(
+                            '${t.rating} ★',
+                            style: AppTextStyles.interBold24.copyWith(
+                              fontSize: 18.sp,
+                              color: Colors.amber.shade800,
+                            ),
+                          ),
+                          SizedBox(height: 2.h),
+                          Text(
+                            'Rating',
+                            style: AppTextStyles.interRegular14.copyWith(
+                              fontSize: 11.sp,
+                              color: AppColors.grey500,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-                SizedBox(width: 10.w),
-                Expanded(
-                  child: Container(
-                    padding: EdgeInsets.symmetric(vertical: 12.h),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF8F9FA),
-                      borderRadius: BorderRadius.circular(12.r),
-                      border: Border.all(color: AppColors.grey300),
-                    ),
-                    child: Column(
-                      children: [
-                        Text('6+',
-                            style: AppTextStyles.interBold24.copyWith(fontSize: 18.sp, color: const Color(0xFF10B981))),
-                        SizedBox(height: 2.h),
-                        Text('Courses', style: AppTextStyles.interRegular14.copyWith(fontSize: 11.sp, color: AppColors.grey500)),
-                      ],
+                  SizedBox(width: 10.w),
+                  Expanded(
+                    child: Container(
+                      padding: EdgeInsets.symmetric(vertical: 12.h),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8F9FA),
+                        borderRadius: BorderRadius.circular(12.r),
+                        border: Border.all(color: AppColors.grey300),
+                      ),
+                      child: Column(
+                        children: [
+                          Text(
+                            '${t.studentCount}+',
+                            style: AppTextStyles.interBold24.copyWith(
+                              fontSize: 18.sp,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                          SizedBox(height: 2.h),
+                          Text(
+                            'Students',
+                            style: AppTextStyles.interRegular14.copyWith(
+                              fontSize: 11.sp,
+                              color: AppColors.grey500,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              ],
-            ),
+                  SizedBox(width: 10.w),
+                  Expanded(
+                    child: Container(
+                      padding: EdgeInsets.symmetric(vertical: 12.h),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8F9FA),
+                        borderRadius: BorderRadius.circular(12.r),
+                        border: Border.all(color: AppColors.grey300),
+                      ),
+                      child: Column(
+                        children: [
+                          Text(
+                            '6+',
+                            style: AppTextStyles.interBold24.copyWith(
+                              fontSize: 18.sp,
+                              color: const Color(0xFF10B981),
+                            ),
+                          ),
+                          SizedBox(height: 2.h),
+                          Text(
+                            'Courses',
+                            style: AppTextStyles.interRegular14.copyWith(
+                              fontSize: 11.sp,
+                              color: AppColors.grey500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             SizedBox(height: 24.h),
 
             // About Faculty Bio
-            Text('About Instructor', style: AppTextStyles.interBold24.copyWith(fontSize: 16.sp)),
-            SizedBox(height: 8.h),
-            Text(
-              'Senior faculty member with over 10 years of mentoring candidates for FPSC, CSS, NTS, and Provincial PSC exams. Specializes in analytical syllabus breakdown, high-scoring essay techniques, and past paper screening strategies.',
-              style: AppTextStyles.interRegular14.copyWith(fontSize: 13.sp, height: 1.5, color: AppColors.grey700),
-            ),
-            SizedBox(height: 24.h),
+            if (!AppConfig.isSupabaseEnabled || t.bio.isNotEmpty) ...[
+              Text(
+                'About Instructor',
+                style: AppTextStyles.interBold24.copyWith(fontSize: 16.sp),
+              ),
+              SizedBox(height: 8.h),
+              Text(
+                AppConfig.isSupabaseEnabled
+                    ? t.bio
+                    : 'Senior faculty member with over 10 years of mentoring candidates for FPSC, CSS, NTS, and Provincial PSC exams. Specializes in analytical syllabus breakdown, high-scoring essay techniques, and past paper screening strategies.',
+                style: AppTextStyles.interRegular14.copyWith(
+                  fontSize: 13.sp,
+                  height: 1.5,
+                  color: AppColors.grey700,
+                ),
+              ),
+              SizedBox(height: 24.h),
+            ],
 
             // Courses Taught
-            Text('Courses by ${t.name}', style: AppTextStyles.interBold24.copyWith(fontSize: 16.sp)),
+            Text(
+              'Courses by ${t.name}',
+              style: AppTextStyles.interBold24.copyWith(fontSize: 16.sp),
+            ),
             SizedBox(height: 12.h),
 
-            teacherState.when(
-              data: (state) {
-                final courses = state.courses;
+            coursesState.when(
+              data: (courses) {
+                if (courses.isEmpty) {
+                  return Padding(
+                    padding: EdgeInsets.symmetric(vertical: 12.h),
+                    child: Text(
+                      'No published courses yet.',
+                      style: AppTextStyles.interRegular14.copyWith(
+                        color: AppColors.grey500,
+                      ),
+                    ),
+                  );
+                }
                 return ListView.separated(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
@@ -187,27 +295,50 @@ class PublicTeacherProfileScreen extends ConsumerWidget {
                         children: [
                           ClipRRect(
                             borderRadius: BorderRadius.circular(8.r),
-                            child: Image.asset(course.imagePath, width: 70.w, height: 55.h, fit: BoxFit.cover),
+                            child: DashboardCourseCover(
+                              imagePath: course.imagePath,
+                              coverUrl: course.coverUrl,
+                              width: 70.w,
+                              height: 55.h,
+                            ),
                           ),
                           SizedBox(width: 12.w),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(course.title,
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: AppTextStyles.interSemiBold16.copyWith(fontSize: 13.sp)),
+                                Text(
+                                  course.title,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: AppTextStyles.interSemiBold16.copyWith(
+                                    fontSize: 13.sp,
+                                  ),
+                                ),
                                 SizedBox(height: 4.h),
-                                Text('${course.price} • ${course.enrolledCount} Enrolled',
-                                    style: AppTextStyles.interRegular14.copyWith(fontSize: 11.sp, color: AppColors.primary)),
+                                Text(
+                                  AppConfig.isSupabaseEnabled
+                                      ? course.price
+                                      : '${course.price} • ${course.enrolledCount} Enrolled',
+                                  style: AppTextStyles.interRegular14.copyWith(
+                                    fontSize: 11.sp,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
                               ],
                             ),
                           ),
                           IconButton(
-                            icon: const Icon(Icons.arrow_forward_ios, size: 14, color: AppColors.grey500),
+                            icon: const Icon(
+                              Icons.arrow_forward_ios,
+                              size: 14,
+                              color: AppColors.grey500,
+                            ),
                             onPressed: () {
-                              context.pushNamed(AppRoute.courseDetail.name, extra: course);
+                              context.pushNamed(
+                                AppRoute.courseDetail.name,
+                                extra: course,
+                              );
                             },
                           ),
                         ],
@@ -217,7 +348,11 @@ class PublicTeacherProfileScreen extends ConsumerWidget {
                 );
               },
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (_, __) => const SizedBox(),
+              error: (_, __) => TextButton(
+                onPressed: () =>
+                    ref.invalidate(publicTeacherCoursesProvider(t.id)),
+                child: const Text('Could not load courses. Retry'),
+              ),
             ),
           ],
         ),

@@ -1,200 +1,178 @@
+import 'package:nts_psc_app/presentation/widgets/student_tab_header.dart';
+import 'package:nts_psc_app/presentation/widgets/app_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:nts_psc_app/core/models/app_models.dart';
 import 'package:nts_psc_app/core/theme/app_colors.dart';
 import 'package:nts_psc_app/core/theme/app_text_styles.dart';
 import 'package:nts_psc_app/features/quizzes/presentation/controllers/quizzes_controller.dart';
 import 'package:nts_psc_app/presentation/widgets/category_filter_chips.dart';
 import 'package:nts_psc_app/presentation/widgets/quiz_card.dart';
-import 'package:go_router/go_router.dart';
-import 'package:nts_psc_app/config/routes/app_routes.dart';
+import 'package:nts_psc_app/features/assignments/presentation/widgets/student_assignments_section.dart';
+import 'package:nts_psc_app/presentation/widgets/assessment_type_tabs.dart';
+import 'package:nts_psc_app/features/quizzes/presentation/widgets/quiz_performance_feedback.dart';
+import 'package:nts_psc_app/features/assignments/presentation/widgets/assignment_performance_feedback.dart';
 
 class QuizzesScreen extends ConsumerWidget {
   const QuizzesScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final quizzesStateAsync = ref.watch(quizzesControllerProvider);
-
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: quizzesStateAsync.when(
-          data: (state) {
-            return SingleChildScrollView(
+    return DefaultTabController(
+      length: 2,
+      child: Builder(
+        builder: (context) {
+          final tabs = DefaultTabController.of(context);
+          final header = Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const StudentTabHeader(title: 'Assessments'),
+              SizedBox(height: 16.h),
+              const AssessmentTypeTabs(),
+              SizedBox(height: 20.h),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20.w),
+                child: AnimatedBuilder(
+                  animation: tabs,
+                  builder: (context, _) => tabs.index == 0
+                      ? Consumer(
+                          builder: (context, ref, _) => ref
+                              .watch(quizzesControllerProvider)
+                              .when(
+                                data: (state) => QuizPerformanceFeedback(
+                                  quizzes: state.courseQuizzes,
+                                ),
+                                loading: () =>
+                                    const AssessmentFeedbackLoading(),
+                                error: (_, __) =>
+                                    const AssessmentFeedbackUnavailable(),
+                              ),
+                        )
+                      : const AssignmentPerformanceFeedback(),
+                ),
+              ),
+              SizedBox(height: 20.h),
+            ],
+          );
+          final compact =
+              MediaQuery.orientationOf(context) == Orientation.landscape;
+          return AppScaffold(
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+            body: SafeArea(
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SizedBox(height: 24.h),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 24.w),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  if (compact)
+                    SizedBox(
+                      height: MediaQuery.sizeOf(context).height * 0.42,
+                      child: SingleChildScrollView(child: header),
+                    )
+                  else
+                    header,
+                  Expanded(
+                    child: TabBarView(
                       children: [
-                        Text(
-                          'Quizzes',
-                          style: AppTextStyles.interBold30.copyWith(
-                            fontSize: 24.sp,
-                            color: AppColors.onBackground,
-                          ),
-                        ),
-                        Icon(Icons.search, color: AppColors.onBackground, size: 28.w),
-                      ],
-                    ),
-                  ),
-                  SizedBox(height: 24.h),
-                  
-                  // Weekly Goal Card
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 24.w),
-                    child: Container(
-                      padding: EdgeInsets.all(16.w),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF8F9FA),
-                        borderRadius: BorderRadius.circular(16.r),
-                        border: Border.all(color: const Color(0xFFDADCE0), width: 1.w),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Weekly Goal',
-                                style: AppTextStyles.interRegular14.copyWith(
-                                  fontSize: 12.sp,
-                                  color: AppColors.grey500,
-                                ),
-                              ),
-                              SizedBox(height: 4.h),
-                              Text(
-                                '5 / 10 Quizzes',
-                                style: AppTextStyles.interBold24.copyWith(
-                                  fontSize: 18.sp,
-                                  color: AppColors.onBackground,
-                                ),
-                              ),
-                            ],
-                          ),
-                          Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              SizedBox(
-                                width: 48.w,
-                                height: 48.w,
-                                child: CircularProgressIndicator(
-                                  value: 0.5,
-                                  backgroundColor: const Color(0xFFE2E8F0),
-                                  color: const Color(0xFF10B981),
-                                  strokeWidth: 4.w,
-                                ),
-                              ),
-                              Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    '50',
-                                    style: AppTextStyles.interBold24.copyWith(
-                                      fontSize: 12.sp,
-                                      color: const Color(0xFF10B981),
-                                      height: 1.0,
-                                    ),
-                                  ),
-                                  Text(
-                                    '%',
-                                    style: AppTextStyles.interBold24.copyWith(
-                                      fontSize: 10.sp,
-                                      color: const Color(0xFF10B981),
-                                      height: 1.0,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 24.h),
-                  Divider(color: const Color(0xFFE2E8F0), height: 1.h, thickness: 1.h),
-                  SizedBox(height: 24.h),
-                  
-                  const CategoryFilterChips(
-                    filters: ['All Quizzes', 'AI Generated', 'Attempted', 'Missed'],
-                  ),
-                  SizedBox(height: 24.h),
-                  
-                  // Personalized AI Quizzes Header
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 24.w),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Personalized AI Quizzes',
-                          style: AppTextStyles.interBold24.copyWith(
-                            fontSize: 18.sp,
-                            color: AppColors.onBackground,
-                          ),
-                        ),
-                        GestureDetector(
-                          onTap: () => context.pushNamed(AppRoute.generateAiQuiz.name),
-                          child: Text(
-                            'Generate New',
-                            style: AppTextStyles.interMedium16.copyWith(
-                              fontSize: 14.sp,
-                              color: AppColors.primary,
-                            ),
-                          ),
+                        const _QuizzesContent(),
+                        StudentAssignmentsSection(
+                          showHeader: false,
+                          fillAvailableHeight: true,
                         ),
                       ],
                     ),
-                  ),
-                  SizedBox(height: 16.h),
-                  ListView.separated(
-                    padding: EdgeInsets.symmetric(horizontal: 24.w),
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: state.aiQuizzes.length,
-                    separatorBuilder: (context, index) => SizedBox(height: 16.h),
-                    itemBuilder: (context, index) {
-                      return QuizCard(quiz: state.aiQuizzes[index]);
-                    },
-                  ),
-                  
-                  SizedBox(height: 32.h),
-                  
-                  // Course Quizzes Header
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 24.w),
-                    child: Text(
-                      'Course Quizzes',
-                      style: AppTextStyles.interBold24.copyWith(
-                        fontSize: 18.sp,
-                        color: AppColors.onBackground,
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 16.h),
-                  ListView.separated(
-                    padding: EdgeInsets.only(left: 24.w, right: 24.w, bottom: 48.h),
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: state.courseQuizzes.length,
-                    separatorBuilder: (context, index) => SizedBox(height: 16.h),
-                    itemBuilder: (context, index) {
-                      return QuizCard(quiz: state.courseQuizzes[index]);
-                    },
                   ),
                 ],
               ),
-            );
-          },
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, stack) => const Center(child: Text('Error loading quizzes')),
-        ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _QuizzesContent extends ConsumerWidget {
+  const _QuizzesContent();
+
+  static final _filterProvider = StateProvider.autoDispose<int>((ref) => 0);
+
+  bool _hasPassed(QuizModel quiz) {
+    final parts = quiz.score?.split('/');
+    if (parts == null || parts.length != 2) return false;
+    final correct = int.tryParse(parts.first.trim());
+    final total = int.tryParse(parts.last.trim());
+    return correct != null &&
+        total != null &&
+        total > 0 &&
+        correct * 100 / total >= quiz.passingScore;
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final quizzesStateAsync = ref.watch(quizzesControllerProvider);
+
+    return AppScaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      body: quizzesStateAsync.when(
+        data: (state) {
+          final selectedFilter = ref.watch(_filterProvider);
+
+          final visibleQuizzes = state.courseQuizzes
+              .where(
+                (quiz) => switch (selectedFilter) {
+                  1 => !_hasPassed(quiz),
+                  2 => _hasPassed(quiz),
+                  _ => true,
+                },
+              )
+              .toList();
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              CategoryFilterChips(
+                filters: const ['All', 'Needs action', 'Completed'],
+                onSelected: (index) =>
+                    ref.read(_filterProvider.notifier).state = index,
+              ),
+              SizedBox(height: 16.h),
+              if (visibleQuizzes.isEmpty)
+                Expanded(
+                  child: Center(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 32.w),
+                      child: Text(
+                        state.courseQuizzes.isEmpty
+                            ? 'No quizzes available yet.'
+                            : 'No quizzes match this filter.',
+                        textAlign: TextAlign.center,
+                        style: AppTextStyles.interRegular14.copyWith(
+                          color: AppColors.grey600,
+                        ),
+                      ),
+                    ),
+                  ),
+                )
+              else
+                Expanded(
+                  child: ListView.separated(
+                    padding: EdgeInsets.only(
+                      left: 24.w,
+                      right: 24.w,
+                      bottom: 48.h,
+                    ),
+                    itemCount: visibleQuizzes.length,
+                    separatorBuilder: (context, index) =>
+                        SizedBox(height: 16.h),
+                    itemBuilder: (context, index) =>
+                        QuizCard(quiz: visibleQuizzes[index]),
+                  ),
+                ),
+            ],
+          );
+        },
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, stack) =>
+            const Center(child: Text('Error loading quizzes')),
       ),
     );
   }

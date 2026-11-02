@@ -2,6 +2,11 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:nts_psc_app/core/constants/app_assets.dart';
 import 'package:nts_psc_app/core/models/app_models.dart';
+import 'package:nts_psc_app/core/networks/supabase_client.dart';
+import 'package:nts_psc_app/core/repositories/supabase_course_repository.dart';
+import 'package:nts_psc_app/features/auth/presentation/controllers/auth_controller.dart';
+import 'package:nts_psc_app/features/discover/presentation/controllers/category_courses_controller.dart';
+import 'package:nts_psc_app/features/learn/presentation/controllers/my_learning_controller.dart';
 
 class HomeState {
   final List<CourseModel> featuredCourses;
@@ -20,9 +25,26 @@ class HomeState {
 class HomeController extends AsyncNotifier<HomeState> {
   @override
   FutureOr<HomeState> build() async {
+    if (AppConfig.isSupabaseEnabled) {
+      final catalogRequest = ref.watch(publishedCatalogProvider.future);
+      final categoriesRequest = ref.watch(allCategoriesProvider.future);
+      final learningRequest = ref.watch(myLearningControllerProvider.future);
+      final featuredRequest = ref.watch(featuredCatalogProvider.future);
+      final catalog = await catalogRequest;
+      final categories = await categoriesRequest;
+      final learning = await learningRequest;
+      final featured = await featuredRequest;
+      return HomeState(
+        featuredCourses: featured,
+        continueLearningCourses: learning.ongoingCourses,
+        categories: categories,
+        newCourses: catalog,
+      );
+    }
     // Simulate slight loading
     await Future.delayed(const Duration(milliseconds: 500));
-    
+    final categories = await ref.read(courseRepositoryProvider).getCategories();
+
     return HomeState(
       featuredCourses: [
         CourseModel(
@@ -64,12 +86,12 @@ class HomeController extends AsyncNotifier<HomeState> {
           progress: 0.80,
         ),
       ],
-      categories: [
-        CategoryModel(id: 'c1', name: 'AJK PSC', courseCount: 12, iconType: 'document'),
-        CategoryModel(id: 'c2', name: 'FPSC', courseCount: 8, iconType: 'globe'),
-        CategoryModel(id: 'c3', name: 'NTS', courseCount: 15, iconType: 'clipboard'),
-        CategoryModel(id: 'c4', name: 'CSS', courseCount: 5, iconType: 'book'),
-      ],
+      categories: categories
+          .where(
+            (category) =>
+                const {'AJK PSC', 'FPSC', 'NTS', 'CSS'}.contains(category.name),
+          )
+          .toList(),
       newCourses: [
         CourseModel(
           id: '5',
@@ -92,6 +114,36 @@ class HomeController extends AsyncNotifier<HomeState> {
   }
 }
 
-final homeControllerProvider = AsyncNotifierProvider<HomeController, HomeState>(() {
-  return HomeController();
+final homeControllerProvider = AsyncNotifierProvider<HomeController, HomeState>(
+  () {
+    return HomeController();
+  },
+);
+
+/// Shared published catalog for student-facing previews and lists.
+final publishedCatalogProvider = FutureProvider<List<CourseModel>>((ref) {
+  ref.watch(authControllerProvider.select((state) => state.value?.user?.id));
+  final repository = ref.read(courseRepositoryProvider);
+  if (AppConfig.isSupabaseEnabled) {
+    return (repository as SupabaseCourseRepository).getNewCoursesPage(
+      offset: 0,
+      limit: 12,
+    );
+  }
+  return repository.getNewCourses();
+});
+
+final featuredCatalogProvider = FutureProvider<List<CourseModel>>((ref) {
+  ref.watch(authControllerProvider.select((state) => state.value?.user?.id));
+  final repository = ref.read(courseRepositoryProvider);
+  return AppConfig.isSupabaseEnabled
+      ? (repository as SupabaseCourseRepository).getFeaturedCoursesPreview()
+      : repository.getFeaturedCourses();
+});
+
+final allNewCoursesProvider = FutureProvider<List<CourseModel>>((ref) {
+  ref.watch(authControllerProvider.select((state) => state.value?.user?.id));
+  return AppConfig.isSupabaseEnabled
+      ? ref.read(courseRepositoryProvider).getNewCourses()
+      : ref.watch(publishedCatalogProvider.future);
 });

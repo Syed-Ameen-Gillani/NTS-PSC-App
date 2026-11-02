@@ -54,7 +54,9 @@ class LessonPlaybackState {
       speed: speed ?? this.speed,
       quality: quality ?? this.quality,
       isBuffering: isBuffering ?? this.isBuffering,
-      activeQuizTriggerId: clearActiveQuizTrigger ? null : (activeQuizTriggerId ?? this.activeQuizTriggerId),
+      activeQuizTriggerId: clearActiveQuizTrigger
+          ? null
+          : (activeQuizTriggerId ?? this.activeQuizTriggerId),
     );
   }
 }
@@ -135,7 +137,10 @@ class LessonPlaybackNotifier extends Notifier<LessonPlaybackState> {
   }
 
   void rewind(int seconds) {
-    final target = (state.positionSeconds - seconds).clamp(0, state.durationSeconds);
+    final target = (state.positionSeconds - seconds).clamp(
+      0,
+      state.durationSeconds,
+    );
     state = state.copyWith(positionSeconds: target);
   }
 
@@ -151,18 +156,26 @@ class LessonPlaybackNotifier extends Notifier<LessonPlaybackState> {
     }
   }
 
-  void syncFromVideo(int positionSeconds, {int? durationSeconds}) {
+  void syncFromVideo(
+    int positionSeconds, {
+    int? durationSeconds,
+    bool? isPlaying,
+  }) {
+    if (isPlaying != null) _playbackTimer?.cancel();
     // Checkpoint detection
-    if (positionSeconds >= checkpoint1 && !_triggeredCheckpoints.contains(checkpoint1)) {
+    if (positionSeconds >= checkpoint1 &&
+        !_triggeredCheckpoints.contains(checkpoint1)) {
       _triggerCheckpoint(checkpoint1);
       return;
-    } else if (positionSeconds >= checkpoint2 && !_triggeredCheckpoints.contains(checkpoint2)) {
+    } else if (positionSeconds >= checkpoint2 &&
+        !_triggeredCheckpoints.contains(checkpoint2)) {
       _triggerCheckpoint(checkpoint2);
       return;
     }
 
     state = state.copyWith(
       positionSeconds: positionSeconds,
+      isPlaying: isPlaying,
       durationSeconds: durationSeconds ?? state.durationSeconds,
     );
   }
@@ -202,10 +215,12 @@ class LessonPlaybackNotifier extends Notifier<LessonPlaybackState> {
     final nextPosition = state.positionSeconds + 1;
 
     // Checkpoint detection (e.g. 06:14 = 374s)
-    if (nextPosition >= checkpoint1 && !_triggeredCheckpoints.contains(checkpoint1)) {
+    if (nextPosition >= checkpoint1 &&
+        !_triggeredCheckpoints.contains(checkpoint1)) {
       _triggerCheckpoint(checkpoint1);
       return;
-    } else if (nextPosition >= checkpoint2 && !_triggeredCheckpoints.contains(checkpoint2)) {
+    } else if (nextPosition >= checkpoint2 &&
+        !_triggeredCheckpoints.contains(checkpoint2)) {
       _triggerCheckpoint(checkpoint2);
       return;
     }
@@ -223,12 +238,14 @@ class LessonPlaybackNotifier extends Notifier<LessonPlaybackState> {
     _triggeredCheckpoints.add(checkpointSeconds);
     state = state.copyWith(
       positionSeconds: checkpointSeconds,
-      activeQuizTriggerId: checkpointSeconds == checkpoint1 ? 'quiz_ajk_01' : 'quiz_ajk_02',
+      activeQuizTriggerId: checkpointSeconds == checkpoint1
+          ? 'quiz_ajk_01'
+          : 'quiz_ajk_02',
     );
   }
 }
 
 final lessonPlaybackControllerProvider =
     NotifierProvider<LessonPlaybackNotifier, LessonPlaybackState>(
-  LessonPlaybackNotifier.new,
-);
+      LessonPlaybackNotifier.new,
+    );

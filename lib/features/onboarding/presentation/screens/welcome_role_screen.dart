@@ -1,3 +1,4 @@
+import 'package:nts_psc_app/presentation/widgets/app_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -11,11 +12,13 @@ import 'package:nts_psc_app/features/auth/presentation/controllers/auth_controll
 import 'package:nts_psc_app/presentation/widgets/custom_button.dart';
 
 class WelcomeRoleScreen extends ConsumerWidget {
+  static const _welcomeTitle = 'Welcome to\nCareer Boost Officers Academy.';
+
   const WelcomeRoleScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Scaffold(
+    return AppScaffold(
       backgroundColor: const Color(0xFFF3F7FA),
       body: SafeArea(
         top: false,
@@ -57,7 +60,7 @@ class WelcomeRoleScreen extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Welcome to \nEducora.',
+                        _welcomeTitle,
                         textAlign: TextAlign.start,
                         style: AppTextStyles.interBold24.copyWith(
                           fontSize: 26.sp,

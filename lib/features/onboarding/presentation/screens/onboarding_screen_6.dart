@@ -1,3 +1,4 @@
+import 'package:nts_psc_app/presentation/widgets/app_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:nts_psc_app/core/constants/app_assets.dart';
 //import 'package:go_router/go_router.dart';
@@ -12,7 +13,7 @@ class OnboardingScreen6 extends StatelessWidget {
     const String title = 'You learn';
     const String description = 'While Sitting at Home';
 
-    return Scaffold(
+    return AppScaffold(
       backgroundColor: kBackgroundColor,
       body: SafeArea(
         child: OnboardingContentStyle3(

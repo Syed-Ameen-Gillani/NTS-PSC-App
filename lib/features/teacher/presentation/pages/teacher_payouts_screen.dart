@@ -1,160 +1,39 @@
+import 'package:nts_psc_app/presentation/widgets/app_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:nts_psc_app/core/theme/app_colors.dart';
 import 'package:nts_psc_app/core/theme/app_text_styles.dart';
-import 'package:nts_psc_app/features/teacher/presentation/controllers/teacher_controller.dart';
-import 'package:nts_psc_app/presentation/widgets/custom_button.dart';
-import 'package:nts_psc_app/presentation/widgets/custom_text_field.dart';
-import 'package:nts_psc_app/presentation/widgets/custom_toast.dart';
+import 'package:nts_psc_app/features/teacher/domain/models/teacher_insights_models.dart';
+import 'package:nts_psc_app/features/teacher/data/teacher_insights_repository_provider.dart';
 
-class TeacherPayoutsScreen extends ConsumerStatefulWidget {
+class TeacherPayoutsScreen extends ConsumerWidget {
   const TeacherPayoutsScreen({super.key});
 
   @override
-  ConsumerState<TeacherPayoutsScreen> createState() => _TeacherPayoutsScreenState();
-}
-
-class _TeacherPayoutsScreenState extends ConsumerState<TeacherPayoutsScreen> {
-  void _showRequestPayoutModal(BuildContext context) {
-    final amountController = TextEditingController(text: '34500');
-    final accountController = TextEditingController(text: '0345-9871234');
-    String selectedMethod = 'Easypaisa';
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24.r))),
-      builder: (ctx) => StatefulBuilder(
-        builder: (context, setModalState) => Padding(
-          padding: EdgeInsets.only(
-            left: 24.w,
-            right: 24.w,
-            top: 24.h,
-            bottom: MediaQuery.of(ctx).viewInsets.bottom + 24.h,
-          ),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('Request Payout Withdrawal', style: AppTextStyles.interBold24.copyWith(fontSize: 18.sp)),
-                    IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(ctx)),
-                  ],
-                ),
-                SizedBox(height: 16.h),
-                Text('Available Balance for Withdrawal', style: AppTextStyles.interRegular14.copyWith(fontSize: 12.sp, color: AppColors.grey500)),
-                SizedBox(height: 4.h),
-                Text('Rs 34,500', style: AppTextStyles.interBold30.copyWith(fontSize: 24.sp, color: AppColors.primary)),
-                SizedBox(height: 16.h),
-                Text('Withdrawal Method', style: AppTextStyles.interSemiBold16.copyWith(fontSize: 13.sp)),
-                SizedBox(height: 8.h),
-                Row(
-                  children: ['Easypaisa', 'JazzCash', 'Bank Transfer'].map((m) {
-                    final isSel = selectedMethod == m;
-                    return Expanded(
-                      child: GestureDetector(
-                        onTap: () => setModalState(() => selectedMethod = m),
-                        child: Container(
-                          margin: EdgeInsets.symmetric(horizontal: 4.w),
-                          padding: EdgeInsets.symmetric(vertical: 10.h),
-                          decoration: BoxDecoration(
-                            color: isSel ? AppColors.surface : AppColors.grey100,
-                            borderRadius: BorderRadius.circular(12.r),
-                            border: Border.all(color: isSel ? AppColors.primary : AppColors.grey300),
-                          ),
-                          alignment: Alignment.center,
-                          child: Text(
-                            m,
-                            style: AppTextStyles.interSemiBold16.copyWith(
-                              fontSize: 11.sp,
-                              color: isSel ? AppColors.primary : AppColors.grey500,
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-                SizedBox(height: 16.h),
-                Text('Withdrawal Amount (Rs)', style: AppTextStyles.interSemiBold16.copyWith(fontSize: 13.sp)),
-                SizedBox(height: 6.h),
-                CustomTextFormField(controller: amountController, hintText: '34500', keyboardType: TextInputType.number),
-                SizedBox(height: 12.h),
-                Text('Account Number / IBAN', style: AppTextStyles.interSemiBold16.copyWith(fontSize: 13.sp)),
-                SizedBox(height: 6.h),
-                CustomTextFormField(controller: accountController, hintText: '03XX-XXXXXXX'),
-                SizedBox(height: 20.h),
-                CustomButton(
-                  text: 'Confirm & Transfer Funds',
-                  onPressed: () {
-                    final amountVal = amountController.text.trim();
-                    if (amountVal.isNotEmpty) {
-                      ref.read(teacherControllerProvider.notifier).requestPayout(
-                            amount: 'Rs $amountVal',
-                            method: selectedMethod,
-                            accountNumber: accountController.text.trim(),
-                          );
-                      Navigator.pop(ctx);
-                      CustomToast.showSuccess(context, message: 'Payout of Rs $amountVal initiated via $selectedMethod!');
-                    }
-                  },
-                  color: AppColors.primary,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSummaryCard(String title, String amount, Color color, IconData icon) {
-    return Container(
-      padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8F9FA),
-        borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(color: AppColors.grey300, width: 1.w),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(title, style: AppTextStyles.interRegular14.copyWith(fontSize: 11.sp, color: AppColors.grey500)),
-              Icon(icon, color: color, size: 16.w),
-            ],
-          ),
-          SizedBox(height: 8.h),
-          Text(amount, style: AppTextStyles.interBold24.copyWith(fontSize: 18.sp, color: color)),
-        ],
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final teacherState = ref.watch(teacherControllerProvider);
-
-    return Scaffold(
-      backgroundColor: Colors.white,
+  Widget build(BuildContext context, WidgetRef ref) {
+    final financial = ref.watch(teacherFinancialOverviewProvider);
+    return AppScaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.background,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: AppColors.onBackground, size: 20),
-          onPressed: () => context.pop(),
+          tooltip: 'Back',
+          icon: Icon(
+            Icons.arrow_back_ios_new,
+            color: AppColors.onBackground,
+            size: 20.w,
+          ),
+          onPressed: context.pop,
         ),
         title: Text(
           'Financial & Payouts',
-          style: AppTextStyles.interBold24.copyWith(fontSize: 18.sp, color: AppColors.onBackground),
+          style: AppTextStyles.interBold24.copyWith(
+            fontSize: 18.sp,
+            color: AppColors.onBackground,
+          ),
         ),
         centerTitle: true,
         bottom: PreferredSize(
@@ -163,181 +42,368 @@ class _TeacherPayoutsScreenState extends ConsumerState<TeacherPayoutsScreen> {
         ),
       ),
       body: SafeArea(
-        child: teacherState.when(
-          data: (state) {
-            final payouts = state.payouts;
-
-            return SingleChildScrollView(
+        child: financial.when(
+          data: (overview) => _PayoutContent(overview: overview),
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (error, _) => Center(
+            child: Padding(
               padding: EdgeInsets.all(24.w),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Main Banner
-                  Container(
-                    width: double.infinity,
-                    padding: EdgeInsets.all(20.w),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF1E75F1), Color(0xFF0F4DB8)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(20.r),
+                  Text(
+                    'Could not load financial data.',
+                    style: AppTextStyles.interMedium16.copyWith(
+                      color: AppColors.grey600,
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Available Balance for Payout',
-                            style: AppTextStyles.interMedium16.copyWith(fontSize: 13.sp, color: Colors.white70)),
-                        SizedBox(height: 6.h),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text('Rs 34,500',
-                                style: AppTextStyles.interBold30.copyWith(fontSize: 28.sp, color: Colors.white)),
-                            ElevatedButton(
-                              onPressed: () => _showRequestPayoutModal(context),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.white,
-                                foregroundColor: AppColors.primary,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50.r)),
-                                elevation: 0,
-                                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
-                              ),
-                              child: Text('Withdraw Funds',
-                                  style: AppTextStyles.interSemiBold16.copyWith(fontSize: 12.sp, color: AppColors.primary)),
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: 12.h),
-                        Text('Automatic payouts are processed every 1st and 15th of the month.',
-                            style: AppTextStyles.interRegular14.copyWith(fontSize: 11.sp, color: Colors.white70)),
-                      ],
-                    ),
-                  ),
-                  SizedBox(height: 20.h),
-
-                  // 2x2 Breakdown Grid
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildSummaryCard(
-                          'Gross Sales',
-                          'Rs 105,625',
-                          AppColors.onBackground,
-                          Icons.trending_up,
-                        ),
-                      ),
-                      SizedBox(width: 12.w),
-                      Expanded(
-                        child: _buildSummaryCard(
-                          'Net Earnings (80%)',
-                          'Rs 84,500',
-                          const Color(0xFF10B981),
-                          Icons.account_balance_wallet_outlined,
-                        ),
-                      ),
-                    ],
                   ),
                   SizedBox(height: 12.h),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildSummaryCard(
-                          'Total Withdrawn',
-                          'Rs 50,000',
-                          const Color(0xFF8B5CF6),
-                          Icons.check_circle_outline,
-                        ),
-                      ),
-                      SizedBox(width: 12.w),
-                      Expanded(
-                        child: _buildSummaryCard(
-                          'Platform Fee (20%)',
-                          'Rs 21,125',
-                          AppColors.grey500,
-                          Icons.pie_chart_outline,
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 28.h),
-
-                  // Transaction History Header
-                  Text('Payout History (${payouts.length})',
-                      style: AppTextStyles.interBold24.copyWith(fontSize: 17.sp, color: AppColors.onBackground)),
-                  SizedBox(height: 14.h),
-
-                  ListView.separated(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: payouts.length,
-                    separatorBuilder: (_, __) => SizedBox(height: 12.h),
-                    itemBuilder: (context, index) {
-                      final payout = payouts[index];
-                      final isCompleted = payout.status == 'Completed';
-
-                      return Container(
-                        padding: EdgeInsets.all(16.w),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF8F9FA),
-                          borderRadius: BorderRadius.circular(16.r),
-                          border: Border.all(color: AppColors.grey300, width: 1.w),
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              padding: EdgeInsets.all(10.w),
-                              decoration: BoxDecoration(
-                                color: isCompleted ? const Color(0xFFD1FAE5) : const Color(0xFFFEF3C7),
-                                shape: BoxShape.circle,
-                              ),
-                              child: Icon(
-                                isCompleted ? Icons.check : Icons.hourglass_top,
-                                color: isCompleted ? const Color(0xFF065F46) : const Color(0xFF92400E),
-                                size: 16.w,
-                              ),
-                            ),
-                            SizedBox(width: 12.w),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text('${payout.method} • ${payout.accountNumber}',
-                                      style: AppTextStyles.interSemiBold16.copyWith(fontSize: 13.sp)),
-                                  SizedBox(height: 2.h),
-                                  Text('${payout.transactionId} • ${payout.date}',
-                                      style: AppTextStyles.interRegular14
-                                          .copyWith(fontSize: 11.sp, color: AppColors.grey500)),
-                                ],
-                              ),
-                            ),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                Text(payout.amount,
-                                    style: AppTextStyles.interBold24.copyWith(fontSize: 14.sp, color: AppColors.onBackground)),
-                                SizedBox(height: 2.h),
-                                Text(payout.status,
-                                    style: AppTextStyles.interSemiBold16.copyWith(
-                                      fontSize: 11.sp,
-                                      color: isCompleted ? const Color(0xFF065F46) : const Color(0xFF92400E),
-                                    )),
-                              ],
-                            ),
-                          ],
-                        ),
-                      );
-                    },
+                  TextButton(
+                    onPressed: () =>
+                        ref.invalidate(teacherFinancialOverviewProvider),
+                    child: const Text('Try again'),
                   ),
                 ],
               ),
-            );
-          },
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (_, __) => const Center(child: Text('Error loading payouts')),
+            ),
+          ),
         ),
       ),
     );
   }
+}
+
+class _PayoutContent extends StatelessWidget {
+  const _PayoutContent({required this.overview});
+
+  final TeacherFinancialOverview overview;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: EdgeInsets.fromLTRB(20.w, 20.h, 20.w, 28.h),
+      children: [
+        _BalancePanel(overview: overview),
+        SizedBox(height: 24.h),
+        Text(
+          'Earnings overview',
+          style: AppTextStyles.interBold24.copyWith(
+            fontSize: 17.sp,
+            color: AppColors.onBackground,
+          ),
+        ),
+        SizedBox(height: 12.h),
+        _FinancialSummary(overview: overview),
+        SizedBox(height: 28.h),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                'Payout history',
+                style: AppTextStyles.interBold24.copyWith(
+                  fontSize: 17.sp,
+                  color: AppColors.onBackground,
+                ),
+              ),
+            ),
+            Text(
+              '${overview.payouts.length} records',
+              style: AppTextStyles.interRegular14.copyWith(
+                fontSize: 12.sp,
+                color: AppColors.grey500,
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 10.h),
+        if (overview.payouts.isEmpty)
+          const _EmptyPayoutHistory()
+        else
+          ...overview.payouts.map(
+            (payout) => _PayoutRow(overview: overview, payout: payout),
+          ),
+      ],
+    );
+  }
+}
+
+class _BalancePanel extends StatelessWidget {
+  const _BalancePanel({required this.overview});
+
+  final TeacherFinancialOverview overview;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.all(22.w),
+      decoration: BoxDecoration(
+        color: AppColors.primary,
+        borderRadius: BorderRadius.circular(8.r),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.2),
+            blurRadius: 18.r,
+            offset: Offset(0, 8.h),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'AVAILABLE BALANCE',
+            style: AppTextStyles.interSemiBold16.copyWith(
+              fontSize: 11.sp,
+              color: AppColors.onPrimary.withValues(alpha: 0.76),
+            ),
+          ),
+          SizedBox(height: 8.h),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              overview.formatMinor(overview.availableBalanceMinor),
+              style: AppTextStyles.interBold30.copyWith(
+                fontSize: 32.sp,
+                color: AppColors.onPrimary,
+              ),
+            ),
+          ),
+          SizedBox(height: 8.h),
+          Text(
+            '${overview.formatMinor(overview.pendingBalanceMinor)} pending clearance',
+            style: AppTextStyles.interRegular14.copyWith(
+              fontSize: 12.sp,
+              color: AppColors.onPrimary.withValues(alpha: 0.78),
+            ),
+          ),
+          SizedBox(height: 18.h),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton(
+              onPressed: null,
+              style: OutlinedButton.styleFrom(
+                disabledForegroundColor: AppColors.onPrimary,
+                disabledBackgroundColor: AppColors.onPrimary.withValues(
+                  alpha: 0.12,
+                ),
+                side: BorderSide(
+                  color: AppColors.onPrimary.withValues(alpha: 0.48),
+                ),
+                padding: EdgeInsets.symmetric(vertical: 11.h),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
+              ),
+              child: Text(
+                'Withdrawals available after PayFast setup',
+                textAlign: TextAlign.center,
+                style: AppTextStyles.interSemiBold16.copyWith(fontSize: 12.sp),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FinancialSummary extends StatelessWidget {
+  const _FinancialSummary({required this.overview});
+
+  final TeacherFinancialOverview overview;
+
+  @override
+  Widget build(BuildContext context) {
+    final items = [
+      ('Gross sales', overview.grossSalesMinor),
+      ('Net earnings', overview.netEarningsMinor),
+      ('Platform fees', overview.platformFeeMinor),
+      ('Withdrawn', overview.totalWithdrawnMinor),
+    ];
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = (constraints.maxWidth - 8.w) / 2;
+        return Wrap(
+          spacing: 8.w,
+          runSpacing: 8.h,
+          children: items
+              .map(
+                (item) => SizedBox(
+                  width: width,
+                  child: Container(
+                    padding: EdgeInsets.all(16.w),
+                    decoration: BoxDecoration(
+                      color: AppColors.grey100,
+                      borderRadius: BorderRadius.circular(8.r),
+                      border: Border.all(color: AppColors.grey300, width: 1.w),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          item.$1,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTextStyles.interRegular14.copyWith(
+                            fontSize: 11.sp,
+                            color: AppColors.grey500,
+                          ),
+                        ),
+                        SizedBox(height: 8.h),
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            overview.formatMinor(item.$2),
+                            style: AppTextStyles.interBold24.copyWith(
+                              fontSize: 17.sp,
+                              color: AppColors.onBackground,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              )
+              .toList(),
+        );
+      },
+    );
+  }
+}
+
+class _EmptyPayoutHistory extends StatelessWidget {
+  const _EmptyPayoutHistory();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 30.h),
+      decoration: BoxDecoration(
+        color: AppColors.grey100,
+        borderRadius: BorderRadius.circular(8.r),
+        border: Border.all(color: AppColors.grey300, width: 1.w),
+      ),
+      child: Column(
+        children: [
+          Text(
+            'No payouts yet',
+            style: AppTextStyles.interSemiBold16.copyWith(
+              fontSize: 14.sp,
+              color: AppColors.onBackground,
+            ),
+          ),
+          SizedBox(height: 4.h),
+          Text(
+            'Completed and processing payouts will be listed here once the payment provider is connected.',
+            textAlign: TextAlign.center,
+            style: AppTextStyles.interRegular14.copyWith(
+              fontSize: 12.sp,
+              height: 1.4,
+              color: AppColors.grey500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PayoutRow extends StatelessWidget {
+  const _PayoutRow({required this.overview, required this.payout});
+
+  final TeacherFinancialOverview overview;
+  final TeacherPayoutModel payout;
+
+  @override
+  Widget build(BuildContext context) {
+    final statusColor = switch (payout.status) {
+      'completed' => AppColors.success,
+      'failed' || 'cancelled' => AppColors.error,
+      _ => AppColors.primary,
+    };
+    return Container(
+      margin: EdgeInsets.only(bottom: 8.h),
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+      decoration: BoxDecoration(
+        color: AppColors.grey100,
+        borderRadius: BorderRadius.circular(8.r),
+        border: Border.all(color: AppColors.grey300, width: 1.w),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 8.w,
+            height: 8.w,
+            decoration: BoxDecoration(
+              color: statusColor,
+              shape: BoxShape.circle,
+            ),
+          ),
+          SizedBox(width: 12.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${_methodLabel(payout.method)} · ${payout.accountMask}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.interSemiBold16.copyWith(
+                    fontSize: 13.sp,
+                    color: AppColors.onBackground,
+                  ),
+                ),
+                SizedBox(height: 3.h),
+                Text(
+                  _dateLabel(payout.requestedAt),
+                  style: AppTextStyles.interRegular14.copyWith(
+                    fontSize: 11.sp,
+                    color: AppColors.grey500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(width: 12.w),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                overview.formatMinor(payout.amountMinor),
+                style: AppTextStyles.interSemiBold16.copyWith(
+                  fontSize: 13.sp,
+                  color: AppColors.onBackground,
+                ),
+              ),
+              SizedBox(height: 3.h),
+              Text(
+                _statusLabel(payout.status),
+                style: AppTextStyles.interMedium16.copyWith(
+                  fontSize: 11.sp,
+                  color: statusColor,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  static String _methodLabel(String value) => switch (value) {
+    'easypaisa' => 'Easypaisa',
+    'jazzcash' => 'JazzCash',
+    _ => 'Bank transfer',
+  };
+
+  static String _statusLabel(String value) =>
+      '${value[0].toUpperCase()}${value.substring(1)}';
+
+  static String _dateLabel(DateTime value) =>
+      '${value.day.toString().padLeft(2, '0')}/'
+      '${value.month.toString().padLeft(2, '0')}/${value.year}';
 }

@@ -1,9 +1,11 @@
+import 'package:nts_psc_app/presentation/widgets/app_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:nts_psc_app/config/routes/app_routes.dart';
+import 'package:nts_psc_app/core/networks/supabase_client.dart';
 import 'package:nts_psc_app/core/theme/app_colors.dart';
 import 'package:nts_psc_app/core/theme/app_text_styles.dart';
 import 'package:nts_psc_app/presentation/widgets/custom_text_field.dart';
@@ -20,7 +22,7 @@ class DeleteAccountScreen extends ConsumerWidget {
     final confirmText = ref.watch(deleteConfirmationProvider);
     final isConfirmed = confirmText == 'DELETE';
 
-    return Scaffold(
+    return AppScaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
@@ -134,7 +136,7 @@ class DeleteAccountScreen extends ConsumerWidget {
                 width: double.infinity,
                 height: 68.h,
                 child: ElevatedButton(
-                  onPressed: isConfirmed
+                  onPressed: isConfirmed && !AppConfig.isSupabaseEnabled
                       ? () {
                           showDialog(
                             context: context,
@@ -162,7 +164,9 @@ class DeleteAccountScreen extends ConsumerWidget {
                     elevation: 0,
                   ),
                   child: Text(
-                    'Delete My Account',
+                    AppConfig.isSupabaseEnabled
+                        ? 'Account deletion unavailable'
+                        : 'Delete My Account',
                     style: AppTextStyles.interSemiBold16.copyWith(
                       color: isConfirmed ? Colors.white : AppColors.grey500,
                       fontSize: 18.sp,

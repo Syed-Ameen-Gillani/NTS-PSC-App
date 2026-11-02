@@ -2,6 +2,11 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:nts_psc_app/core/constants/app_assets.dart';
 import 'package:nts_psc_app/core/models/app_models.dart';
+import 'package:nts_psc_app/core/networks/supabase_client.dart';
+import 'package:nts_psc_app/features/auth/presentation/controllers/auth_controller.dart';
+import 'package:nts_psc_app/features/home/presentation/controllers/home_controller.dart';
+import 'package:nts_psc_app/features/home/presentation/controllers/catalog_pages_controller.dart';
+import 'package:nts_psc_app/features/learn/data/offline_progress_queue.dart';
 
 class MyLearningState {
   final List<CourseModel> ongoingCourses;
@@ -30,8 +35,25 @@ class MyLearningState {
 class MyLearningController extends AsyncNotifier<MyLearningState> {
   @override
   FutureOr<MyLearningState> build() async {
+    if (AppConfig.isSupabaseEnabled) {
+      final studentId = ref.watch(
+        authControllerProvider.select((state) => state.value?.user?.id),
+      );
+      if (studentId == null) return MyLearningState();
+      final courses = await ref
+          .read(courseRepositoryProvider)
+          .getEnrolledCourses(studentId);
+      return MyLearningState(
+        ongoingCourses: courses
+            .where((course) => course.learningComplete != true)
+            .toList(),
+        completedCourses: courses
+            .where((course) => course.learningComplete == true)
+            .toList(),
+      );
+    }
     await Future.delayed(const Duration(milliseconds: 300));
-    
+
     return MyLearningState(
       ongoingCourses: [
         CourseModel(
@@ -78,6 +100,10 @@ class MyLearningController extends AsyncNotifier<MyLearningState> {
   }
 
   Future<void> enrollCourse(CourseModel course) async {
+    if (AppConfig.isSupabaseEnabled) {
+      ref.invalidateSelf();
+      return;
+    }
     final current = state.value;
     if (current == null) return;
 
@@ -92,6 +118,18 @@ class MyLearningController extends AsyncNotifier<MyLearningState> {
   }
 
   Future<void> markLessonCompleted(String courseId, String lessonId) async {
+    if (AppConfig.isSupabaseEnabled) {
+      final synced = await ref
+          .read(offlineProgressQueueProvider)
+          .complete(lessonId);
+      if (!synced) throw PendingLessonCompletion();
+      ref.invalidate(homeControllerProvider);
+      ref.invalidate(publishedCatalogProvider);
+      ref.invalidate(featuredCatalogProvider);
+      ref.invalidate(catalogPageProvider);
+      ref.invalidateSelf();
+      return;
+    }
     final current = state.value;
     if (current == null) return;
 
@@ -107,6 +145,7 @@ class MyLearningController extends AsyncNotifier<MyLearningState> {
   }
 }
 
-final myLearningControllerProvider = AsyncNotifierProvider<MyLearningController, MyLearningState>(() {
-  return MyLearningController();
-});
+final myLearningControllerProvider =
+    AsyncNotifierProvider<MyLearningController, MyLearningState>(() {
+      return MyLearningController();
+    });
