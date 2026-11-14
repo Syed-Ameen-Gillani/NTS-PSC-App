@@ -2,6 +2,11 @@ part of 'go_router.dart';
 
 List<RouteBase> _studentRoutes() => [
   GoRoute(
+    path: AppRoute.learningInterests.path,
+    name: AppRoute.learningInterests.name,
+    builder: (_, _) => const LearningInterestsPage(),
+  ),
+  GoRoute(
     path: AppRoute.curriculumResources.path,
     name: AppRoute.curriculumResources.name,
     builder: (_, state) {
@@ -18,8 +23,11 @@ List<RouteBase> _studentRoutes() => [
     path: AppRoute.videoFullscreen.path,
     name: AppRoute.videoFullscreen.name,
     pageBuilder: (context, state) => NoTransitionPage(
+      restorationId: state.pageKey.value,
       child: state.extra is VideoPlayerSession
           ? VideoFullscreenScreen(session: state.extra as VideoPlayerSession)
+          : state.extra is TransientNavigationExtra
+          ? const RestoredInlineVideo()
           : const FeatureUnavailableScreen(
               title: 'Video',
               message: 'Open a lesson to play its video.',

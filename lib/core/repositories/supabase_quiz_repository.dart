@@ -112,11 +112,12 @@ class SupabaseQuizRepository implements QuizRepository {
               .inFilter('question_id', ids);
     final attempts = await _client
         .from('quiz_attempts')
-        .select('id, score, total_questions')
+        .select('id, score, total_questions, submitted_at')
         .eq('student_id', userId)
         .eq('quiz_id', quizId)
-        .order('submitted_at');
-    final latest = attempts.isEmpty ? null : attempts.last;
+        .order('submitted_at', ascending: false)
+        .limit(1);
+    final latest = attempts.isEmpty ? null : attempts.first;
     return mapQuizRow(
       row,
       keyByQuestion: {
@@ -317,17 +318,19 @@ class SupabaseQuizRepository implements QuizRepository {
     };
     final attempts = await _client
         .from('quiz_attempts')
-        .select('id, quiz_id, score, total_questions')
+        .select('id, quiz_id, score, total_questions, submitted_at')
         .eq('student_id', userId)
-        .order('submitted_at');
+        .order('submitted_at', ascending: false);
+    final latestAttemptByQuiz = latestAttemptsByQuiz(
+      attempts.cast<Map<String, dynamic>>(),
+    );
     final scoreByQuiz = {
-      for (final attempt in attempts)
-        attempt['quiz_id'] as String:
-            '${attempt['score']}/${attempt['total_questions']}',
+      for (final entry in latestAttemptByQuiz.entries)
+        entry.key: '${entry.value['score']}/${entry.value['total_questions']}',
     };
     final attemptIdByQuiz = {
-      for (final attempt in attempts)
-        attempt['quiz_id'] as String: attempt['id'] as String,
+      for (final entry in latestAttemptByQuiz.entries)
+        entry.key: entry.value['id'] as String,
     };
     return rows
         .map(
@@ -339,6 +342,23 @@ class SupabaseQuizRepository implements QuizRepository {
           ),
         )
         .toList();
+  }
+
+  static Map<String, Map<String, dynamic>> latestAttemptsByQuiz(
+    Iterable<Map<String, dynamic>> attempts,
+  ) {
+    final latest = <String, Map<String, dynamic>>{};
+    for (final attempt in attempts) {
+      final quizId = attempt['quiz_id'] as String;
+      final current = latest[quizId];
+      if (current == null ||
+          DateTime.parse(
+            attempt['submitted_at'] as String,
+          ).isAfter(DateTime.parse(current['submitted_at'] as String))) {
+        latest[quizId] = attempt;
+      }
+    }
+    return latest;
   }
 
   static QuizModel mapQuizRow(

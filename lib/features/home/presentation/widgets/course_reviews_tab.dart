@@ -1,3 +1,4 @@
+import 'package:nts_psc_app/presentation/widgets/app_choice_chip.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'live_course_reviews.dart';
 import 'package:flutter/material.dart';
@@ -242,7 +243,7 @@ class _CourseReviewsTabState extends ConsumerState<CourseReviewsTab> {
           final isSelected = _selectedFilterStars == f['stars'];
           return Padding(
             padding: EdgeInsets.only(right: 8.w),
-            child: ChoiceChip(
+            child: AppChoiceChip(
               label: Text(
                 f['label'] as String,
                 style: AppTextStyles.interMedium16.copyWith(
@@ -251,7 +252,6 @@ class _CourseReviewsTabState extends ConsumerState<CourseReviewsTab> {
                 ),
               ),
               selected: isSelected,
-              selectedColor: AppColors.primary,
               backgroundColor: AppColors.grey100,
               onSelected: (_) =>
                   ref

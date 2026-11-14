@@ -1,5 +1,6 @@
 import 'automatic_learning_status.dart';
 import 'lesson_meta_row.dart';
+import 'package:nts_psc_app/presentation/widgets/module_accordion.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'course_scoped_resources_link.dart';
@@ -375,14 +376,17 @@ class _CurriculumSection extends StatelessWidget {
             ],
           ),
           SizedBox(height: 14.h),
-          LiveLessonModuleGroup(
-            courseId: course.id,
-            module: module,
-            moduleNumber: moduleIndex + 1,
-            currentLesson: currentLesson,
-            completedLessonIds: completedLessonIds,
-            onSelectLesson: onSelectLesson,
-            isInstructorPreview: isInstructorPreview,
+          ModuleAccordion(
+            initialModuleId: module.id,
+            child: LiveLessonModuleGroup(
+              courseId: course.id,
+              module: module,
+              moduleNumber: moduleIndex + 1,
+              currentLesson: currentLesson,
+              completedLessonIds: completedLessonIds,
+              onSelectLesson: onSelectLesson,
+              isInstructorPreview: isInstructorPreview,
+            ),
           ),
         ],
       ),

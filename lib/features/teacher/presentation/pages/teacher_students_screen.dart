@@ -1,3 +1,4 @@
+import 'package:nts_psc_app/presentation/widgets/app_choice_chip.dart';
 import 'package:nts_psc_app/presentation/widgets/app_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -122,12 +123,11 @@ class _TeacherStudentsScreenState extends ConsumerState<TeacherStudentsScreen> {
                       final isSelected = _selectedCourse == course;
                       return Padding(
                         padding: EdgeInsets.only(right: 8.w),
-                        child: ChoiceChip(
+                        child: AppChoiceChip(
                           label: Text(course),
                           selected: isSelected,
                           onSelected: (_) =>
                               setState(() => _selectedCourse = course),
-                          selectedColor: AppColors.primary,
                           backgroundColor: const Color(0xFFF8F9FA),
                           labelStyle: AppTextStyles.interMedium16.copyWith(
                             fontSize: 11.sp,
@@ -179,14 +179,11 @@ class _TeacherStudentsScreenState extends ConsumerState<TeacherStudentsScreen> {
 
                             return Padding(
                               padding: EdgeInsets.only(right: 8.w),
-                              child: FilterChip(
+                              child: AppChoiceChip(
                                 label: Text('$status ($count)'),
                                 selected: isSelected,
                                 onSelected: (_) =>
                                     setState(() => _selectedStatus = status),
-                                selectedColor: status == 'Needs Attention'
-                                    ? const Color(0xFFFEF3C7)
-                                    : AppColors.primary.withValues(alpha: 0.12),
                                 backgroundColor: Colors.white,
                                 labelStyle: AppTextStyles.interSemiBold16
                                     .copyWith(

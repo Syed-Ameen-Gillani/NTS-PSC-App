@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:nts_psc_app/core/theme/app_colors.dart';
+import 'package:nts_psc_app/core/theme/app_gradients.dart';
 import 'package:nts_psc_app/core/theme/app_text_styles.dart';
 
 class CategoryFilterChips extends StatefulWidget {
@@ -33,7 +34,7 @@ class _CategoryFilterChipsState extends State<CategoryFilterChips> {
   @override
   void didUpdateWidget(CategoryFilterChips oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.initialSelectedIndex != _selectedIndex) {
+    if (oldWidget.initialSelectedIndex != widget.initialSelectedIndex) {
       _selectedIndex = widget.initialSelectedIndex;
     }
   }
@@ -65,11 +66,14 @@ class _CategoryFilterChipsState extends State<CategoryFilterChips> {
               padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 16.w),
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: isSelected ? AppColors.primary : const Color(0xFFF8F9FA),
+                color: isSelected ? null : const Color(0xFFF8F9FA),
+                gradient: isSelected
+                    ? AppGradients.primaryBanner(Theme.of(context).colorScheme)
+                    : null,
                 borderRadius: BorderRadius.circular(100.r),
                 border: Border.all(
                   color: isSelected
-                      ? AppColors.primary
+                      ? Colors.transparent
                       : const Color(0xFFDADCE0),
                   width: 1.w,
                 ),
@@ -77,7 +81,9 @@ class _CategoryFilterChipsState extends State<CategoryFilterChips> {
               child: Text(
                 widget.filters[index],
                 style: AppTextStyles.interMedium16.copyWith(
-                  color: isSelected ? Colors.white : AppColors.onBackground,
+                  color: isSelected
+                      ? Theme.of(context).colorScheme.onPrimary
+                      : AppColors.onBackground,
                   fontSize: 14.sp,
                 ),
               ),

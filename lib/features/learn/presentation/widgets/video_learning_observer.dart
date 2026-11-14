@@ -2,9 +2,7 @@ import 'dart:async';
 import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:video_player/video_player.dart';
-import 'package:nts_psc_app/config/routes/app_routes.dart';
 import 'package:nts_psc_app/features/learn/data/learning_evidence_repository.dart';
 import 'package:nts_psc_app/features/learn/domain/playback_evidence_sampler.dart';
 import 'professional_video_player.dart' show VideoPlayerSession;
@@ -38,9 +36,11 @@ class _VideoLearningObserverState extends ConsumerState<VideoLearningObserver>
   bool foreground = true;
   bool busy = false;
   int ticks = 0;
+  int sampledMs = 0;
   int nextAttemptMs = 0;
   bool wasPlaying = false;
   ({int start, int end, int wallMs, double speed})? pending;
+  Future<void>? _flushing;
 
   @override
   void initState() {
@@ -89,23 +89,37 @@ class _VideoLearningObserverState extends ConsumerState<VideoLearningObserver>
       if (!mounted) return;
       await flush();
       await repository.sync();
-    } catch (_) {
-      // The durable queue retries on the next periodic sync or reconnection.
+    } catch (error, stackTrace) {
+      developer.log(
+        'Playback boundary sync failed for ${widget.lessonId}.',
+        name: 'CBOA.LearningProgress',
+        error: error,
+        stackTrace: stackTrace,
+      );
     }
   }
 
   Future<void> flush() async {
+    final previous = _flushing;
+    if (previous != null) await previous;
     final value = pending;
-    pending = null;
-    if (value == null || ticket == null || owner == null) return;
-    await repository.append(
+    final session = ticket;
+    if (value == null || session == null || owner == null) return;
+    final operation = repository.append(
       owner!,
-      ticket!,
+      session,
       start: value.start,
       end: value.end,
       wallMs: value.wallMs,
       speed: value.speed,
     );
+    _flushing = operation;
+    try {
+      await operation;
+      if (pending == value) pending = null;
+    } finally {
+      if (identical(_flushing, operation)) _flushing = null;
+    }
   }
 
   Future<void> tick() async {
@@ -126,18 +140,14 @@ class _VideoLearningObserverState extends ConsumerState<VideoLearningObserver>
           name: 'CBOA.LearningProgress',
         );
         sampler.reset();
+        sampledMs = 0;
         wasPlaying = false;
         if (mounted) transition();
         return;
       }
       if (!mounted) return;
       final current = ModalRoute.of(context)?.isCurrent ?? false;
-      final route = GoRouter.maybeOf(context)?.state;
-      final session = route?.extra;
-      final fullscreen =
-          route?.uri.path == AppRoute.videoFullscreen.path &&
-          session is VideoPlayerSession &&
-          identical(session.controller, widget.controller);
+      final fullscreen = VideoPlayerSession.isFullscreen(widget.controller);
       final value = widget.controller.value;
       final evidence = sampler.sample(
         positionMs: value.position.inMilliseconds,
@@ -148,6 +158,7 @@ class _VideoLearningObserverState extends ConsumerState<VideoLearningObserver>
         speed: value.playbackSpeed,
       );
       if (evidence != null && owner != null) {
+        sampledMs += evidence.end - evidence.start;
         final before = pending;
         if (before != null &&
             before.end == evidence.start &&
@@ -167,7 +178,17 @@ class _VideoLearningObserverState extends ConsumerState<VideoLearningObserver>
       } else {
         await flush();
       }
-      if (++ticks % 20 == 0) {
+      ticks++;
+      if (ticks % 40 == 0 && value.isPlaying) {
+        developer.log(
+          'Playback sampling lesson ${widget.lessonId}: '
+          'positionMs=${value.position.inMilliseconds}, '
+          'sampledMs=$sampledMs, active=${foreground && (current || fullscreen)}, '
+          'buffering=${value.isBuffering}.',
+          name: 'CBOA.LearningProgress',
+        );
+      }
+      if (ticks % 20 == 0) {
         await flush();
         unawaited(repository.sync());
         final renewed = await repository.videoSession(

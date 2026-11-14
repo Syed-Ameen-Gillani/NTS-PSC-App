@@ -39,7 +39,19 @@ class CourseDetailScreen extends ConsumerStatefulWidget {
 }
 
 class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, RestorationMixin {
+  final _restoredTab = RestorableInt(0);
+
+  @override
+  String get restorationId =>
+      'course-detail-${widget.course?.id ?? "unavailable"}';
+
+  @override
+  void restoreState(RestorationBucket? oldBucket, bool initialRestore) {
+    registerForRestoration(_restoredTab, 'tab');
+    _tabController.index = _restoredTab.value.clamp(0, 3);
+  }
+
   late TabController _tabController;
   late CourseModel _course;
 
@@ -47,12 +59,14 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
+    _tabController.addListener(() => _restoredTab.value = _tabController.index);
     if (widget.course != null) _course = widget.course!;
   }
 
   @override
   void dispose() {
     _tabController.dispose();
+    _restoredTab.dispose();
     super.dispose();
   }
 

@@ -54,6 +54,10 @@ class _TeacherCreateAssignmentScreenState
   void initState() {
     super.initState();
     final assignment = widget.assignment;
+    _selectedCourseId =
+        widget.course?.id ??
+        assignment?.courseId ??
+        widget.creationRequest?.targetScope.courseId;
     if (assignment != null) {
       _title.text = assignment.title;
       _instructions.text = assignment.instructions;
@@ -160,29 +164,44 @@ class _TeacherCreateAssignmentScreenState
 
   Future<void> _create() async {
     if (_saving || !_formKey.currentState!.validate()) return;
-    final courses = ref.read(teacherControllerProvider).value?.courses ?? [];
-    final selectedCourseId =
-        _selectedCourseId ??
-        widget.course?.id ??
-        widget.creationRequest?.targetScope.courseId;
-    final course =
-        widget.course ??
-        courses.where((item) => item.id == selectedCourseId).firstOrNull;
     final assignment = widget.assignment;
-    if ((course == null && assignment == null) || _dueAt == null) {
-      if (course == null && mounted) {
-        CustomToast.showError(context, message: 'Choose a course first.');
-      }
-      return;
-    }
     setState(() => _saving = true);
     try {
       if (assignment == null) {
+        String courseId;
+        String courseTitle;
+        if (widget.course case final selected?) {
+          courseId = selected.id;
+          courseTitle = selected.title;
+        } else if (widget.creationRequest case final request?) {
+          final context = await ref.read(
+            curriculumContextProvider(request.targetScope).future,
+          );
+          if (!context.canManage ||
+              context.scope.courseId != request.targetScope.courseId ||
+              context.scope.moduleId != request.targetScope.moduleId ||
+              context.scope.lessonId != request.targetScope.lessonId) {
+            throw StateError(
+              'Selected lesson is unavailable. Reopen Lesson Studio.',
+            );
+          }
+          courseId = context.scope.courseId!;
+          courseTitle = context.courseTitle;
+        } else {
+          final selected = (await ref.read(
+            teacherControllerProvider.future,
+          )).courses.where((item) => item.id == _selectedCourseId).firstOrNull;
+          if (selected == null) {
+            throw StateError('Selected course is unavailable. Try again.');
+          }
+          courseId = selected.id;
+          courseTitle = selected.title;
+        }
         final created = await ref
             .read(assignmentsControllerProvider.notifier)
             .createAssignment(
-              courseId: course!.id,
-              courseTitle: course.title,
+              courseId: courseId,
+              courseTitle: courseTitle,
               title: _title.text.trim(),
               instructions: _instructions.text.trim(),
               externalUrl: _externalUrl.text.trim(),
@@ -191,17 +210,31 @@ class _TeacherCreateAssignmentScreenState
             );
         final targetScope = widget.creationRequest?.targetScope;
         if (targetScope != null) {
-          await ref
-              .read(curriculumActionsProvider(targetScope).notifier)
-              .link(
-                CurriculumAssessment(
-                  id: created.id,
-                  assessmentId: created.id,
-                  title: created.title,
-                  kind: 'assignment',
-                  status: 'draft',
-                ),
+          try {
+            await ref
+                .read(curriculumActionsProvider(targetScope).notifier)
+                .link(
+                  CurriculumAssessment(
+                    id: created.id,
+                    assessmentId: created.id,
+                    title: created.title,
+                    kind: 'assignment',
+                    status: 'draft',
+                  ),
+                );
+          } catch (_) {
+            ref.invalidate(assignmentsControllerProvider);
+            if (mounted) {
+              CustomToast.showError(
+                context,
+                message:
+                    'Draft saved, but linking failed. Link it from Assessment Studio.',
               );
+              context.pop();
+            }
+            return;
+          }
+          ref.invalidate(assignmentsControllerProvider);
         }
       } else {
         await ref
@@ -240,6 +273,12 @@ class _TeacherCreateAssignmentScreenState
               : error is StateError &&
                     error.message.toString().startsWith('Draft saved')
               ? error.message.toString()
+              : error is StateError &&
+                    error.message.toString().startsWith('Selected course')
+              ? error.message.toString()
+              : error is StateError &&
+                    error.message.toString().startsWith('Selected lesson')
+              ? error.message.toString()
               : 'Could not save assignment. Try again.',
         );
         if (error is StateError &&
@@ -262,9 +301,9 @@ class _TeacherCreateAssignmentScreenState
 
   @override
   Widget build(BuildContext context) {
+    final auth = ref.watch(authControllerProvider).value;
     final isTeacher =
-        ref.watch(authControllerProvider).value?.selectedRole ==
-        UserRole.teacher;
+        (auth?.user?.role ?? auth?.selectedRole) == UserRole.teacher;
     return PopScope(
       canPop: !_saving,
       child: AppScaffold(
@@ -310,7 +349,29 @@ class _TeacherCreateAssignmentScreenState
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          if (widget.course != null ||
+                          if (widget.creationRequest != null &&
+                              widget.course == null &&
+                              widget.assignment == null)
+                            ref
+                                .watch(
+                                  curriculumContextProvider(
+                                    widget.creationRequest!.targetScope,
+                                  ),
+                                )
+                                .when(
+                                  data: (context) => Text(
+                                    context.courseTitle,
+                                    style: AppTextStyles.interMedium16.copyWith(
+                                      fontSize: 13.sp,
+                                      color: AppColors.primary,
+                                    ),
+                                  ),
+                                  loading: () =>
+                                      const Text('Loading course...'),
+                                  error: (_, _) =>
+                                      const Text('Could not load course.'),
+                                )
+                          else if (widget.course != null ||
                               widget.assignment != null)
                             Text(
                               widget.course?.title ??

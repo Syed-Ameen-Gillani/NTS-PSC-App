@@ -32,6 +32,7 @@ void main() {
           ? 'student cannot forge instructor preview'
           : 'locked deep link hides protected lesson content',
       (tester) async {
+        var accessRequests = 0;
         final course = CourseModel(
           id: 'course',
           title: 'Course',
@@ -62,9 +63,10 @@ void main() {
           ProviderScope(
             overrides: [
               authControllerProvider.overrideWith(_Auth.new),
-              lessonAccessCourseProvider.overrideWith(
-                (ref, id) async => course,
-              ),
+              lessonAccessCourseProvider.overrideWith((ref, id) async {
+                accessRequests++;
+                return course;
+              }),
             ],
             child: ScreenUtilInit(
               designSize: const Size(375, 812),
@@ -81,6 +83,21 @@ void main() {
           ),
         );
         await tester.pumpAndSettle();
+        expect(accessRequests, 1);
+        for (final state in [
+          AppLifecycleState.inactive,
+          AppLifecycleState.resumed,
+          AppLifecycleState.inactive,
+          AppLifecycleState.hidden,
+          AppLifecycleState.paused,
+          AppLifecycleState.hidden,
+          AppLifecycleState.inactive,
+          AppLifecycleState.resumed,
+        ]) {
+          tester.binding.handleAppLifecycleStateChanged(state);
+        }
+        await tester.pumpAndSettle();
+        expect(accessRequests, 1);
         expect(find.text('Protected reading'), findsNothing);
         expect(
           find.text(

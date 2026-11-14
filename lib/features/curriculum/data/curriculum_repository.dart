@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:http/http.dart' as http;
+import 'package:nts_psc_app/core/networks/upload_progress_client.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:nts_psc_app/features/curriculum/domain/curriculum_models.dart';
@@ -10,8 +12,12 @@ final curriculumRepositoryProvider = Provider(
 );
 
 class CurriculumRepository {
-  CurriculumRepository(this.client);
+  CurriculumRepository(
+    this.client, {
+    http.Client Function()? uploadClientFactory,
+  }) : _uploadClientFactory = uploadClientFactory ?? http.Client.new;
   final SupabaseClient client;
+  final http.Client Function() _uploadClientFactory;
   static const bucket = 'course-materials';
 
   Future<void> configureActivities(
@@ -115,7 +121,12 @@ class CurriculumRepository {
   Future<void> unlink(String id) =>
       client.rpc('unlink_curriculum_assessment', params: {'p_link_id': id});
 
-  Future<void> upload(CurriculumScope scope, PendingMaterial material) async {
+  Future<void> upload(
+    CurriculumScope scope,
+    PendingMaterial material, {
+    void Function(double)? onProgress,
+    void Function(CurriculumMaterial)? onUploaded,
+  }) async {
     final size = await File(material.path).length();
     validateCurriculumMaterial(material.name, size);
     final reservation = Map<String, dynamic>.from(
@@ -131,8 +142,18 @@ class CurriculumRepository {
     );
     final id = reservation['id'] as String;
     final path = reservation['object_path'] as String;
+    final progressClient = onProgress == null
+        ? null
+        : UploadProgressClient(_uploadClientFactory(), onProgress);
     try {
-      await client.storage
+      final storage = progressClient == null
+          ? client.storage
+          : SupabaseStorageClient(client.storage.url, {
+              ...client.storage.headers,
+              if (client.auth.currentSession case final session?)
+                'Authorization': 'Bearer ${session.accessToken}',
+            }, httpClient: progressClient);
+      await storage
           .from(bucket)
           .upload(
             path,
@@ -151,7 +172,18 @@ class CurriculumRepository {
         // A reservation is hidden from learners until successfully finalized.
       }
       rethrow;
+    } finally {
+      progressClient?.close();
     }
+    // The document is ready now; text extraction must not delay its visibility.
+    onUploaded?.call(
+      CurriculumMaterial(
+        id: id,
+        title: material.name,
+        path: path,
+        sizeBytes: size,
+      ),
+    );
     if (scope.lessonId != null &&
         {'pdf', 'txt'}.contains(materialExtension(material.name))) {
       try {

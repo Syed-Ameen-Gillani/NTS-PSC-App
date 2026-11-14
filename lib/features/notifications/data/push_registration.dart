@@ -21,16 +21,20 @@ final pushRegistrationProvider = FutureProvider<void>((ref) async {
       ].contains(defaultTargetPlatform)) {
     return;
   }
-  final user = ref.watch(authControllerProvider).value?.user;
-  final preferences = ref.watch(notificationsProvider).value;
-  if (user == null || preferences == null) return;
+  final userId = ref.watch(
+    authControllerProvider.select((state) => state.value?.user?.id),
+  );
+  final pushAllowed = ref.watch(
+    notificationsProvider.select((state) => state.value?.pushNotifications),
+  );
+  if (userId == null || pushAllowed == null) return;
   if (Firebase.apps.isEmpty) {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
   }
   final messaging = FirebaseMessaging.instance;
-  if (!preferences.pushNotifications) {
+  if (!pushAllowed) {
     await PushRegistration.unregister();
     return;
   }
@@ -52,7 +56,7 @@ final pushRegistrationProvider = FutureProvider<void>((ref) async {
   );
   Future<void> register(String token) async {
     if (!ref.mounted ||
-        Supabase.instance.client.auth.currentUser?.id != user.id) {
+        Supabase.instance.client.auth.currentUser?.id != userId) {
       return;
     }
     await ref

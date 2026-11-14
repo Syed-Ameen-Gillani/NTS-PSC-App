@@ -46,6 +46,12 @@ class OfflineLessonEntry {
   final bool needsAccessRefresh;
 }
 
+class PendingLessonTransfer {
+  const PendingLessonTransfer(this.status, this.progress);
+  final TaskStatus status;
+  final double progress;
+}
+
 class OfflineLessonLibrary {
   OfflineLessonLibrary(this.mediaRepository);
   final LessonMediaRepository mediaRepository;
@@ -53,6 +59,144 @@ class OfflineLessonLibrary {
   static bool _syncing = false;
   static final _activeDownloads = <String>{};
   static final _downloadTasks = <String, String>{};
+  static final _taskResults = <String, Completer<TaskStatusUpdate>>{};
+  static final _pauseAcks = <String, Completer<bool>>{};
+  static final _taskProgress = <String, void Function(double)>{};
+  static final _pauseRequested = <String>{};
+  static final _requestedPauseKeys = <String>{};
+  static final _cancelRequestedKeys = <String>{};
+  static bool _callbacksRegistered = false;
+
+  void clearCancellation(String lessonId) {
+    final owner = _userId;
+    if (owner != null) _cancelRequestedKeys.remove('$owner:$lessonId');
+  }
+
+  Future<PendingLessonTransfer?> pendingTransfer(String lessonId) async {
+    OfflineFileStore.requireId(lessonId);
+    final owner = _userId;
+    if (owner == null) return null;
+    final root = await getApplicationSupportDirectory();
+    final pending = File(
+      '${root.path}/lesson-videos/$owner/download-$lessonId.pending',
+    );
+    final id = await OfflineFileStore.pendingTaskId(pending);
+    if (id == null) return null;
+    final record = await FileDownloader().database.recordForId(id);
+    if (record?.task is! DownloadTask ||
+        record?.task.group != 'cboa-lesson-videos') {
+      return null;
+    }
+    return PendingLessonTransfer(record!.status, record.progress);
+  }
+
+  static void registerTransferCallbacks() {
+    if (_callbacksRegistered) return;
+    _callbacksRegistered = true;
+    FileDownloader().registerCallbacks(
+      group: 'cboa-lesson-videos',
+      taskStatusCallback: (update) {
+        final id = update.task.taskId;
+        if (update.status == TaskStatus.paused) {
+          final ack = _pauseAcks.remove(id);
+          if (ack != null && !ack.isCompleted) ack.complete(true);
+        } else if (update.status.isFinalState) {
+          final ack = _pauseAcks.remove(id);
+          if (ack != null && !ack.isCompleted) ack.complete(false);
+        }
+        if (update.status == TaskStatus.running &&
+            _pauseRequested.contains(id)) {
+          unawaited(FileDownloader().pause(update.task as DownloadTask));
+        }
+        if (update.status.isFinalState || update.status == TaskStatus.paused) {
+          final waiter = _taskResults.remove(id);
+          if (waiter != null && !waiter.isCompleted) waiter.complete(update);
+        }
+      },
+      taskProgressCallback: (update) {
+        if (update.progress >= 0 && update.progress <= 1) {
+          _taskProgress[update.task.taskId]?.call(update.progress);
+        }
+      },
+    );
+  }
+
+  Future<bool> pauseDownload(String lessonId) async {
+    final owner = _userId;
+    if (owner == null) return false;
+    final key = '$owner:$lessonId';
+    _requestedPauseKeys.add(key);
+    final id = _downloadTasks[key];
+    if (id == null) return true;
+    _pauseRequested.add(id);
+    final task = await FileDownloader().taskForId(id);
+    // The task is registered locally before enqueue reaches native storage.
+    if (task is! DownloadTask) return true;
+    final record = await FileDownloader().database.recordForId(id);
+    if (record?.status == TaskStatus.paused) return true;
+    if (record?.status != TaskStatus.running) return true;
+    final ack = Completer<bool>();
+    _pauseAcks[id] = ack;
+    final accepted = await FileDownloader().pause(task);
+    if (!accepted) {
+      _pauseRequested.remove(id);
+      _requestedPauseKeys.remove(key);
+      _pauseAcks.remove(id);
+      return false;
+    }
+    try {
+      final paused = await ack.future.timeout(const Duration(seconds: 8));
+      if (!paused) {
+        _pauseRequested.remove(id);
+        _requestedPauseKeys.remove(key);
+      }
+      return paused;
+    } on TimeoutException {
+      _pauseAcks.remove(id);
+      _pauseRequested.remove(id);
+      _requestedPauseKeys.remove(key);
+      return false;
+    }
+  }
+
+  Future<bool> resumeDownload(String lessonId) async {
+    final owner = _userId;
+    if (owner == null) return false;
+    final key = '$owner:$lessonId';
+    _requestedPauseKeys.remove(key);
+    final id = _downloadTasks[key];
+    if (id == null) return true;
+    _pauseRequested.remove(id);
+    final task = await FileDownloader().taskForId(id);
+    if (task is! DownloadTask) return true;
+    final record = await FileDownloader().database.recordForId(id);
+    if (record?.status != TaskStatus.paused) return true;
+    final root = await getApplicationSupportDirectory();
+    final pending = File(
+      '${root.path}/lesson-videos/$owner/download-$lessonId.pending',
+    );
+    if (!await pending.exists()) return false;
+    final data =
+        jsonDecode(await pending.readAsString()) as Map<String, dynamic>;
+    final created = DateTime.tryParse(data['authorizedAt'] as String? ?? '');
+    var resumeTask = task;
+    if (created == null ||
+        DateTime.now().toUtc().difference(created.toUtc()) >
+            const Duration(minutes: 50)) {
+      final mediaPath = data['mediaPath'] as String?;
+      if (mediaPath == null ||
+          !(await mediaRepository.listForLesson(
+            lessonId,
+          )).any((item) => item.path == mediaPath && item.status == 'ready')) {
+        throw StateError('This video is no longer available to download.');
+      }
+      final url = await mediaRepository.signedVideoUrl(mediaPath);
+      resumeTask = task.copyWith(url: url.toString());
+      data['authorizedAt'] = DateTime.now().toUtc().toIso8601String();
+      await OfflineFileStore.writeJson(pending, data);
+    }
+    return FileDownloader().resume(resumeTask);
+  }
 
   Future<void> cancelDownload(String lessonId) async {
     try {
@@ -62,6 +206,7 @@ class OfflineLessonLibrary {
     }
     final ownerId = _userId;
     if (ownerId == null) return;
+    _cancelRequestedKeys.add('$ownerId:$lessonId');
     var taskId = _downloadTasks['$ownerId:$lessonId'];
     if (taskId == null) {
       final root = await getApplicationSupportDirectory();
@@ -71,6 +216,13 @@ class OfflineLessonLibrary {
       taskId = await OfflineFileStore.pendingTaskId(pending);
     }
     if (taskId != null) await FileDownloader().cancelTaskWithId(taskId);
+    if (!_downloadTasks.containsKey('$ownerId:$lessonId')) {
+      final root = await getApplicationSupportDirectory();
+      final dir = Directory('${root.path}/lesson-videos/$ownerId');
+      final pending = File('${dir.path}/download-$lessonId.pending');
+      await _discardPending(pending, dir, lessonId);
+      if (await pending.exists()) await pending.delete();
+    }
   }
 
   Future<T> _queueLock<T>(Future<T> Function() action) async {
@@ -302,31 +454,69 @@ class OfflineLessonLibrary {
     required bool wifiOnly,
     void Function(double)? onProgress,
   }) async {
+    registerTransferCallbacks();
     final uri = await mediaRepository.signedVideoUrl(media.path, seconds: 3600);
     if (_userId != ownerId) {
       throw StateError('Account changed during download.');
     }
     final dir = await _userDirectory();
+    final pending = File('${dir.path}/download-$lessonId.pending');
+    DownloadTask? retainedTask;
+    TaskStatus? retainedStatus;
+    Map<String, dynamic>? retainedData;
+    if (await pending.exists()) {
+      try {
+        final data =
+            jsonDecode(await pending.readAsString()) as Map<String, dynamic>;
+        final id = data['taskId'];
+        if (data['mediaPath'] == media.path &&
+            data['byteSize'] == media.byteSize &&
+            OfflineFileStore.isVideoFilename(data['filename']) &&
+            id is String) {
+          final record = await FileDownloader().database.recordForId(id);
+          if (record?.task is DownloadTask &&
+              (record?.status == TaskStatus.paused ||
+                  record?.status == TaskStatus.running ||
+                  record?.status == TaskStatus.enqueued)) {
+            final candidate = record!.task as DownloadTask;
+            if (candidate.group == 'cboa-lesson-videos' &&
+                candidate.filename == data['filename']) {
+              retainedTask = candidate;
+              retainedStatus = record.status;
+              retainedData = data;
+            }
+          }
+        }
+      } on FormatException {
+        // A malformed pending file cannot authorize a native transfer.
+      } on TypeError {
+        // The new transfer path discards invalid metadata below.
+      }
+    }
     final extension = media.path.split('.').last;
-    final filename = '${media.id}_${const Uuid().v4()}.$extension';
+    final filename =
+        retainedTask?.filename ?? '${media.id}_${const Uuid().v4()}.$extension';
     if (!OfflineFileStore.isVideoFilename(filename)) {
       throw StateError('Unsupported lesson video.');
     }
-    final task = DownloadTask(
-      url: uri.toString(),
-      filename: filename,
-      directory: 'lesson-videos/$ownerId',
-      baseDirectory: BaseDirectory.applicationSupport,
-      updates: Updates.statusAndProgress,
-      requiresWiFi: wifiOnly,
-      retries: 2,
-      allowPause: true,
-    );
+    final task =
+        retainedTask?.copyWith(url: uri.toString()) ??
+        DownloadTask(
+          url: uri.toString(),
+          filename: filename,
+          directory: 'lesson-videos/$ownerId',
+          baseDirectory: BaseDirectory.applicationSupport,
+          updates: Updates.statusAndProgress,
+          requiresWiFi: wifiOnly,
+          retries: 2,
+          allowPause: true,
+          group: 'cboa-lesson-videos',
+        );
     var committed = false;
     final key = '$ownerId:$lessonId';
-    final pending = File('${dir.path}/download-$lessonId.pending');
-    await _discardPending(pending, dir, lessonId);
+    if (retainedTask == null) await _discardPending(pending, dir, lessonId);
     final data = {
+      ...?retainedData,
       'filename': filename,
       'title': title,
       'durationMinutes': durationMinutes,
@@ -338,18 +528,42 @@ class OfflineLessonLibrary {
       'taskId': task.taskId,
     };
     _downloadTasks[key] = task.taskId;
+    if (_requestedPauseKeys.contains(key)) _pauseRequested.add(task.taskId);
     try {
       await OfflineFileStore.writeJson(pending, data);
-      final result = await FileDownloader().download(
-        task,
-        onProgress: (value) => onProgress?.call(value),
-      );
+      _taskProgress[task.taskId] = (value) => onProgress?.call(value);
+      var waiter = Completer<TaskStatusUpdate>();
+      _taskResults[task.taskId] = waiter;
+      if (retainedTask == null) {
+        if (_cancelRequestedKeys.contains(key)) {
+          throw StateError('Download cancelled.');
+        }
+        if (!await FileDownloader().enqueue(task)) {
+          throw StateError('Could not start the download. Try again.');
+        }
+      } else if (retainedStatus == TaskStatus.paused) {
+        if (!await FileDownloader().resume(task)) {
+          throw StateError('The partial download is unavailable. Retry it.');
+        }
+      }
+      var result = await waiter.future;
+      while (result.status == TaskStatus.paused) {
+        // The native partial file and task identity remain intact while paused.
+        waiter = Completer<TaskStatusUpdate>();
+        _taskResults[task.taskId] = waiter;
+        result = await waiter.future;
+      }
       if (result.status != TaskStatus.complete) {
+        if (result.status == TaskStatus.canceled) {
+          throw StateError('Download cancelled.');
+        }
         throw StateError('Download failed. Check the connection and retry.');
       }
       final file = File(await task.filePath());
-      if (_userId != ownerId || await file.length() != media.byteSize) {
-        await file.delete();
+      if (_userId != ownerId ||
+          !await file.exists() ||
+          await file.length() != media.byteSize) {
+        if (await file.exists()) await file.delete();
         throw StateError('Downloaded video did not match the uploaded file.');
       }
       final target = File('${dir.path}/$lessonId.json');
@@ -383,7 +597,13 @@ class OfflineLessonLibrary {
         segments: media.segments,
       );
     } finally {
+      _taskResults.remove(task.taskId);
+      _pauseAcks.remove(task.taskId);
+      _taskProgress.remove(task.taskId);
+      _pauseRequested.remove(task.taskId);
       _downloadTasks.remove(key);
+      _requestedPauseKeys.remove(key);
+      _cancelRequestedKeys.remove(key);
       if (await pending.exists()) await pending.delete();
       if (!committed) {
         final file = File(await task.filePath());

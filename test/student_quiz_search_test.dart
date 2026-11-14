@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nts_psc_app/core/models/app_models.dart';
+import 'package:nts_psc_app/core/theme/app_colors.dart';
 import 'package:nts_psc_app/features/quizzes/presentation/controllers/quizzes_controller.dart';
 import 'package:nts_psc_app/features/quizzes/presentation/pages/quizzes_screen.dart';
 
@@ -73,6 +74,7 @@ void main() {
       expect(find.byType(TextField), findsNothing);
       expect(find.text('Kashmir history'), findsOneWidget);
       expect(find.text('Everyday science'), findsOneWidget);
+      expect(find.text('4 questions · 15 min · Pass 60%'), findsNWidgets(2));
       expect(tester.takeException(), isNull);
     },
   );
@@ -100,6 +102,14 @@ void main() {
     expect(find.text('All'), findsOneWidget);
     await tester.tap(find.text('Needs action'));
     await tester.pumpAndSettle();
+    expect(
+      tester.widget<Text>(find.text('Needs action')).style?.color,
+      Colors.white,
+    );
+    expect(
+      tester.widget<Text>(find.text('All')).style?.color,
+      AppColors.onBackground,
+    );
     expect(find.text('Needs another attempt'), findsOneWidget);
     expect(find.text('Passed quiz'), findsNothing);
 
@@ -107,6 +117,10 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Completed'));
     await tester.pumpAndSettle();
+    expect(
+      tester.widget<Text>(find.text('Completed')).style?.color,
+      Colors.white,
+    );
     expect(find.text('Passed quiz'), findsOneWidget);
     expect(find.text('Needs another attempt'), findsNothing);
     expect(tester.takeException(), isNull);

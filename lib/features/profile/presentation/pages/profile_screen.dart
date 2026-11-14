@@ -80,6 +80,7 @@ class ProfileScreen extends ConsumerWidget {
   Widget _buildSettingTile({
     required IconData icon,
     required String title,
+    String? subtitle,
     VoidCallback? onTap,
     bool isDestructive = false,
     bool showDivider = true,
@@ -114,6 +115,15 @@ class ProfileScreen extends ConsumerWidget {
                 color: isDestructive ? AppColors.error : AppColors.onBackground,
               ),
             ),
+            subtitle: subtitle == null
+                ? null
+                : Text(
+                    subtitle,
+                    style: AppTextStyles.interRegular14.copyWith(
+                      fontSize: 12.sp,
+                      color: AppColors.grey500,
+                    ),
+                  ),
             trailing: Icon(
               Icons.arrow_forward_ios,
               size: 14.w,
@@ -259,6 +269,13 @@ class ProfileScreen extends ConsumerWidget {
                   _buildGroupedSection(
                     title: 'SETTINGS',
                     items: [
+                      _buildSettingTile(
+                        icon: Icons.interests_outlined,
+                        title: 'Learning preferences',
+                        subtitle: 'Categories, interests and skills',
+                        onTap: () =>
+                            context.pushNamed(AppRoute.learningInterests.name),
+                      ),
                       _buildSettingTile(
                         icon: Icons.language_outlined,
                         title: 'App Language',

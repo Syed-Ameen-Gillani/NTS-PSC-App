@@ -37,7 +37,22 @@ void main() {
 
     await tester.tap(find.widgetWithText(Tab, 'Assignments'));
     await tester.pumpAndSettle();
+    expect(tester.widget<TabBar>(find.byType(TabBar)).controller?.index, 1);
     expect(find.text('Customs Act case study'), findsOneWidget);
+    await tester.tap(find.text('In review'));
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<Text>(find.text('In review')).style?.color,
+      Colors.white,
+    );
+
+    await tester.tap(find.widgetWithText(Tab, 'Quizzes'));
+    await tester.pumpAndSettle();
+    expect(tester.widget<TabBar>(find.byType(TabBar)).controller?.index, 0);
+    expect(
+      find.text('English Grammar & Vocabulary Assessment'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('teacher assessment studio uses tabs and two floating actions', (

@@ -56,6 +56,7 @@ class LessonCurriculumActivityRows extends ConsumerWidget {
                       '${topic.kindLabel} · '
                       '${activity.isRequired ? 'Required' : 'Optional'}',
                   icon: topic.icon,
+                  subtitleAccent: topic.kindLabel,
                   complete: completedActivityIds.contains(activity.id),
                   indent: 24.w,
                   loading: busy,

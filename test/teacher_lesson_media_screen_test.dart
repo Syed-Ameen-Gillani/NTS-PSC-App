@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
+import 'package:nts_psc_app/config/routes/app_routes.dart';
 import 'package:nts_psc_app/core/models/app_models.dart';
 import 'package:nts_psc_app/core/networks/supabase_client.dart';
 import 'package:nts_psc_app/features/curriculum/domain/curriculum_models.dart';
@@ -27,6 +29,8 @@ class _MediaRepository extends LessonMediaRepository {
   List<Map<String, dynamic>>? saved;
   bool failSave = false;
   bool empty = false;
+  bool replacement = false;
+  String? mediaError;
   String? deletedMediaId;
 
   @override
@@ -40,23 +44,39 @@ class _MediaRepository extends LessonMediaRepository {
   Future<List<LessonMedia>> listForLesson(
     String id, {
     bool includeUnreleased = false,
-  }) async => empty
-      ? []
-      : [
-          LessonMedia(
-            id: 'media',
-            lessonId: id,
-            path: 'lesson.mp4',
-            status: status,
-            segments:
-                saved ??
-                [
-                  {'start': 0, 'end': 30, 'text': 'Original transcript'},
-                ],
-            error: null,
-            byteSize: 100,
-          ),
-        ];
+  }) async {
+    if (empty) return [];
+    final media = [
+      LessonMedia(
+        id: 'media',
+        lessonId: id,
+        path: 'lesson.mp4',
+        status: status,
+        segments:
+            saved ??
+            [
+              {'start': 0, 'end': 30, 'text': 'Original transcript'},
+            ],
+        error: mediaError,
+        byteSize: 100,
+      ),
+    ];
+    if (replacement) {
+      media.add(
+        LessonMedia(
+          id: 'current-media',
+          lessonId: id,
+          path: 'old.mp4',
+          status: 'ready',
+          segments: const [],
+          error: null,
+          byteSize: 100,
+          isCurrent: true,
+        ),
+      );
+    }
+    return media;
+  }
 
   @override
   Future<void> saveTranscript(
@@ -80,6 +100,10 @@ Future<void> _open(
   _MediaRepository repository, {
   bool moduleAssessment = false,
   bool handout = false,
+  bool settle = true,
+  QuizModel? linkedQuiz,
+  bool missingQuiz = false,
+  GoRouter? router,
 }) async {
   await tester.pumpWidget(
     ProviderScope(
@@ -117,26 +141,40 @@ Future<void> _open(
               ),
             ],
           ),
+        if (linkedQuiz != null || missingQuiz)
+          curriculumQuizProvider(
+            'quiz',
+          ).overrideWith((ref) async => linkedQuiz),
         lessonMediaRepositoryProvider.overrideWithValue(repository),
         teacherVideoPreviewProvider('lesson.mp4').overrideWith(
+          (ref) async => throw StateError('Preview unavailable in test'),
+        ),
+        teacherVideoPreviewProvider('old.mp4').overrideWith(
           (ref) async => throw StateError('Preview unavailable in test'),
         ),
       ],
       child: ScreenUtilInit(
         designSize: const Size(375, 812),
-        builder: (_, _) => MaterialApp(
-          home: TeacherLessonMediaScreen(
-            lesson: LessonModel(
-              id: 'lesson',
-              title: 'Saved lesson',
-              durationMinutes: 1,
-            ),
-          ),
-        ),
+        builder: (_, _) => router == null
+            ? MaterialApp(
+                home: TeacherLessonMediaScreen(
+                  lesson: LessonModel(
+                    id: 'lesson',
+                    title: 'Saved lesson',
+                    durationMinutes: 1,
+                  ),
+                ),
+              )
+            : MaterialApp.router(routerConfig: router),
       ),
     ),
   );
-  await tester.pumpAndSettle();
+  if (settle) {
+    await tester.pumpAndSettle();
+  } else {
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+  }
 }
 
 void main() {
@@ -187,6 +225,142 @@ void main() {
     expect(find.text('Link Assessments & Practice'), findsNothing);
   });
 
+  testWidgets('tapping a published linked quiz opens its analysis page', (
+    tester,
+  ) async {
+    final quiz = QuizModel(
+      id: 'quiz',
+      title: 'Module review quiz',
+      category: 'General',
+      totalQuestions: 1,
+      durationMinutes: 10,
+      passingScore: 60,
+      courseId: 'course',
+    );
+    final router = GoRouter(
+      routes: [
+        GoRoute(
+          path: '/',
+          builder: (_, _) => TeacherLessonMediaScreen(
+            lesson: LessonModel(
+              id: 'lesson',
+              title: 'Saved lesson',
+              durationMinutes: 1,
+            ),
+          ),
+        ),
+        GoRoute(
+          path: AppRoute.teacherQuizAnalysis.path,
+          name: AppRoute.teacherQuizAnalysis.name,
+          builder: (_, state) => Scaffold(
+            body: Text(
+              state.extra == quiz ? 'Quiz analysis opened' : 'Wrong quiz',
+            ),
+          ),
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+    await _open(
+      tester,
+      _MediaRepository()..empty = true,
+      moduleAssessment: true,
+      linkedQuiz: quiz,
+      router: router,
+    );
+    await tester.tap(find.widgetWithText(Tab, 'Assessments'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Module review quiz'));
+    await tester.pumpAndSettle();
+    expect(find.text('Quiz analysis opened'), findsOneWidget);
+    expect(find.byType(BottomSheet), findsNothing);
+  });
+
+  testWidgets('tapping a draft linked quiz opens the quiz editor', (
+    tester,
+  ) async {
+    final quiz = QuizModel(
+      id: 'quiz',
+      title: 'Module review quiz',
+      category: 'General',
+      totalQuestions: 1,
+      isPublished: false,
+    );
+    final router = GoRouter(
+      routes: [
+        GoRoute(
+          path: '/',
+          builder: (_, _) => TeacherLessonMediaScreen(
+            lesson: LessonModel(
+              id: 'lesson',
+              title: 'Saved lesson',
+              durationMinutes: 1,
+            ),
+          ),
+        ),
+        GoRoute(
+          path: AppRoute.teacherCreateQuiz.path,
+          name: AppRoute.teacherCreateQuiz.name,
+          builder: (_, state) => Scaffold(
+            body: Text(
+              state.extra == quiz ? 'Quiz editor opened' : 'Wrong quiz',
+            ),
+          ),
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+    await _open(
+      tester,
+      _MediaRepository()..empty = true,
+      moduleAssessment: true,
+      linkedQuiz: quiz,
+      router: router,
+    );
+    await tester.tap(find.widgetWithText(Tab, 'Assessments'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Module review quiz'));
+    await tester.pumpAndSettle();
+    expect(find.text('Quiz editor opened'), findsOneWidget);
+  });
+
+  testWidgets('a stale quiz link stays on Lesson Studio with an error', (
+    tester,
+  ) async {
+    await _open(
+      tester,
+      _MediaRepository()..empty = true,
+      moduleAssessment: true,
+      missingQuiz: true,
+    );
+    await tester.tap(find.widgetWithText(Tab, 'Assessments'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Module review quiz'));
+    await tester.pump();
+    expect(
+      find.text('This quiz is unavailable. Refresh the assessments.'),
+      findsOneWidget,
+    );
+    expect(find.text('Lesson Studio'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 4));
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets('replacement video clearly preserves the current live video', (
+    tester,
+  ) async {
+    await _open(tester, _MediaRepository()..replacement = true, settle: false);
+
+    expect(find.text('REPLACEMENT NEEDS REVIEW'), findsOneWidget);
+    expect(find.text('LIVE FOR STUDENTS'), findsNothing);
+    expect(find.byTooltip('Dismiss video status'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Dismiss video status'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.byTooltip('Dismiss video status'), findsNothing);
+  });
+
   testWidgets('attached handout appears above the compact add action', (
     tester,
   ) async {
@@ -194,10 +368,10 @@ void main() {
     await tester.tap(find.widgetWithText(Tab, 'Handouts'));
     await tester.pumpAndSettle();
     expect(find.text('Reading.pdf'), findsOneWidget);
-    expect(find.text('Add another handout'), findsOneWidget);
+    expect(find.text('Add another document'), findsOneWidget);
     expect(find.text('Upload Lecture Handouts'), findsNothing);
     expect(
-      tester.getTopLeft(find.text('Add another handout')).dy,
+      tester.getTopLeft(find.text('Add another document')).dy,
       greaterThan(tester.getTopLeft(find.text('Reading.pdf')).dy),
     );
   });
@@ -213,16 +387,12 @@ void main() {
       );
       expect(find.text('Upload Lecture Video'), findsNothing);
       expect(find.text('ATTACHED VIDEO'), findsOneWidget);
-      expect(find.text('Change video'), findsOneWidget);
+      expect(find.text('Change video'), findsNothing);
       expect(find.byTooltip('Delete video'), findsOneWidget);
       expect(
-        (tester.getTopLeft(find.text('Change video')).dy -
-                tester.getTopLeft(find.text('ATTACHED VIDEO')).dy)
-            .abs(),
-        lessThan(24),
-      );
-      expect(
-        tester.getTopLeft(find.text('Only one video is allowed per lesson.')).dy,
+        tester
+            .getTopLeft(find.text('Only one video is allowed per lesson.'))
+            .dy,
         greaterThan(tester.getTopLeft(find.text('ATTACHED VIDEO')).dy),
       );
       expect(find.byType(AlertDialog), findsNothing);
@@ -274,7 +444,7 @@ void main() {
       expect(tester.widget<IconButton>(back).onPressed, isNull);
       repository.publishing!.complete();
       await tester.pumpAndSettle();
-      expect(find.text('Change video'), findsOneWidget);
+      expect(find.text('Change video'), findsNothing);
       expect(find.byTooltip('Delete video'), findsOneWidget);
       expect(find.byType(TextFormField), findsNothing);
       expect(find.byType(BottomSheet), findsNothing);
@@ -332,5 +502,24 @@ void main() {
     await tester.pumpAndSettle();
     expect(repository.saved, isNull);
     expect(find.text('Enter valid seconds'), findsOneWidget);
+  });
+
+  testWidgets('transcription failure replaces status and auto-dismisses', (
+    tester,
+  ) async {
+    final repository = _MediaRepository()..mediaError = 'Transcription failed';
+    await _open(tester, repository);
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.text('TRANSCRIPTION FAILED'), findsOneWidget);
+    expect(find.text('TRANSCRIPT REVIEW'), findsNothing);
+    expect(find.byTooltip('Dismiss video status'), findsOneWidget);
+
+    await tester.pump(const Duration(seconds: 4));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(find.text('TRANSCRIPTION FAILED'), findsNothing);
+    expect(tester.takeException(), isNull);
   });
 }

@@ -1,6 +1,7 @@
 import 'support/fake_learning_evidence_repository.dart';
 import 'package:nts_psc_app/features/learn/data/learning_evidence_repository.dart';
 import 'dart:convert';
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -39,7 +40,27 @@ class _Library extends OfflineLessonLibrary {
   final attempts = <String>[];
   final expired = <String>{};
   final refreshed = <String>[];
+  final cancelled = <String>[];
   String? failLesson;
+  Completer<void>? holdTransfer;
+  bool paused = false;
+
+  @override
+  Future<bool> pauseDownload(String lessonId) async {
+    paused = true;
+    return true;
+  }
+
+  @override
+  Future<bool> resumeDownload(String lessonId) async {
+    paused = false;
+    return true;
+  }
+
+  @override
+  Future<void> cancelDownload(String lessonId) async {
+    cancelled.add(lessonId);
+  }
 
   @override
   Future<List<OfflineLessonEntry>> listDownloads() async => [
@@ -82,6 +103,7 @@ class _Library extends OfflineLessonLibrary {
     void Function(double)? onProgress,
   }) async {
     attempts.add(lessonId);
+    await holdTransfer?.future;
     if (failLesson == lessonId) throw StateError('Network interrupted');
     saved.add(lessonId);
     return _lesson(media.path);
@@ -243,4 +265,53 @@ void main() {
       expect(library.attempts, isEmpty);
     },
   );
+
+  test(
+    'pause and resume retain one active transfer and reject duplicate starts',
+    () async {
+      library.holdTransfer = Completer<void>();
+      final controller = container.read(
+        courseDownloadProvider(course.id).notifier,
+      );
+      final first = controller.download(course, wifiOnly: false);
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+      expect(library.attempts, ['one']);
+      await controller.download(course, wifiOnly: false);
+      expect(library.attempts, ['one']);
+      expect(await controller.pause(), isTrue);
+      expect(
+        container.read(courseDownloadProvider(course.id)).phase,
+        CourseDownloadPhase.paused,
+      );
+      expect(library.paused, isTrue);
+      await controller.resume();
+      expect(library.paused, isFalse);
+      library.holdTransfer!.complete();
+      await first;
+      expect(library.attempts, ['one', 'two']);
+      expect(
+        container.read(courseDownloadProvider(course.id)).phase,
+        CourseDownloadPhase.completed,
+      );
+    },
+  );
+
+  test('cancel after restart clears queued native transfers', () async {
+    final ledger = container.read(courseDownloadLedgerProvider);
+    await ledger.write(
+      const CourseDownloadQueue(
+        owner: 'student',
+        courseId: 'course',
+        remainingLessonIds: ['one', 'two'],
+        wifiOnly: false,
+      ),
+    );
+    await container.read(courseDownloadProvider(course.id).notifier).cancel();
+    expect(library.cancelled, ['one', 'two']);
+    expect(await ledger.read('student', course.id), isNull);
+    expect(
+      container.read(courseDownloadProvider(course.id)).phase,
+      CourseDownloadPhase.cancelled,
+    );
+  });
 }

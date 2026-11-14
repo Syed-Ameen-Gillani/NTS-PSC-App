@@ -33,7 +33,7 @@ class ActiveQuizScreen extends ConsumerWidget {
     ref.listen(provider, (previous, next) {
       final result = next.result;
       if (result == null || previous?.result != null) return;
-      ref.invalidate(quizzesControllerProvider);
+      ref.read(quizzesControllerProvider.notifier).recordResult(result);
       ref.invalidate(myLearningControllerProvider);
       ref.invalidate(homeControllerProvider);
       ref.invalidate(publishedCatalogProvider);

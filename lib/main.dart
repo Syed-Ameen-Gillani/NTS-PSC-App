@@ -9,12 +9,15 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:http/http.dart' show ClientException;
+import 'package:http/http.dart' as http;
+import 'package:nts_psc_app/core/utils/lifecycle_diagnostics.dart';
 import 'package:nts_psc_app/config/routes/go_router.dart';
 import 'package:nts_psc_app/core/networks/supabase_client.dart';
 import 'package:nts_psc_app/core/repositories/supabase_auth_repository.dart';
 import 'package:nts_psc_app/features/learn/data/offline_lesson_library.dart';
 import 'package:nts_psc_app/features/learn/data/course_download_ledger.dart';
 import 'package:nts_psc_app/features/learn/data/offline_reading_store.dart';
+import 'package:nts_psc_app/features/learn/data/offline_pdf_transfer.dart';
 import 'package:nts_psc_app/features/learn/presentation/controllers/learning_activity_sync.dart';
 import 'package:nts_psc_app/features/learn/data/lesson_media_repository.dart';
 import 'package:nts_psc_app/core/theme/app_theme.dart';
@@ -30,46 +33,45 @@ import 'package:nts_psc_app/features/auth/presentation/controllers/auth_controll
     as authentication;
 import 'package:nts_psc_app/config/routes/app_routes.dart';
 import 'package:nts_psc_app/core/models/user_role.dart';
+import 'package:nts_psc_app/presentation/widgets/app_startup.dart';
+import 'package:nts_psc_app/features/onboarding/presentation/widgets/student_interest_gate.dart';
+
+Future<void>? _notificationInitialization;
+Future<void>? _supabaseInitialization;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  runApp(
+    ProviderScope(
+      observers: [
+        if (LifecycleDiagnostics.enabled) LifecycleProviderObserver(),
+      ],
+      child: AppStartup(initialize: _initializeApp, child: const MyApp()),
+    ),
+  );
+}
+
+Future<void> _initializeApp() async {
   await AppConfig.loadPublicConfig();
   AppConfig.validate();
-  await initializeNotificationBootstrap();
-  await Supabase.initialize(
-    url: AppConfig.supabaseUrl,
-    publishableKey: AppConfig.supabasePublishableKey,
-  );
-  if (!kIsWeb) {
-    await FileDownloader().start(autoCleanDatabase: true);
-    await OfflineLessonLibrary.purgeOtherUsers(
-      Supabase.instance.client.auth.currentUser?.id,
-    );
-    await CourseDownloadLedger().purgeOtherUsers(
-      Supabase.instance.client.auth.currentUser?.id,
-    );
-    await OfflineReadingStore(
-      Supabase.instance.client,
-    ).purgeOtherUsers(Supabase.instance.client.auth.currentUser?.id);
-    final offlineLibrary = OfflineLessonLibrary(
-      LessonMediaRepository(Supabase.instance.client),
-    );
-    unawaited(offlineLibrary.syncAnswers());
-    Timer.periodic(const Duration(minutes: 1), (_) {
-      unawaited(offlineLibrary.syncAnswers());
-    });
-    Supabase.instance.client.auth.onAuthStateChange.listen((event) {
-      if (event.event == AuthChangeEvent.signedOut ||
-          event.event == AuthChangeEvent.signedIn) {
-        OfflineLessonLibrary.purgeOtherUsers(event.session?.user.id);
-        CourseDownloadLedger().purgeOtherUsers(event.session?.user.id);
-        OfflineReadingStore(
-          Supabase.instance.client,
-        ).purgeOtherUsers(event.session?.user.id);
-        if (event.session != null) unawaited(offlineLibrary.syncAnswers());
-      }
-    });
-  }
+  await (_notificationInitialization ??= initializeNotificationBootstrap()
+          .catchError((Object error, StackTrace stack) {
+            _notificationInitialization = null;
+            Error.throwWithStackTrace(error, stack);
+          }))
+      .timeout(const Duration(seconds: 15));
+  await (_supabaseInitialization ??=
+          Supabase.initialize(
+            url: AppConfig.supabaseUrl,
+            publishableKey: AppConfig.supabasePublishableKey,
+            httpClient: LifecycleDiagnostics.enabled
+                ? LifecycleHttpClient(http.Client())
+                : null,
+          ).then((_) {}).catchError((Object error, StackTrace stack) {
+            _supabaseInitialization = null;
+            Error.throwWithStackTrace(error, stack);
+          }))
+      .timeout(const Duration(seconds: 15));
   if (Supabase.instance.client.auth.currentUser != null) {
     try {
       AppConfig.restoredRole = (await SupabaseAuthRepository(
@@ -86,7 +88,58 @@ Future<void> main() async {
     }
   }
   await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-  runApp(const ProviderScope(child: MyApp()));
+  if (!kIsWeb) unawaited(_initializeOfflineServices());
+}
+
+Future<void> _initializeOfflineServices() async {
+  try {
+    if (!kIsWeb) {
+      OfflineLessonLibrary.registerTransferCallbacks();
+      OfflinePdfTransfer.registerCallbacks();
+      try {
+        await FileDownloader()
+            .start(autoCleanDatabase: true)
+            .timeout(const Duration(seconds: 15));
+      } catch (error) {
+        LifecycleDiagnostics.event('downloads', 'startup ${error.runtimeType}');
+      }
+      await OfflineLessonLibrary.purgeOtherUsers(
+        Supabase.instance.client.auth.currentUser?.id,
+      );
+      await CourseDownloadLedger().purgeOtherUsers(
+        Supabase.instance.client.auth.currentUser?.id,
+      );
+      await OfflineReadingStore(
+        Supabase.instance.client,
+      ).purgeOtherUsers(Supabase.instance.client.auth.currentUser?.id);
+      final offlineLibrary = OfflineLessonLibrary(
+        LessonMediaRepository(Supabase.instance.client),
+      );
+      unawaited(offlineLibrary.syncAnswers());
+      Timer.periodic(const Duration(minutes: 1), (_) {
+        if (WidgetsBinding.instance.lifecycleState ==
+            AppLifecycleState.resumed) {
+          unawaited(offlineLibrary.syncAnswers());
+        }
+      });
+      Supabase.instance.client.auth.onAuthStateChange.listen((event) {
+        if (event.event == AuthChangeEvent.signedOut ||
+            event.event == AuthChangeEvent.signedIn) {
+          OfflineLessonLibrary.purgeOtherUsers(event.session?.user.id);
+          CourseDownloadLedger().purgeOtherUsers(event.session?.user.id);
+          OfflineReadingStore(
+            Supabase.instance.client,
+          ).purgeOtherUsers(event.session?.user.id);
+          if (event.session != null) unawaited(offlineLibrary.syncAnswers());
+        }
+      });
+    }
+  } catch (error) {
+    LifecycleDiagnostics.event(
+      'offline-library',
+      'startup ${error.runtimeType}',
+    );
+  }
 }
 
 Future<void> _openOfflineDownloads() async {
@@ -139,6 +192,14 @@ class MyApp extends ConsumerWidget {
         }
       }
     });
+    final authOwner = ref.watch(
+      authentication.authControllerProvider.select(
+        (value) => value.value?.user?.id,
+      ),
+    );
+    final owner = AppConfig.isSupabaseEnabled
+        ? Supabase.instance.client.auth.currentUser?.id
+        : authOwner;
     final size = MediaQuery.sizeOf(context);
     final scale = math
         .min(size.width / 375, size.height / 812)
@@ -150,6 +211,8 @@ class MyApp extends ConsumerWidget {
       splitScreenMode: true,
       builder: (context, child) {
         return MaterialApp.router(
+          restorationScopeId:
+              'cboa-${owner ?? "guest"}-${AppConfig.restoredRole?.name ?? "guest"}',
           routerConfig: appRouter,
           debugShowCheckedModeBanner: false,
           theme: AppTheme.lightTheme,
@@ -158,7 +221,7 @@ class MyApp extends ConsumerWidget {
             value: systemNavigationBarStyle(
               Theme.of(context).scaffoldBackgroundColor,
             ),
-            child: child!,
+            child: StudentInterestGate(child: child!),
           ),
         );
       },

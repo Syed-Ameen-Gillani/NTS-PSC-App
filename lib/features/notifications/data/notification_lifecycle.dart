@@ -6,6 +6,8 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:nts_psc_app/core/utils/background_return_observer.dart';
+import 'package:nts_psc_app/core/utils/lifecycle_diagnostics.dart';
 import 'package:nts_psc_app/features/notifications/data/local_notification_service.dart';
 import 'package:nts_psc_app/features/notifications/domain/notification_models.dart';
 import 'package:nts_psc_app/features/notifications/presentation/controllers/local_reminder_controller.dart';
@@ -83,7 +85,8 @@ class NotificationPermissionController
   }
 
   Future<void> refresh() async {
-    state = AsyncData(await current());
+    final permission = await current();
+    if (ref.mounted) state = AsyncData(permission);
   }
 
   Future<void> openDeviceSettings() =>
@@ -125,10 +128,20 @@ final notificationIntentProvider =
 final notificationLifecycleProvider = FutureProvider<void>((ref) async {
   if (!pushEnabled || Firebase.apps.isEmpty) return;
   final local = LocalNotificationService.instance;
-  final observer = _NotificationLifecycleObserver(() {
+  final observer = BackgroundReturnObserver(() async {
     if (!ref.mounted) return;
-    ref.invalidate(notificationPermissionProvider);
-    ref.invalidate(localRemindersProvider);
+    final before = ref.read(notificationPermissionProvider).value;
+    try {
+      await ref.read(notificationPermissionProvider.notifier).refresh();
+      if (!ref.mounted) return;
+      final after = ref.read(notificationPermissionProvider).value;
+      if (before != after) {
+        LifecycleDiagnostics.event('notifications', 'permission-changed');
+        ref.invalidate(localRemindersProvider);
+      }
+    } catch (_) {
+      LifecycleDiagnostics.event('notifications', 'permission-check-failed');
+    }
   });
   WidgetsBinding.instance.addObserver(observer);
   ref.onDispose(() => WidgetsBinding.instance.removeObserver(observer));
@@ -142,9 +155,11 @@ final notificationLifecycleProvider = FutureProvider<void>((ref) async {
   ref.onDispose(() => local.onTap = null);
 
   final localLaunch = await local.launchPayload();
+  if (!ref.mounted) return;
   if (localLaunch != null) receive(localLaunch);
 
   final initialMessage = await FirebaseMessaging.instance.getInitialMessage();
+  if (!ref.mounted) return;
   final initialPayload = initialMessage == null
       ? null
       : AppNotificationPayload.tryParse(initialMessage.data);
@@ -153,6 +168,7 @@ final notificationLifecycleProvider = FutureProvider<void>((ref) async {
   final openedSubscription = FirebaseMessaging.onMessageOpenedApp.listen((
     message,
   ) {
+    LifecycleDiagnostics.event('firebase', 'message-opened');
     final payload = AppNotificationPayload.tryParse(message.data);
     if (payload != null) receive(payload);
   });
@@ -161,6 +177,8 @@ final notificationLifecycleProvider = FutureProvider<void>((ref) async {
   final foregroundSubscription = FirebaseMessaging.onMessage.listen((
     message,
   ) async {
+    if (!ref.mounted) return;
+    LifecycleDiagnostics.event('firebase', 'foreground-message');
     final payload = AppNotificationPayload.tryParse(message.data);
     if (payload == null || payload.isExpired) return;
     ref.invalidate(notificationInboxProvider);
@@ -173,14 +191,8 @@ final notificationLifecycleProvider = FutureProvider<void>((ref) async {
     }
   });
   ref.onDispose(foregroundSubscription.cancel);
+  LifecycleDiagnostics.event('firebase', 'listeners-attached');
+  ref.onDispose(
+    () => LifecycleDiagnostics.event('firebase', 'listeners-disposed'),
+  );
 });
-
-class _NotificationLifecycleObserver with WidgetsBindingObserver {
-  _NotificationLifecycleObserver(this.onResume);
-  final VoidCallback onResume;
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) onResume();
-  }
-}

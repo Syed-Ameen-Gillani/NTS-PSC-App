@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:developer' as developer;
+import 'package:background_downloader/background_downloader.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
@@ -8,7 +9,9 @@ import 'package:pdfrx/pdfrx.dart';
 import 'package:nts_psc_app/core/theme/app_text_styles.dart';
 import 'package:nts_psc_app/features/learn/data/lesson_reading_repository.dart';
 import 'package:nts_psc_app/features/learn/data/offline_reading_store.dart';
+import 'package:nts_psc_app/features/learn/data/offline_pdf_transfer.dart';
 import 'package:nts_psc_app/features/learn/data/learning_evidence_repository.dart';
+import 'package:nts_psc_app/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:nts_psc_app/features/learn/presentation/controllers/learning_outcome_provider.dart';
 import 'package:nts_psc_app/features/learn/presentation/controllers/offline_downloads_controller.dart';
 import 'package:nts_psc_app/presentation/widgets/app_scaffold.dart';
@@ -17,6 +20,37 @@ import 'package:nts_psc_app/presentation/widgets/custom_toast.dart';
 final _readingPage = StateProvider.autoDispose.family<int, ReadingKey>(
   (ref, key) => 0,
 );
+final _readingSave = StateProvider.autoDispose
+    .family<
+      ({
+        bool saving,
+        bool paused,
+        bool cancelled,
+        bool failed,
+        double? progress,
+        bool saved,
+      }),
+      ReadingKey
+    >(
+      (ref, key) => (
+        saving: false,
+        paused: false,
+        cancelled: false,
+        failed: false,
+        progress: null,
+        saved: false,
+      ),
+    );
+final _readingTransfer = FutureProvider.autoDispose
+    .family<PendingPdfTransfer?, ReadingKey>((ref, key) async {
+      final owner = ref.watch(
+        authControllerProvider.select((state) => state.value?.user?.id),
+      );
+      if (owner == null) return null;
+      return ref
+          .read(offlineReadingStoreProvider)
+          .pending(owner, key.lessonId, key.materialId);
+    });
 
 class LessonReadingScreen extends ConsumerWidget {
   const LessonReadingScreen({
@@ -30,6 +64,21 @@ class LessonReadingScreen extends ConsumerWidget {
   final bool offlineOnly;
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final saving = ref.watch(_readingSave(reading));
+    final transfer = ref.watch(_readingTransfer(reading)).value;
+    final paused = saving.paused || transfer?.status == TaskStatus.paused;
+    final transferring =
+        saving.saving ||
+        transfer?.status == TaskStatus.running ||
+        transfer?.status == TaskStatus.enqueued;
+    final savedEntries = ref.watch(offlineReadingsProvider).value ?? const [];
+    final alreadySaved = savedEntries.any(
+      (entry) =>
+          entry.lessonId == reading.lessonId &&
+          entry.materialId == reading.materialId &&
+          !entry.needsAccessRefresh,
+    );
+    final visibleProgress = saving.progress ?? transfer?.progress;
     final documentState = offlineOnly
         ? ref.watch(savedLessonReadingProvider(reading))
         : ref.watch(lessonReadingProvider(reading));
@@ -37,37 +86,250 @@ class LessonReadingScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Reading'),
         actions: [
+          if ((transferring || paused) &&
+              visibleProgress != null &&
+              visibleProgress >= 0 &&
+              visibleProgress < 1)
+            Center(child: Text('${(visibleProgress * 100).round()}%')),
           if (documentState.value case final document? when !document.isOffline)
             IconButton(
-              tooltip: 'Save reading offline',
-              icon: const Icon(Icons.download_outlined),
-              onPressed: () async {
-                try {
-                  await ref
-                      .read(offlineReadingStoreProvider)
-                      .save(
-                        owner: document.owner,
-                        lessonId: reading.lessonId,
-                        materialId: reading.materialId,
-                        ticket: document.ticket,
-                        text: document.text,
-                        title: title ?? 'Lesson reading',
-                        pdfUrl: document.pdfUrl,
+              tooltip: alreadySaved
+                  ? 'Reading downloaded'
+                  : paused
+                  ? 'Resume reading download'
+                  : transferring && document.pdfUrl != null
+                  ? 'Pause reading download'
+                  : transferring
+                  ? 'Saving reading'
+                  : saving.failed
+                  ? 'Retry reading download'
+                  : 'Save reading offline',
+              icon:
+                  transferring &&
+                      document.pdfUrl != null &&
+                      saving.progress != null
+                  ? SizedBox.square(
+                      dimension: 28,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          CircularProgressIndicator(
+                            value: saving.progress,
+                            strokeWidth: 2.5,
+                          ),
+                          Icon(Icons.pause_rounded, size: 14.w),
+                        ],
+                      ),
+                    )
+                  : Icon(
+                      alreadySaved
+                          ? Icons.download_done_rounded
+                          : paused
+                          ? Icons.play_arrow_rounded
+                          : transferring && document.pdfUrl != null
+                          ? Icons.pause_rounded
+                          : transferring
+                          ? Icons.download_outlined
+                          : saving.failed
+                          ? Icons.refresh_rounded
+                          : Icons.download_outlined,
+                    ),
+              onPressed:
+                  alreadySaved || (transferring && document.pdfUrl == null)
+                  ? null
+                  : () async {
+                      final store = ref.read(offlineReadingStoreProvider);
+                      if (transferring && !paused) {
+                        final accepted = await store.pause(
+                          document.owner,
+                          reading.lessonId,
+                          reading.materialId,
+                        );
+                        if (context.mounted) {
+                          if (accepted) {
+                            ref.read(_readingSave(reading).notifier).state = (
+                              saving: true,
+                              paused: true,
+                              cancelled: false,
+                              failed: false,
+                              progress: saving.progress,
+                              saved: false,
+                            );
+                            ref.invalidate(_readingTransfer(reading));
+                            CustomToast.showInfo(
+                              context,
+                              message: 'Download paused',
+                              top: true,
+                            );
+                          } else {
+                            CustomToast.showError(
+                              context,
+                              message: 'This PDF cannot be paused yet.',
+                              top: true,
+                            );
+                          }
+                        }
+                        return;
+                      }
+                      if (paused && saving.saving) {
+                        final accepted = await store.resume(
+                          document.owner,
+                          reading.lessonId,
+                          reading.materialId,
+                        );
+                        if (context.mounted) {
+                          if (accepted) {
+                            ref.read(_readingSave(reading).notifier).state = (
+                              saving: true,
+                              paused: false,
+                              cancelled: false,
+                              failed: false,
+                              progress: saving.progress,
+                              saved: false,
+                            );
+                            ref.invalidate(_readingTransfer(reading));
+                            CustomToast.showInfo(
+                              context,
+                              message: 'Download resumed',
+                              top: true,
+                            );
+                          } else {
+                            CustomToast.showError(
+                              context,
+                              message:
+                                  'Could not resume. Reopen the reading and retry.',
+                              top: true,
+                            );
+                          }
+                        }
+                        return;
+                      }
+                      ref.read(_readingSave(reading).notifier).state = (
+                        saving: true,
+                        paused: false,
+                        cancelled: false,
+                        failed: false,
+                        progress: null,
+                        saved: false,
                       );
-                  if (context.mounted) {
-                    ref.invalidate(offlineReadingsProvider);
-                    CustomToast.showInfo(
-                      context,
-                      message: 'Reading saved offline',
-                    );
-                  }
-                } catch (_) {
-                  if (context.mounted) {
-                    CustomToast.showError(
-                      context,
-                      message: 'Could not save reading',
-                    );
-                  }
+                      CustomToast.showInfo(
+                        context,
+                        message: paused
+                            ? 'Download resumed'
+                            : 'Download started',
+                        top: true,
+                      );
+                      try {
+                        await store.save(
+                          owner: document.owner,
+                          lessonId: reading.lessonId,
+                          materialId: reading.materialId,
+                          ticket: document.ticket,
+                          text: document.text,
+                          title: title ?? 'Lesson reading',
+                          pdfUrl: document.pdfUrl,
+                          onProgress: (value) {
+                            if (context.mounted) {
+                              final current = ref.read(_readingSave(reading));
+                              ref.read(_readingSave(reading).notifier).state = (
+                                saving: true,
+                                paused: current.paused,
+                                cancelled: current.cancelled,
+                                failed: false,
+                                progress: value,
+                                saved: false,
+                              );
+                            }
+                          },
+                        );
+                        if (context.mounted) {
+                          ref.read(_readingSave(reading).notifier).state = (
+                            saving: false,
+                            paused: false,
+                            cancelled: false,
+                            failed: false,
+                            progress: 1,
+                            saved: true,
+                          );
+                          ref.invalidate(offlineReadingsProvider);
+                          ref.invalidate(_readingTransfer(reading));
+                          CustomToast.showSuccess(
+                            context,
+                            message: 'Download completed',
+                            top: true,
+                          );
+                        }
+                      } catch (error) {
+                        if (context.mounted) {
+                          final cancelled = ref
+                              .read(_readingSave(reading))
+                              .cancelled;
+                          ref.read(_readingSave(reading).notifier).state = (
+                            saving: false,
+                            paused: false,
+                            cancelled: false,
+                            failed: !cancelled,
+                            progress: null,
+                            saved: false,
+                          );
+                          ref.invalidate(_readingTransfer(reading));
+                          if (!cancelled &&
+                              !error.toString().toLowerCase().contains(
+                                'cancelled',
+                              )) {
+                            CustomToast.showError(
+                              context,
+                              message:
+                                  error is StateError &&
+                                      error.message.toString().contains(
+                                        'access',
+                                      )
+                                  ? 'Reading access changed. Reopen the reading and retry.'
+                                  : 'Could not save reading. Retry the download.',
+                              top: true,
+                            );
+                          }
+                        }
+                      }
+                    },
+            ),
+          if (documentState.value case final document?
+              when !document.isOffline &&
+                  document.pdfUrl != null &&
+                  (transferring || paused))
+            IconButton(
+              tooltip: 'Cancel reading download',
+              icon: const Icon(Icons.close_rounded),
+              onPressed: () async {
+                final store = ref.read(offlineReadingStoreProvider);
+                ref.read(_readingSave(reading).notifier).state = (
+                  saving: saving.saving,
+                  paused: saving.paused,
+                  cancelled: true,
+                  failed: false,
+                  progress: saving.progress,
+                  saved: false,
+                );
+                await store.cancel(
+                  document.owner,
+                  reading.lessonId,
+                  reading.materialId,
+                );
+                if (context.mounted) {
+                  ref.read(_readingSave(reading).notifier).state = (
+                    saving: false,
+                    paused: false,
+                    cancelled: false,
+                    failed: false,
+                    progress: null,
+                    saved: false,
+                  );
+                  ref.invalidate(_readingTransfer(reading));
+                  CustomToast.showInfo(
+                    context,
+                    message: 'Download cancelled',
+                    top: true,
+                  );
                 }
               },
             ),

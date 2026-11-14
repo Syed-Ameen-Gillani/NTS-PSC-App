@@ -1,3 +1,4 @@
+import 'package:nts_psc_app/core/theme/app_gradients.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
@@ -102,7 +103,9 @@ class _CourseTypeOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final foreground = selected ? AppColors.primary : AppColors.grey700;
+    final foreground = selected
+        ? Theme.of(context).colorScheme.onPrimary
+        : AppColors.grey700;
     return Semantics(
       button: true,
       selected: selected,
@@ -117,13 +120,14 @@ class _CourseTypeOption extends StatelessWidget {
             height: 52.h,
             padding: EdgeInsets.symmetric(horizontal: 12.w),
             decoration: BoxDecoration(
-              color: selected
-                  ? AppColors.primary.withValues(alpha: 0.10)
-                  : AppColors.settingsCardBackground,
+              color: selected ? null : AppColors.settingsCardBackground,
+              gradient: selected
+                  ? AppGradients.primaryBanner(Theme.of(context).colorScheme)
+                  : null,
               borderRadius: BorderRadius.circular(10.r),
               border: Border.all(
                 color: selected
-                    ? AppColors.primary
+                    ? Colors.transparent
                     : AppColors.settingsCardBorder,
                 width: selected ? 1.5.w : 1.w,
               ),

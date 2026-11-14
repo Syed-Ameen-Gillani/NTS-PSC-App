@@ -13,6 +13,7 @@ import 'package:nts_psc_app/features/curriculum/presentation/curriculum_provider
 import 'package:nts_psc_app/features/learn/domain/lesson_player_mode.dart';
 import 'package:nts_psc_app/features/learn/domain/learning_access.dart';
 import 'package:nts_psc_app/features/teacher/domain/lesson_limits.dart';
+import 'package:nts_psc_app/presentation/widgets/module_accordion.dart';
 
 class CourseCurriculumTab extends StatelessWidget {
   const CourseCurriculumTab({
@@ -45,92 +46,108 @@ class CourseCurriculumTab extends StatelessWidget {
     if (course.modules.isEmpty) {
       return const Center(child: Text('No modules added yet.'));
     }
-    return ListView(
-      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
-      children: [
-        for (var m = 0; m < course.modules.length; m++)
-          Padding(
-            padding: EdgeInsets.only(bottom: 12.h),
-            child: Material(
-              color: AppColors.background,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8.r),
-                side: const BorderSide(color: AppColors.grey300),
-              ),
-              clipBehavior: Clip.antiAlias,
-              child: Theme(
-                data: Theme.of(
-                  context,
-                ).copyWith(dividerColor: Colors.transparent),
-                child: ExpansionTile(
-                  key: PageStorageKey(
-                    'module:${course.id}:${course.modules[m].id}',
-                  ),
-                  initiallyExpanded: m == 0,
-                  tilePadding: EdgeInsets.symmetric(
-                    horizontal: 16.w,
-                    vertical: 6.h,
-                  ),
-                  leading: Container(
-                    width: 36.w,
-                    height: 36.w,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: AppColors.grey100,
-                      borderRadius: BorderRadius.circular(6.r),
-                    ),
-                    child: Text(
-                      '${m + 1}'.padLeft(2, '0'),
-                      style: AppTextStyles.interSemiBold16.copyWith(
-                        fontSize: 12.sp,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                  ),
-                  title: Text(
-                    course.modules[m].title,
-                    style: AppTextStyles.interSemiBold16.copyWith(
-                      fontSize: 14.sp,
-                    ),
-                  ),
-                  subtitle: Text(
-                    '${course.modules[m].lessons.length}/$maxLessonsPerModule lessons',
-                    style: AppTextStyles.interRegular14.copyWith(
-                      fontSize: 12.sp,
-                      color: AppColors.grey500,
-                    ),
-                  ),
-                  children: [
-                    Divider(height: 1.h, color: AppColors.grey200),
-                    if (course.modules[m].lessons.isEmpty)
-                      Padding(
-                        padding: EdgeInsets.all(16.w),
-                        child: Text(
-                          'No lessons added yet.',
+    return ModuleAccordion(
+      initialModuleId: course.modules.first.id,
+      child: ListView(
+        padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+        children: [
+          for (var m = 0; m < course.modules.length; m++)
+            Padding(
+              padding: EdgeInsets.only(bottom: 12.h),
+              child: Material(
+                color: AppColors.background,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8.r),
+                  side: const BorderSide(color: AppColors.grey300),
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: Theme(
+                  data: Theme.of(
+                    context,
+                  ).copyWith(dividerColor: Colors.transparent),
+                  child: ModuleAccordionEntry(
+                    moduleId: course.modules[m].id,
+                    builder: (context, controller, expanded, onChanged) {
+                      final module = course.modules[m];
+                      final moduleCompleted =
+                          module.lessons.isNotEmpty &&
+                          module.lessons.every((lesson) => lesson.isCompleted);
+                      return ExpansionTile(
+                        controller: controller,
+                        initiallyExpanded: expanded,
+                        onExpansionChanged: onChanged,
+                        tilePadding: EdgeInsets.symmetric(
+                          horizontal: 16.w,
+                          vertical: 6.h,
+                        ),
+                        leading: Container(
+                          key: !expanded && moduleCompleted
+                              ? ValueKey('completed-module-${module.id}')
+                              : null,
+                          width: 36.w,
+                          height: 36.w,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: AppColors.grey100,
+                            borderRadius: BorderRadius.circular(6.r),
+                          ),
+                          child: !expanded && moduleCompleted
+                              ? Icon(
+                                  Icons.check_circle_rounded,
+                                  semanticLabel: 'Module completed',
+                                  size: 22.w,
+                                  color: AppColors.success,
+                                )
+                              : Text(
+                                  '${m + 1}'.padLeft(2, '0'),
+                                  style: AppTextStyles.interSemiBold16.copyWith(
+                                    fontSize: 12.sp,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                        ),
+                        title: Text(
+                          module.title,
+                          style: AppTextStyles.interSemiBold16.copyWith(
+                            fontSize: 14.sp,
+                          ),
+                        ),
+                        subtitle: Text(
+                          '${module.lessons.length}/$maxLessonsPerModule lessons',
                           style: AppTextStyles.interRegular14.copyWith(
+                            fontSize: 12.sp,
                             color: AppColors.grey500,
                           ),
                         ),
-                      ),
-                    for (
-                      var l = 0;
-                      l < course.modules[m].lessons.length;
-                      l++
-                    )
-                      _LessonOutline(
-                        courseId: course.id,
-                        moduleId: course.modules[m].id,
-                        lesson: course.modules[m].lessons[l],
-                        index: l,
-                        onOpen: () =>
-                            _open(context, course.modules[m].lessons[l]),
-                      ),
-                  ],
+                        children: [
+                          Divider(height: 1.h, color: AppColors.grey200),
+                          if (module.lessons.isEmpty)
+                            Padding(
+                              padding: EdgeInsets.all(16.w),
+                              child: Text(
+                                'No lessons added yet.',
+                                style: AppTextStyles.interRegular14.copyWith(
+                                  color: AppColors.grey500,
+                                ),
+                              ),
+                            ),
+                          for (var l = 0; l < module.lessons.length; l++)
+                            _LessonOutline(
+                              courseId: course.id,
+                              moduleId: module.id,
+                              lesson: module.lessons[l],
+                              index: l,
+                              onOpen: () => _open(context, module.lessons[l]),
+                            ),
+                        ],
+                      );
+                    },
+                  ),
                 ),
               ),
             ),
-          ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -203,11 +220,7 @@ class _LessonOutline extends ConsumerWidget {
       key: ValueKey('open-lesson:${lesson.id}'),
       onTap: available ? onOpen : null,
       contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
-      leading: Icon(
-        leadingIcon,
-        color: iconColor,
-        size: 24.w,
-      ),
+      leading: Icon(leadingIcon, color: iconColor, size: 24.w),
       title: Text(
         '${index + 1}. ${lesson.title}',
         style: AppTextStyles.interMedium16.copyWith(

@@ -1,3 +1,4 @@
+import 'package:nts_psc_app/core/theme/app_gradients.dart';
 import 'package:nts_psc_app/presentation/widgets/app_scaffold.dart';
 import 'package:nts_psc_app/features/learn/presentation/controllers/my_learning_controller.dart';
 import 'package:flutter/material.dart';
@@ -97,18 +98,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           child: Container(
                             padding: EdgeInsets.all(16.w),
                             decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  Color.lerp(
-                                    colors.primary,
-                                    colors.secondary,
-                                    0.2,
-                                  )!,
-                                  colors.primary,
-                                ],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
+                              gradient: AppGradients.primaryBanner(colors),
                               borderRadius: BorderRadius.circular(16.r),
                               boxShadow: [
                                 BoxShadow(
@@ -253,7 +243,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     SizedBox(height: 20.h),
                     _CategoryCourseResults(
                       filter: _courseFilters[selectedFilterIndex],
-                      courses: [...state.featuredCourses, ...state.newCourses],
+                      courses: AppConfig.isSupabaseEnabled
+                          ? ref.watch(recommendedCatalogProvider).value ??
+                                [...state.featuredCourses, ...state.newCourses]
+                          : [...state.featuredCourses, ...state.newCourses],
                     ),
                     SizedBox(height: 32.h),
                     if (state.continueLearningCourses.isEmpty)
@@ -427,7 +420,9 @@ class _CategoryCourseResults extends StatelessWidget {
         onActionPressed: () => context.pushNamed(
           AppRoute.newCourses.name,
           queryParameters: {
-            'section': 'available',
+            'section': AppConfig.isSupabaseEnabled && filter == 'All'
+                ? 'recommended'
+                : 'available',
             if (filter != 'All') 'category': filter,
           },
         ),

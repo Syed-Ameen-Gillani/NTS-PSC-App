@@ -1,6 +1,59 @@
 part of '../pages/teacher_lesson_media_screen.dart';
 
 extension _LessonStudioHandoutsTab on _TeacherLessonMediaScreenState {
+  Widget _buildDocumentUploadAction({bool compact = false}) =>
+      ValueListenableBuilder<LessonUploadProgressValue?>(
+        valueListenable: documentProgress,
+        builder: (context, value, _) => AnimatedSize(
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeInOut,
+          alignment: Alignment.topCenter,
+          child: value != null
+              ? Container(
+                  key: const ValueKey('document-upload-progress'),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 12.h,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.08),
+                    border: Border(
+                      bottom: BorderSide(
+                        color: AppColors.primary.withValues(alpha: 0.2),
+                      ),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      LessonUploadProgressDetails(
+                        value: value,
+                        icon: Icons.description_outlined,
+                        originalLabel: 'Size',
+                      ),
+                      SizedBox(height: 8.h),
+                      Text(
+                        _uploadingDocumentName ?? '',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyles.interRegular14.copyWith(
+                          fontSize: 11.sp,
+                          color: AppColors.grey600,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              : compact
+              ? _compactAddAction(
+                  icon: Icons.add_circle_outline,
+                  label: 'Add another document',
+                  onPressed: busy.value ? null : _pickMaterial,
+                )
+              : _buildMaterialUploadCard(),
+        ),
+      );
+
   Widget _buildMaterialUploadCard() {
     return Container(
       width: double.infinity,
@@ -34,7 +87,7 @@ extension _LessonStudioHandoutsTab on _TeacherLessonMediaScreenState {
           ),
           SizedBox(height: 6.h),
           Text(
-            'PDFs, presentations, slides, and study notes up to 50 MB.',
+            'PDFs, presentations, slides, and study notes up to 25 MB.',
             textAlign: TextAlign.center,
             style: AppTextStyles.interRegular14.copyWith(
               fontSize: 13.sp,
@@ -65,15 +118,17 @@ extension _LessonStudioHandoutsTab on _TeacherLessonMediaScreenState {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           materials.when(
-            loading: () => Center(
-              child: Padding(
-                padding: EdgeInsets.symmetric(vertical: 30.h),
-                child: const CircularProgressIndicator(),
-              ),
-            ),
+            loading: () => documentProgress.value != null
+                ? _buildDocumentUploadAction()
+                : Center(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(vertical: 30.h),
+                      child: const CircularProgressIndicator(),
+                    ),
+                  ),
             error: (_, _) => Column(
               children: [
-                _buildMaterialUploadCard(),
+                _buildDocumentUploadAction(),
                 const _AttachedEmptyState(
                   icon: Icons.error_outline,
                   title: 'Failed to load handouts',
@@ -82,15 +137,22 @@ extension _LessonStudioHandoutsTab on _TeacherLessonMediaScreenState {
             ),
             data: (files) {
               if (files.isEmpty) {
-                return _buildMaterialUploadCard();
+                return _buildDocumentUploadAction();
               }
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildAttachedHeader(
                     title: 'ATTACHED DOCUMENTS',
-                    onRetry: () =>
-                        ref.invalidate(curriculumMaterialsProvider(_scope)),
+                    onRetry: () {
+                      final scope =
+                          ref
+                              .read(curriculumContextProvider(_scope))
+                              .value
+                              ?.scope ??
+                          _scope;
+                      ref.invalidate(curriculumMaterialsProvider(scope));
+                    },
                   ),
                   SizedBox(height: 10.h),
                   ...files.map((file) {
@@ -170,23 +232,35 @@ extension _LessonStudioHandoutsTab on _TeacherLessonMediaScreenState {
                               color: AppColors.error,
                               size: 20,
                             ),
-                            onPressed: () => _run(
-                              () => ref
-                                  .read(
-                                    curriculumActionsProvider(_scope).notifier,
-                                  )
-                                  .delete(file),
-                            ),
+                            onPressed: busy.value
+                                ? null
+                                : () => _run(() async {
+                                    final scope = await _resolveScope();
+                                    await ref
+                                        .read(
+                                          curriculumActionsProvider(
+                                            scope,
+                                          ).notifier,
+                                        )
+                                        .delete(file);
+                                    if (mounted) {
+                                      ref.invalidate(
+                                        curriculumMaterialsProvider(scope),
+                                      );
+                                      ref.invalidate(
+                                        curriculumAttachmentSummaryProvider(
+                                          scope,
+                                        ),
+                                      );
+                                      ref.invalidate(teacherControllerProvider);
+                                    }
+                                  }),
                           ),
                         ],
                       ),
                     );
                   }),
-                  _compactAddAction(
-                    icon: Icons.add_circle_outline,
-                    label: 'Add another handout',
-                    onPressed: busy.value ? null : _pickMaterial,
-                  ),
+                  _buildDocumentUploadAction(compact: true),
                 ],
               );
             },

@@ -1,3 +1,4 @@
+import 'package:nts_psc_app/presentation/widgets/app_choice_chip.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
@@ -148,7 +149,7 @@ class LiveCourseReviews extends ConsumerWidget {
                   spacing: 6.w,
                   runSpacing: 6.h,
                   children: [
-                    ChoiceChip(
+                    AppChoiceChip(
                       label: const Text('All'),
                       selected: rating == null,
                       onSelected: (_) =>
@@ -156,7 +157,7 @@ class LiveCourseReviews extends ConsumerWidget {
                               null,
                     ),
                     for (var star = 5; star >= 1; star--)
-                      ChoiceChip(
+                      AppChoiceChip(
                         label: Text('$star ★ (${page.distribution[star - 1]})'),
                         selected: rating == star,
                         onSelected: (_) =>

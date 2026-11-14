@@ -1,22 +1,21 @@
-import 'package:nts_psc_app/presentation/widgets/app_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:nts_psc_app/config/routes/app_routes.dart';
 import 'package:nts_psc_app/core/models/app_models.dart';
+import 'package:nts_psc_app/core/networks/supabase_client.dart';
 import 'package:nts_psc_app/core/theme/app_colors.dart';
 import 'package:nts_psc_app/core/theme/app_text_styles.dart';
-import 'package:nts_psc_app/config/routes/app_routes.dart';
-import 'package:nts_psc_app/core/networks/supabase_client.dart';
 import 'package:nts_psc_app/features/quizzes/presentation/controllers/quizzes_controller.dart';
-import 'package:nts_psc_app/presentation/widgets/custom_button.dart';
 import 'package:nts_psc_app/features/quizzes/presentation/widgets/quiz_retry_button.dart';
+import 'package:nts_psc_app/presentation/widgets/app_scaffold.dart';
 
 class QuizCompletedScreen extends ConsumerWidget {
+  const QuizCompletedScreen({super.key, this.result, this.attemptId});
+
   final QuizSubmissionResultModel? result;
   final String? attemptId;
-
-  const QuizCompletedScreen({super.key, this.result, this.attemptId});
 
   void _continueLearning(BuildContext context) {
     if (context.canPop()) {
@@ -30,24 +29,16 @@ class QuizCompletedScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     if (AppConfig.isSupabaseEnabled) {
       final id = attemptId ?? result?.attemptId;
-      if (id == null) {
-        return const AppScaffold(
-          body: Center(child: Text('Result unavailable')),
-        );
-      }
+      if (id == null) return const _ResultState(message: 'Result unavailable');
       return ref
           .watch(quizAttemptResultProvider(id))
           .when(
             data: (saved) => saved == null
-                ? const AppScaffold(
-                    body: Center(child: Text('Result unavailable')),
-                  )
+                ? const _ResultState(message: 'Result unavailable')
                 : _buildResult(context, saved),
-            loading: () => const AppScaffold(
-              body: Center(child: CircularProgressIndicator()),
-            ),
-            error: (_, __) => const AppScaffold(
-              body: Center(child: Text('Could not load result')),
+            loading: () => const _ResultState(loading: true),
+            error: (_, __) => const _ResultState(
+              message: 'Could not load assessment result.',
             ),
           );
     }
@@ -58,202 +49,257 @@ class QuizCompletedScreen extends ConsumerWidget {
     final savedAttemptId = result?.attemptId;
     final total = result?.totalQuestions ?? 4;
     final score = result?.score ?? 3;
-    final percentage = total > 0 ? ((score / total) * 100).toInt() : 0;
-    final isPassed = result?.isPassed ?? false;
+    final passingScore = result?.passingScore ?? 60;
+    final percentage = total > 0 ? ((score / total) * 100).round() : 0;
+    final isPassed = result?.isPassed ?? percentage >= passingScore;
+    final statusColor = isPassed ? AppColors.success : AppColors.error;
 
     return AppScaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         automaticallyImplyLeading: false,
-        actions: [
-          IconButton(
-            icon: Icon(Icons.close, color: AppColors.grey900, size: 24.w),
-            onPressed: () => _continueLearning(context),
-          ),
-          SizedBox(width: 8.w),
-        ],
         title: Text(
           'Assessment Results',
           style: AppTextStyles.interBold24.copyWith(
             fontSize: 18.sp,
-            color: AppColors.grey900,
+            color: AppColors.onBackground,
           ),
         ),
         centerTitle: true,
+        actions: [
+          IconButton(
+            tooltip: 'Close results',
+            onPressed: () => _continueLearning(context),
+            icon: Icon(Icons.close_rounded, size: 22.w),
+            color: AppColors.onBackground,
+          ),
+          SizedBox(width: 8.w),
+        ],
         bottom: PreferredSize(
           preferredSize: Size.fromHeight(1.h),
-          child: Container(color: const Color(0xFFE2E8F0), height: 1.h),
+          child: const Divider(height: 1, color: AppColors.grey300),
         ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: EdgeInsets.all(24.w),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              SizedBox(height: 24.h),
-              Container(
-                width: 96.w,
-                height: 96.w,
-                decoration: BoxDecoration(
-                  color: isPassed
-                      ? const Color(0xFFFFF7E6)
-                      : const Color(0xFFFFEBEE),
-                  shape: BoxShape.circle,
-                ),
-                child: Center(
-                  child: Icon(
-                    isPassed ? Icons.emoji_events : Icons.refresh_rounded,
-                    color: isPassed ? const Color(0xFFFA8C16) : AppColors.error,
-                    size: 48.w,
+          padding: EdgeInsets.fromLTRB(20.w, 24.h, 20.w, 32.h),
+          child: Align(
+            alignment: Alignment.topCenter,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: 520.w),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _ResultSummary(
+                    passed: isPassed,
+                    percentage: percentage,
+                    quizTitle: result?.quizTitle,
                   ),
-                ),
-              ),
-              SizedBox(height: 20.h),
-              Text(
-                isPassed ? 'Test Passed!' : 'Practice Makes Perfect!',
-                textAlign: TextAlign.center,
-                style: AppTextStyles.interBold30.copyWith(
-                  fontSize: 26.sp,
-                  color: AppColors.grey900,
-                  height: 1.2,
-                ),
-              ),
-              SizedBox(height: 12.h),
-              Text(
-                result != null
-                    ? 'You have completed "${result.quizTitle}" with $percentage% accuracy.'
-                    : 'You have successfully completed the competitive practice challenge.',
-                textAlign: TextAlign.center,
-                style: AppTextStyles.interRegular14.copyWith(
-                  color: AppColors.grey500,
-                  height: 1.5,
-                ),
-              ),
-              SizedBox(height: 36.h),
-
-              Container(
-                width: double.infinity,
-                padding: EdgeInsets.all(24.w),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF8F9FA),
-                  borderRadius: BorderRadius.circular(24.r),
-                  border: Border.all(
-                    color: const Color(0xFFDADCE0),
-                    width: 1.w,
+                  SizedBox(height: 24.h),
+                  Container(
+                    padding: EdgeInsets.all(16.w),
+                    decoration: BoxDecoration(
+                      color: AppColors.grey100,
+                      borderRadius: BorderRadius.circular(8.r),
+                      border: Border.all(color: AppColors.grey300, width: 1.w),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Performance breakdown',
+                          style: AppTextStyles.interSemiBold16.copyWith(
+                            fontSize: 15.sp,
+                            color: AppColors.onBackground,
+                          ),
+                        ),
+                        SizedBox(height: 14.h),
+                        _ResultMetric(
+                          icon: Icons.check_circle_outline_rounded,
+                          label: 'Correct answers',
+                          value: '$score of $total',
+                          color: statusColor,
+                        ),
+                        SizedBox(height: 12.h),
+                        _ResultMetric(
+                          icon: Icons.pie_chart_outline_rounded,
+                          label: 'Accuracy',
+                          value: '$percentage%',
+                          color: AppColors.primary,
+                        ),
+                        SizedBox(height: 12.h),
+                        _ResultMetric(
+                          icon: Icons.flag_outlined,
+                          label: 'Pass mark',
+                          value: '$passingScore%',
+                          color: AppColors.accent,
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Performance Breakdown',
-                      style: AppTextStyles.interBold24.copyWith(
-                        fontSize: 18.sp,
-                        color: AppColors.grey900,
-                        height: 1.2,
+                  SizedBox(height: 24.h),
+                  SizedBox(
+                    height: 50.h,
+                    child: FilledButton.icon(
+                      onPressed: () => context.pushNamed(
+                        AppRoute.quizReview.name,
+                        queryParameters: savedAttemptId == null
+                            ? const {}
+                            : {'attemptId': savedAttemptId},
+                        extra: result,
+                      ),
+                      icon: Icon(Icons.fact_check_outlined, size: 19.w),
+                      label: const Text('Review answers'),
+                      style: FilledButton.styleFrom(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8.r),
+                        ),
                       ),
                     ),
-                    SizedBox(height: 20.h),
-                    _buildSpecRow(
-                      Icons.check_circle_outline,
-                      'Score: $score / $total',
-                      const Color(0xFF10B981),
-                      const Color(0xFFD1FAE5),
-                    ),
-                    SizedBox(height: 14.h),
-                    _buildSpecRow(
-                      Icons.pie_chart_outline,
-                      'Accuracy: $percentage%',
-                      AppColors.primary,
-                      const Color(0xFFE3F2FD),
-                    ),
-                    SizedBox(height: 14.h),
-                    _buildSpecRow(
-                      Icons.timer_outlined,
-                      'Time Taken: 04:32',
-                      const Color(0xFFF59E0B),
-                      const Color(0xFFFEF3C7),
-                    ),
+                  ),
+                  if (result != null && !isPassed) ...[
+                    SizedBox(height: 12.h),
+                    QuizRetryButton(quizId: result.quizId),
                   ],
-                ),
+                ],
               ),
-              SizedBox(height: 36.h),
-
-              // Action buttons
-              CustomButton(
-                text: 'Review Answers & Explanations',
-                color: AppColors.primary,
-                trailingIcon: const Icon(
-                  Icons.arrow_forward,
-                  color: Colors.white,
-                  size: 18,
-                ),
-                onPressed: () {
-                  context.pushNamed(
-                    AppRoute.quizReview.name,
-                    queryParameters: savedAttemptId == null
-                        ? const {}
-                        : {'attemptId': savedAttemptId},
-                    extra: result,
-                  );
-                },
-              ),
-              SizedBox(height: 14.h),
-              if (result != null) QuizRetryButton(quizId: result.quizId),
-              SizedBox(
-                width: double.infinity,
-                height: 52.h,
-                child: OutlinedButton(
-                  onPressed: () => _continueLearning(context),
-                  style: OutlinedButton.styleFrom(
-                    side: BorderSide(color: AppColors.grey300, width: 1.w),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(50.r),
-                    ),
-                  ),
-                  child: Text(
-                    'Continue learning',
-                    style: AppTextStyles.interSemiBold16.copyWith(
-                      fontSize: 15.sp,
-                      color: AppColors.onBackground,
-                    ),
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),
     );
   }
+}
 
-  Widget _buildSpecRow(
-    IconData icon,
-    String text,
-    Color iconColor,
-    Color bgColor,
-  ) {
-    return Row(
+class _ResultSummary extends StatelessWidget {
+  const _ResultSummary({
+    required this.passed,
+    required this.percentage,
+    required this.quizTitle,
+  });
+
+  final bool passed;
+  final int percentage;
+  final String? quizTitle;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = passed ? AppColors.success : AppColors.error;
+    return Column(
       children: [
         Container(
-          padding: EdgeInsets.all(8.w),
-          decoration: BoxDecoration(color: bgColor, shape: BoxShape.circle),
-          child: Icon(icon, color: iconColor, size: 20.w),
+          width: 72.w,
+          height: 72.w,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.1),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            passed ? Icons.emoji_events_outlined : Icons.replay_rounded,
+            size: 34.w,
+            color: color,
+          ),
         ),
-        SizedBox(width: 12.w),
-        Expanded(
-          child: Text(
-            text,
-            style: AppTextStyles.interMedium16.copyWith(
-              fontSize: 15.sp,
-              color: AppColors.grey700,
-            ),
+        SizedBox(height: 16.h),
+        Text(
+          passed ? 'Assessment passed' : 'Keep practicing',
+          textAlign: TextAlign.center,
+          style: AppTextStyles.interBold24.copyWith(
+            fontSize: 22.sp,
+            color: AppColors.onBackground,
+          ),
+        ),
+        SizedBox(height: 6.h),
+        Text(
+          quizTitle == null
+              ? 'You completed this assessment with $percentage% accuracy.'
+              : '$quizTitle · $percentage% accuracy',
+          textAlign: TextAlign.center,
+          style: AppTextStyles.interRegular14.copyWith(
+            fontSize: 13.sp,
+            height: 1.4,
+            color: AppColors.grey600,
           ),
         ),
       ],
     );
   }
+}
+
+class _ResultMetric extends StatelessWidget {
+  const _ResultMetric({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    children: [
+      Container(
+        width: 36.w,
+        height: 36.w,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(8.r),
+        ),
+        child: Icon(icon, color: color, size: 19.w),
+      ),
+      SizedBox(width: 12.w),
+      Expanded(
+        child: Text(
+          label,
+          style: AppTextStyles.interRegular14.copyWith(
+            fontSize: 13.sp,
+            color: AppColors.grey600,
+          ),
+        ),
+      ),
+      SizedBox(width: 12.w),
+      Text(
+        value,
+        textAlign: TextAlign.right,
+        style: AppTextStyles.interSemiBold16.copyWith(
+          fontSize: 14.sp,
+          color: AppColors.onBackground,
+        ),
+      ),
+    ],
+  );
+}
+
+class _ResultState extends StatelessWidget {
+  const _ResultState({this.message, this.loading = false});
+
+  final String? message;
+  final bool loading;
+
+  @override
+  Widget build(BuildContext context) => AppScaffold(
+    backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+    body: Center(
+      child: loading
+          ? const CircularProgressIndicator()
+          : Padding(
+              padding: EdgeInsets.symmetric(horizontal: 32.w),
+              child: Text(
+                message ?? 'Result unavailable',
+                textAlign: TextAlign.center,
+                style: AppTextStyles.interRegular14.copyWith(
+                  color: AppColors.grey600,
+                ),
+              ),
+            ),
+    ),
+  );
 }

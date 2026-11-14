@@ -18,9 +18,11 @@ extension _LessonStudioVideoTab on _TeacherLessonMediaScreenState {
               children: [
                 _buildVideoUploadCard(),
                 TextButton(
-                  onPressed: () => ref.invalidate(
-                    teacherLessonMediaProvider(widget.lesson.id),
-                  ),
+                  onPressed: busy.value
+                      ? null
+                      : () => ref.invalidate(
+                          teacherLessonMediaProvider(widget.lesson.id),
+                        ),
                   child: const Text('Could not load video. Retry'),
                 ),
               ],
@@ -29,15 +31,43 @@ extension _LessonStudioVideoTab on _TeacherLessonMediaScreenState {
               if (items.isEmpty) {
                 return _buildVideoUploadCard();
               }
+              final hasCurrentVideo = items.any((item) => item.isCurrent);
+              final statusItem = items.firstWhere(
+                (item) => item.error != null,
+                orElse: () => items.firstWhere(
+                  (item) => !item.isCurrent,
+                  orElse: () => items.first,
+                ),
+              );
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildAttachedHeader(
                     title: 'ATTACHED VIDEO',
-                    trailing: _videoHeaderActions(items.first),
+                    trailing: AbsorbPointer(
+                      absorbing: busy.value,
+                      child: _videoHeaderActions(items.first),
+                    ),
                   ),
                   SizedBox(height: 10.h),
-                  ...items.map(_buildMediaCard),
+                  ValueListenableBuilder(
+                    valueListenable: progress,
+                    builder: (context, value, _) => Padding(
+                      padding: EdgeInsets.only(bottom: 16.h),
+                      child: value == null
+                          ? _buildVideoStatus(statusItem, hasCurrentVideo)
+                          : _buildVideoPreparationCard(
+                              value,
+                              isReplacement: hasCurrentVideo,
+                            ),
+                    ),
+                  ),
+                  ...items.map(
+                    (item) => AbsorbPointer(
+                      absorbing: busy.value,
+                      child: _buildMediaCard(item),
+                    ),
+                  ),
                   Padding(
                     padding: EdgeInsets.symmetric(vertical: 8.h),
                     child: Row(
@@ -59,12 +89,6 @@ extension _LessonStudioVideoTab on _TeacherLessonMediaScreenState {
                         ),
                       ],
                     ),
-                  ),
-                  ValueListenableBuilder(
-                    valueListenable: progress,
-                    builder: (context, value, _) => value == null
-                        ? const SizedBox.shrink()
-                        : _buildVideoPreparationCard(value),
                   ),
                 ],
               );
@@ -148,36 +172,92 @@ extension _LessonStudioVideoTab on _TeacherLessonMediaScreenState {
     ),
   );
 
-  Widget _buildVideoPreparationCard(LessonUploadProgressValue value) =>
-      Container(
-        key: const ValueKey('video-preparation-card'),
-        width: double.infinity,
-        padding: EdgeInsets.all(18.w),
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(12.r),
-          border: Border.all(color: AppColors.grey200),
-        ),
-        child: LessonUploadProgressDetails(
+  Widget _buildVideoPreparationCard(
+    LessonUploadProgressValue value, {
+    bool isReplacement = false,
+  }) => Container(
+    key: const ValueKey('video-preparation-card'),
+    constraints: BoxConstraints(maxWidth: 350.w),
+    padding: EdgeInsets.fromLTRB(16.w, 10.h, 6.w, 10.h),
+    decoration: BoxDecoration(
+      color: AppColors.primary.withValues(alpha: 0.08),
+      border: Border(
+        bottom: BorderSide(color: AppColors.primary.withValues(alpha: 0.2)),
+      ),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        LessonUploadProgressDetails(
           value: value,
-          showCancel: _preparationCancellation != null,
+          showCancel:
+              !_videoCancellationRequested &&
+              (_uploadCancellation != null || _preparationCancellation != null),
           onCancel:
-              _preparationCancellation == null ||
-                  _preparationCancellation!.isCancelled
+              _uploadCancellation == null &&
+                  (_preparationCancellation == null ||
+                      _preparationCancellation!.isCancelled)
               ? null
-              : () async {
-                  final token = _preparationCancellation;
-                  if (token == null) return;
-                  final cancelled = token.cancel();
-                  progress.value = value.copyWith(label: 'Cancelling…');
-                  try {
-                    await cancelled;
-                  } catch (_) {
-                    // The latched token still prevents a later upload.
-                  }
-                },
+              : _confirmAndCancelVideoTransfer,
         ),
+        if (isReplacement && value.label != 'Cancelling…') ...[
+          SizedBox(height: 8.h),
+          Text(
+            'The current video stays live until this replacement is ready and published.',
+            style: AppTextStyles.interRegular14.copyWith(
+              fontSize: 11.sp,
+              height: 1.35,
+              color: AppColors.grey600,
+            ),
+          ),
+        ],
+      ],
+    ),
+  );
+
+  Future<void> _confirmAndCancelVideoTransfer() async {
+    final token = _preparationCancellation;
+    final uploadCancellation = _uploadCancellation;
+    if (_cancelDialogOpen ||
+        _videoCancellationRequested ||
+        (uploadCancellation == null && (token == null || token.isCancelled))) {
+      return;
+    }
+    _cancelDialogOpen = true;
+    try {
+      final confirmed = await confirmVideoPreparationCancellation(
+        context,
+        uploading: uploadCancellation != null,
       );
+      if (!confirmed || !mounted || progress.value == null) {
+        return;
+      }
+      Future<void> Function()? cancel;
+      if (uploadCancellation != null &&
+          identical(uploadCancellation, _uploadCancellation)) {
+        cancel = uploadCancellation;
+      } else if (token != null &&
+          identical(token, _preparationCancellation) &&
+          !token.isCancelled) {
+        cancel = token.cancel;
+      }
+      if (cancel == null) return;
+      _videoCancellationRequested = true;
+      progress.value = progress.value!.copyWith(label: 'Cancelling…');
+      try {
+        await cancel();
+      } catch (error, stackTrace) {
+        developer.log(
+          'Video cancellation did not finish cleanly.',
+          name: 'CBOA.VideoUpload',
+          error: error,
+          stackTrace: stackTrace,
+        );
+      }
+    } finally {
+      _cancelDialogOpen = false;
+    }
+  }
 
   Widget _buildMediaCard(LessonMedia item) {
     final isPublished = item.status == 'ready';
@@ -190,17 +270,7 @@ extension _LessonStudioVideoTab on _TeacherLessonMediaScreenState {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (item.error != null)
-            Padding(
-              padding: EdgeInsets.only(bottom: 12.h),
-              child: Text(
-                'Transcription failed. Retry or review the transcript below.',
-                style: AppTextStyles.interRegular14.copyWith(
-                  color: AppColors.error,
-                ),
-              ),
-            ),
-          if (isTranscribing)
+          if (isTranscribing && item.error == null)
             Padding(
               padding: EdgeInsets.only(bottom: 12.h),
               child: Text(
@@ -260,19 +330,74 @@ extension _LessonStudioVideoTab on _TeacherLessonMediaScreenState {
     );
   }
 
+  Widget _buildVideoStatus(LessonMedia item, bool hasCurrentVideo) {
+    final isReplacement = hasCurrentVideo && !item.isCurrent;
+    final (title, message, icon, color) = item.error != null
+        ? (
+            'TRANSCRIPTION FAILED',
+            'Retry or review the transcript below.',
+            Icons.error_outline_rounded,
+            AppColors.error,
+          )
+        : switch (item.status) {
+            'uploading' => (
+              isReplacement ? 'REPLACEMENT UPLOADING' : 'VIDEO UPLOADING',
+              'Keep this screen open while the upload finishes.',
+              Icons.cloud_upload_outlined,
+              AppColors.primary,
+            ),
+            'transcribing' => (
+              isReplacement ? 'REPLACEMENT PROCESSING' : 'VIDEO PROCESSING',
+              isReplacement
+                  ? 'Creating the transcript. The current video remains live.'
+                  : 'Creating the transcript for review.',
+              Icons.auto_awesome_outlined,
+              AppColors.primary,
+            ),
+            'needs_review' => (
+              isReplacement ? 'REPLACEMENT NEEDS REVIEW' : 'TRANSCRIPT REVIEW',
+              isReplacement
+                  ? 'Review the transcript, then publish this replacement.'
+                  : 'Review the transcript before publishing the video.',
+              Icons.fact_check_outlined,
+              AppColors.accent,
+            ),
+            'ready' when item.isCurrent => (
+              'LIVE FOR STUDENTS',
+              'This is the video currently available to learners.',
+              Icons.check_circle_outline_rounded,
+              AppColors.success,
+            ),
+            'ready' => (
+              'REPLACEMENT READY',
+              'Publish the course changes to make this video live for students.',
+              Icons.task_alt_rounded,
+              AppColors.primary,
+            ),
+            _ => (
+              'VIDEO STATUS',
+              'This video is being prepared.',
+              Icons.info_outline_rounded,
+              AppColors.primary,
+            ),
+          };
+
+    return _VideoStatusAnnouncement(
+      key: ValueKey(
+        'video-status-${item.id}-${item.status}-${item.isCurrent}-${item.error}',
+      ),
+      title: title,
+      message: message,
+      icon: icon,
+      color: color,
+    );
+  }
+
   Widget _videoHeaderActions(LessonMedia item) {
     final disabled = busy.value || item.status == 'uploading';
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        TextButton(
-          onPressed: disabled ? null : _pickVideo,
-          style: TextButton.styleFrom(
-            visualDensity: VisualDensity.compact,
-            padding: EdgeInsets.symmetric(horizontal: 8.w),
-          ),
-          child: const Text('Change video'),
-        ),
         IconButton(
           tooltip: 'Delete video',
           onPressed: disabled ? null : () => _deleteVideo(item),

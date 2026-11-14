@@ -1,3 +1,4 @@
+import 'package:nts_psc_app/presentation/widgets/app_choice_chip.dart';
 import 'package:nts_psc_app/presentation/widgets/app_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -110,16 +111,14 @@ class _TeacherReviewAssignmentScreenState
                     spacing: 6.w,
                     runSpacing: 6.h,
                     children: presetChips.map((chipText) {
-                      return ActionChip(
+                      return AppActionChip(
                         label: Text(
                           chipText,
                           style: AppTextStyles.interRegular14.copyWith(
                             fontSize: 11.sp,
-                            color: AppColors.primary,
+                            color: Theme.of(context).colorScheme.onPrimary,
                           ),
                         ),
-                        backgroundColor: AppColors.surface,
-                        side: const BorderSide(color: AppColors.primaryLight),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20.r),
                         ),
@@ -140,9 +139,12 @@ class _TeacherReviewAssignmentScreenState
                     key: formKey,
                     child: CustomTextFormField(
                       controller: controller,
-                      hintText: 'Enter specific instructor notes or guidance...',
+                      hintText:
+                          'Enter specific instructor notes or guidance...',
                       maxLines: 4,
-                      validator: (value) => isDisapprove && (value == null || value.trim().isEmpty)
+                      validator: (value) =>
+                          isDisapprove &&
+                              (value == null || value.trim().isEmpty)
                           ? 'Feedback is required when requesting revision'
                           : null,
                     ),
@@ -163,7 +165,9 @@ class _TeacherReviewAssignmentScreenState
                 }
               },
               style: FilledButton.styleFrom(
-                backgroundColor: isDisapprove ? AppColors.error : AppColors.primary,
+                backgroundColor: isDisapprove
+                    ? AppColors.error
+                    : AppColors.primary,
               ),
               child: Text(actionLabel),
             ),
@@ -224,7 +228,9 @@ class _TeacherReviewAssignmentScreenState
                     .where((s) => s.status == AssignmentReviewStatus.approved)
                     .toList();
                 final disapproved = allSubmissions
-                    .where((s) => s.status == AssignmentReviewStatus.disapproved)
+                    .where(
+                      (s) => s.status == AssignmentReviewStatus.disapproved,
+                    )
                     .toList();
 
                 final visible = switch (_selectedStatus) {
@@ -351,14 +357,26 @@ class _TeacherReviewAssignmentScreenState
                         scrollDirection: Axis.horizontal,
                         child: Row(
                           children: [
-                            _buildFilterChip('all', 'All (${allSubmissions.length})'),
+                            _buildFilterChip(
+                              'all',
+                              'All (${allSubmissions.length})',
+                            ),
                             SizedBox(width: 8.w),
-                            _buildFilterChip('pending', 'Needs Review (${pending.length})'),
+                            _buildFilterChip(
+                              'pending',
+                              'Needs Review (${pending.length})',
+                            ),
                             SizedBox(width: 8.w),
-                            _buildFilterChip('approved', 'Approved (${approved.length})'),
+                            _buildFilterChip(
+                              'approved',
+                              'Approved (${approved.length})',
+                            ),
                             if (disapproved.isNotEmpty) ...[
                               SizedBox(width: 8.w),
-                              _buildFilterChip('disapproved', 'Disapproved (${disapproved.length})'),
+                              _buildFilterChip(
+                                'disapproved',
+                                'Disapproved (${disapproved.length})',
+                              ),
                             ],
                           ],
                         ),
@@ -415,7 +433,8 @@ class _TeacherReviewAssignmentScreenState
                                     backgroundColor: AppColors.surface,
                                     child: Text(
                                       submission.studentName.isNotEmpty
-                                          ? submission.studentName[0].toUpperCase()
+                                          ? submission.studentName[0]
+                                                .toUpperCase()
                                           : 'S',
                                       style: AppTextStyles.interBold24.copyWith(
                                         fontSize: 13.sp,
@@ -427,13 +446,16 @@ class _TeacherReviewAssignmentScreenState
                                   Expanded(
                                     child: Text(
                                       submission.studentName,
-                                      style: AppTextStyles.interSemiBold16.copyWith(
-                                        fontSize: 15.sp,
-                                        color: AppColors.onBackground,
-                                      ),
+                                      style: AppTextStyles.interSemiBold16
+                                          .copyWith(
+                                            fontSize: 15.sp,
+                                            color: AppColors.onBackground,
+                                          ),
                                     ),
                                   ),
-                                  AssignmentStatusBadge(status: submission.status),
+                                  AssignmentStatusBadge(
+                                    status: submission.status,
+                                  ),
                                 ],
                               ),
                               SizedBox(height: 12.h),
@@ -474,30 +496,38 @@ class _TeacherReviewAssignmentScreenState
                                     ),
                                   ),
                                   children: [
-                                    for (final revision in submission.revisions.skip(1)) ...[
+                                    for (final revision
+                                        in submission.revisions.skip(1)) ...[
                                       Align(
                                         alignment: Alignment.centerLeft,
                                         child: Text(
                                           'Revision ${revision.number}',
-                                          style: AppTextStyles.interBold24.copyWith(
-                                            fontSize: 12.sp,
-                                            color: AppColors.grey600,
-                                          ),
+                                          style: AppTextStyles.interBold24
+                                              .copyWith(
+                                                fontSize: 12.sp,
+                                                color: AppColors.grey600,
+                                              ),
                                         ),
                                       ),
                                       if (revision.response.isNotEmpty)
                                         Padding(
-                                          padding: EdgeInsets.symmetric(vertical: 4.h),
+                                          padding: EdgeInsets.symmetric(
+                                            vertical: 4.h,
+                                          ),
                                           child: Text(
                                             revision.response,
-                                            style: AppTextStyles.interRegular14.copyWith(
-                                              fontSize: 12.sp,
-                                              color: AppColors.grey700,
-                                            ),
+                                            style: AppTextStyles.interRegular14
+                                                .copyWith(
+                                                  fontSize: 12.sp,
+                                                  color: AppColors.grey700,
+                                                ),
                                           ),
                                         ),
-                                      for (final attachment in revision.attachments)
-                                        AssignmentAttachmentTile(attachment: attachment),
+                                      for (final attachment
+                                          in revision.attachments)
+                                        AssignmentAttachmentTile(
+                                          attachment: attachment,
+                                        ),
                                       SizedBox(height: 8.h),
                                     ],
                                   ],
@@ -510,10 +540,13 @@ class _TeacherReviewAssignmentScreenState
                                   decoration: BoxDecoration(
                                     color: AppColors.grey100,
                                     borderRadius: BorderRadius.circular(8.r),
-                                    border: Border.all(color: AppColors.grey200),
+                                    border: Border.all(
+                                      color: AppColors.grey200,
+                                    ),
                                   ),
                                   child: Row(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Icon(
                                         Icons.chat_bubble_outline,
@@ -524,17 +557,19 @@ class _TeacherReviewAssignmentScreenState
                                       Expanded(
                                         child: Text(
                                           submission.feedback,
-                                          style: AppTextStyles.interRegular14.copyWith(
-                                            fontSize: 12.sp,
-                                            color: AppColors.grey700,
-                                          ),
+                                          style: AppTextStyles.interRegular14
+                                              .copyWith(
+                                                fontSize: 12.sp,
+                                                color: AppColors.grey700,
+                                              ),
                                         ),
                                       ),
                                     ],
                                   ),
                                 ),
                               ],
-                              if (submission.status == AssignmentReviewStatus.pending) ...[
+                              if (submission.status ==
+                                  AssignmentReviewStatus.pending) ...[
                                 SizedBox(height: 14.h),
                                 Row(
                                   children: [
@@ -544,14 +579,23 @@ class _TeacherReviewAssignmentScreenState
                                           submission,
                                           AssignmentReviewStatus.disapproved,
                                         ),
-                                        icon: const Icon(Icons.refresh, size: 16),
+                                        icon: const Icon(
+                                          Icons.refresh,
+                                          size: 16,
+                                        ),
                                         label: const Text('Request Revision'),
                                         style: OutlinedButton.styleFrom(
                                           foregroundColor: AppColors.error,
-                                          side: const BorderSide(color: AppColors.error),
-                                          padding: EdgeInsets.symmetric(vertical: 10.h),
+                                          side: const BorderSide(
+                                            color: AppColors.error,
+                                          ),
+                                          padding: EdgeInsets.symmetric(
+                                            vertical: 10.h,
+                                          ),
                                           shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(8.r),
+                                            borderRadius: BorderRadius.circular(
+                                              8.r,
+                                            ),
                                           ),
                                         ),
                                       ),
@@ -566,11 +610,17 @@ class _TeacherReviewAssignmentScreenState
                                         icon: const Icon(Icons.check, size: 16),
                                         label: const Text('Approve'),
                                         style: FilledButton.styleFrom(
-                                          backgroundColor: const Color(0xFF16A34A),
+                                          backgroundColor: const Color(
+                                            0xFF16A34A,
+                                          ),
                                           foregroundColor: Colors.white,
-                                          padding: EdgeInsets.symmetric(vertical: 10.h),
+                                          padding: EdgeInsets.symmetric(
+                                            vertical: 10.h,
+                                          ),
                                           shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(8.r),
+                                            borderRadius: BorderRadius.circular(
+                                              8.r,
+                                            ),
                                           ),
                                         ),
                                       ),
@@ -634,19 +684,16 @@ class _TeacherReviewAssignmentScreenState
 
   Widget _buildFilterChip(String value, String label) {
     final isSelected = _selectedStatus == value;
-    return ChoiceChip(
+    return AppChoiceChip(
       label: Text(label),
       selected: isSelected,
       onSelected: (_) => setState(() => _selectedStatus = value),
       showCheckmark: false,
-      selectedColor: AppColors.primary,
       backgroundColor: AppColors.grey100,
       side: BorderSide(
         color: isSelected ? AppColors.primary : AppColors.grey300,
       ),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(50.r),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50.r)),
       labelStyle: AppTextStyles.interSemiBold16.copyWith(
         fontSize: 12.sp,
         color: isSelected ? AppColors.onPrimary : AppColors.grey600,

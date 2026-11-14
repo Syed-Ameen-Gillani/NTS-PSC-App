@@ -15,77 +15,88 @@ import 'package:nts_psc_app/presentation/widgets/assessment_type_tabs.dart';
 import 'package:nts_psc_app/features/quizzes/presentation/widgets/quiz_performance_feedback.dart';
 import 'package:nts_psc_app/features/assignments/presentation/widgets/assignment_performance_feedback.dart';
 
-class QuizzesScreen extends ConsumerWidget {
+class QuizzesScreen extends ConsumerStatefulWidget {
   const QuizzesScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return DefaultTabController(
-      length: 2,
-      child: Builder(
-        builder: (context) {
-          final tabs = DefaultTabController.of(context);
-          final header = Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const StudentTabHeader(title: 'Assessments'),
-              SizedBox(height: 16.h),
-              const AssessmentTypeTabs(),
-              SizedBox(height: 20.h),
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20.w),
-                child: AnimatedBuilder(
-                  animation: tabs,
-                  builder: (context, _) => tabs.index == 0
-                      ? Consumer(
-                          builder: (context, ref, _) => ref
-                              .watch(quizzesControllerProvider)
-                              .when(
-                                data: (state) => QuizPerformanceFeedback(
-                                  quizzes: state.courseQuizzes,
-                                ),
-                                loading: () =>
-                                    const AssessmentFeedbackLoading(),
-                                error: (_, __) =>
-                                    const AssessmentFeedbackUnavailable(),
-                              ),
-                        )
-                      : const AssignmentPerformanceFeedback(),
-                ),
-              ),
-              SizedBox(height: 20.h),
-            ],
-          );
-          final compact =
-              MediaQuery.orientationOf(context) == Orientation.landscape;
-          return AppScaffold(
-            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-            body: SafeArea(
-              child: Column(
-                children: [
-                  if (compact)
-                    SizedBox(
-                      height: MediaQuery.sizeOf(context).height * 0.42,
-                      child: SingleChildScrollView(child: header),
-                    )
-                  else
-                    header,
-                  Expanded(
-                    child: TabBarView(
-                      children: [
-                        const _QuizzesContent(),
-                        StudentAssignmentsSection(
-                          showHeader: false,
-                          fillAvailableHeight: true,
+  ConsumerState<QuizzesScreen> createState() => _QuizzesScreenState();
+}
+
+class _QuizzesScreenState extends ConsumerState<QuizzesScreen>
+    with SingleTickerProviderStateMixin {
+  late final TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final header = Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const StudentTabHeader(title: 'Assessments'),
+        SizedBox(height: 16.h),
+        AssessmentTypeTabs(controller: _tabController),
+        SizedBox(height: 20.h),
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 20.w),
+          child: AnimatedBuilder(
+            animation: _tabController,
+            builder: (context, _) => _tabController.index == 0
+                ? Consumer(
+                    builder: (context, ref, _) => ref
+                        .watch(quizzesControllerProvider)
+                        .when(
+                          data: (state) => QuizPerformanceFeedback(
+                            quizzes: state.courseQuizzes,
+                          ),
+                          loading: () => const AssessmentFeedbackLoading(),
+                          error: (_, __) =>
+                              const AssessmentFeedbackUnavailable(),
                         ),
-                      ],
-                    ),
+                  )
+                : const AssignmentPerformanceFeedback(),
+          ),
+        ),
+        SizedBox(height: 20.h),
+      ],
+    );
+    final compact = MediaQuery.orientationOf(context) == Orientation.landscape;
+    return AppScaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      body: SafeArea(
+        child: Column(
+          children: [
+            if (compact)
+              SizedBox(
+                height: MediaQuery.sizeOf(context).height * 0.42,
+                child: SingleChildScrollView(child: header),
+              )
+            else
+              header,
+            Expanded(
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  const _QuizzesContent(),
+                  StudentAssignmentsSection(
+                    showHeader: false,
+                    fillAvailableHeight: true,
                   ),
                 ],
               ),
             ),
-          );
-        },
+          ],
+        ),
       ),
     );
   }
@@ -131,6 +142,7 @@ class _QuizzesContent extends ConsumerWidget {
             children: [
               CategoryFilterChips(
                 filters: const ['All', 'Needs action', 'Completed'],
+                initialSelectedIndex: selectedFilter,
                 onSelected: (index) =>
                     ref.read(_filterProvider.notifier).state = index,
               ),

@@ -13,11 +13,16 @@ import 'package:nts_psc_app/features/learn/presentation/controllers/offline_down
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:video_player/video_player.dart';
 import 'package:nts_psc_app/features/learn/presentation/controllers/video_initialization.dart';
+import 'package:nts_psc_app/features/learn/presentation/controllers/video_playback_diagnostics.dart';
+import 'package:nts_psc_app/features/learn/presentation/controllers/video_controls_state.dart';
+import 'package:nts_psc_app/features/learn/domain/video_study_state.dart';
 import 'package:nts_psc_app/features/learn/presentation/widgets/study_video_player.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:nts_psc_app/core/theme/app_colors.dart';
 import 'package:nts_psc_app/core/theme/app_text_styles.dart';
 import 'package:nts_psc_app/features/learn/presentation/widgets/video_player_status.dart';
+import 'package:nts_psc_app/features/learn/presentation/widgets/professional_video_player.dart';
+import 'package:nts_psc_app/features/auth/presentation/controllers/auth_controller.dart';
 
 part 'coursera_checkpoint_sheet.dart';
 
@@ -55,16 +60,32 @@ class _HostedLessonPlayerState extends ConsumerState<HostedLessonPlayer> {
   bool wifiOnly = true;
   double downloadProgress = 0;
   Timer? syncTimer;
-  int _displayedSecond = -1;
   bool _endedHandled = false;
+  VideoPlaybackDiagnostics? _diagnostics;
+  VideoStudyState? _recoveryState;
+  bool? _recoveryAutoPlay;
 
   Future<void> _retry() async {
     if (loading) return;
     loading = true;
     syncTimer?.cancel();
     final previous = video;
+    if (previous != null) {
+      _recoveryState = VideoStudyState(
+        positionMs: previous.value.position.inMilliseconds,
+        speed: previous.value.playbackSpeed,
+        volume: previous.value.volume,
+        captions: ref.read(videoCaptionsProvider(previous)),
+      );
+      _recoveryAutoPlay = VideoPlayerSession.playbackRequested(previous);
+    }
+    _diagnostics?.dispose();
+    _diagnostics = null;
     video = null;
     previous?.removeListener(onTick);
+    refresh();
+    // Let study listeners persist their final snapshot before native teardown.
+    await WidgetsBinding.instance.endOfFrame;
     await previous?.dispose();
     if (!mounted) return;
     error = null;
@@ -89,6 +110,7 @@ class _HostedLessonPlayerState extends ConsumerState<HostedLessonPlayer> {
     if (!mounted) return;
     final repo = ref.read(lessonMediaRepositoryProvider);
     final library = ref.read(offlineLessonLibraryProvider);
+    VideoPlayerController? created;
     try {
       downloaded = await library.find(
         widget.lesson.id,
@@ -141,10 +163,41 @@ class _HostedLessonPlayerState extends ConsumerState<HostedLessonPlayer> {
             .timeout(videoLoadTimeout);
         candidate = VideoPlayerController.networkUrl(uri);
       }
+      created = candidate;
+      _diagnostics = VideoPlaybackDiagnostics(
+        candidate,
+        offline: downloaded != null,
+      );
       await initializeLessonVideo(candidate);
       if (!mounted) {
+        _diagnostics?.dispose();
         await candidate.dispose();
         return;
+      }
+      // Guests have no persisted study session to restore the retry snapshot.
+      final recovery = _recoveryState;
+      if (recovery != null &&
+          ref.read(authControllerProvider).value?.user == null) {
+        await candidate
+            .seekTo(
+              boundedVideoSeek(
+                Duration(milliseconds: recovery.positionMs),
+                candidate.value.duration,
+              ),
+            )
+            .timeout(videoLoadTimeout);
+        await candidate
+            .setPlaybackSpeed(recovery.speed)
+            .timeout(videoLoadTimeout);
+        await candidate.setVolume(recovery.volume).timeout(videoLoadTimeout);
+        if (!mounted) {
+          _diagnostics?.dispose();
+          await candidate.dispose();
+          return;
+        }
+        ref.read(videoCaptionsProvider(candidate).notifier).state =
+            recovery.captions;
+        if (_recoveryAutoPlay == true) await candidate.play();
       }
       video = candidate;
       candidate.addListener(onTick);
@@ -176,6 +229,13 @@ class _HostedLessonPlayerState extends ConsumerState<HostedLessonPlayer> {
         unawaited(library.syncAnswers());
       });
     } catch (_) {
+      _diagnostics?.dispose();
+      _diagnostics = null;
+      if (created != null) {
+        created.removeListener(onTick);
+        if (identical(video, created)) video = null;
+        unawaited(created.dispose().catchError((Object _) {}));
+      }
       error = 'Video could not be loaded. Check your enrollment or connection.';
     } finally {
       loading = false;
@@ -211,10 +271,8 @@ class _HostedLessonPlayerState extends ConsumerState<HostedLessonPlayer> {
         if (mounted) widget.onEnded?.call();
       });
     }
-    if (controller.value.position.inSeconds != _displayedSecond) {
-      _displayedSecond = controller.value.position.inSeconds;
-      refresh();
-    }
+    // Playback rendering already listens directly to the controller. Rebuilding
+    // the entire study session every second adds work without changing this UI.
   }
 
   Future<void> showCheck(Map<String, dynamic> check) async {
@@ -327,6 +385,8 @@ class _HostedLessonPlayerState extends ConsumerState<HostedLessonPlayer> {
       downloaded = null;
       ref.invalidate(offlineDownloadsProvider);
       if (current != null) {
+        _diagnostics?.dispose();
+        _diagnostics = null;
         current.removeListener(onTick);
         await current.dispose();
       }
@@ -351,6 +411,7 @@ class _HostedLessonPlayerState extends ConsumerState<HostedLessonPlayer> {
   void dispose() {
     syncTimer?.cancel();
     video?.removeListener(onTick);
+    _diagnostics?.dispose();
     video?.dispose();
     revision.dispose();
     super.dispose();
@@ -371,7 +432,8 @@ class _HostedLessonPlayerState extends ConsumerState<HostedLessonPlayer> {
               controller: controller,
               lessonId: widget.lesson.id,
               source: widget.lesson.videoPath,
-              autoPlay: widget.autoPlay,
+              autoPlay: _recoveryAutoPlay ?? widget.autoPlay,
+              recoveryState: _recoveryState,
               trackLearning: widget.trackLearning,
               title: widget.lesson.title,
               segments: segments,

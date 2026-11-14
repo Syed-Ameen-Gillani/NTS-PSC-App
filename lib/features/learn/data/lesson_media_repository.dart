@@ -12,6 +12,8 @@ import 'package:tusc/tusc.dart';
 
 const maxLessonVideoBytes = maxPreparedLessonBytes;
 
+typedef LessonUploadCanceller = Future<void> Function();
+
 final lessonMediaRepositoryProvider = Provider<LessonMediaRepository>((ref) {
   return LessonMediaRepository(Supabase.instance.client);
 });
@@ -25,6 +27,7 @@ class LessonMedia {
     required this.segments,
     required this.error,
     required this.byteSize,
+    this.isCurrent = false,
   });
 
   final String id;
@@ -34,8 +37,12 @@ class LessonMedia {
   final List<Map<String, dynamic>> segments;
   final String? error;
   final int byteSize;
+  final bool isCurrent;
 
-  factory LessonMedia.fromRow(Map<String, dynamic> row) => LessonMedia(
+  factory LessonMedia.fromRow(
+    Map<String, dynamic> row, {
+    bool isCurrent = false,
+  }) => LessonMedia(
     id: row['id'] as String,
     lessonId: row['lesson_id'] as String,
     path: row['object_path'] as String,
@@ -44,6 +51,7 @@ class LessonMedia {
         .cast<Map<String, dynamic>>(),
     error: row['processing_error'] as String?,
     byteSize: (row['byte_size'] as num).toInt(),
+    isCurrent: isCurrent,
   );
 }
 
@@ -106,7 +114,12 @@ class LessonMediaRepository {
                       (!pendingRemoval || row['object_path'] != currentPath)) ||
                   row['object_path'] == currentPath),
         )
-        .map(LessonMedia.fromRow)
+        .map(
+          (row) => LessonMedia.fromRow(
+            row,
+            isCurrent: row['object_path'] == currentPath,
+          ),
+        )
         .toList();
   }
 
@@ -143,6 +156,7 @@ class LessonMediaRepository {
     void Function(double)? onCompressionProgress,
     void Function(LessonVideoPreparationEstimate)? onPreparationEstimate,
     CancellationToken? preparationCancellation,
+    void Function(LessonUploadCanceller?)? onUploadCanceller,
   }) async {
     final key = '${client.auth.currentUser?.id}:$lessonId';
     if (!_activeUploads.add(key)) {
@@ -183,6 +197,7 @@ class LessonMediaRepository {
         file: prepared.file,
         mimeType: prepared.mimeType,
         onProgress: onProgress,
+        onUploadCanceller: onUploadCanceller,
       );
       if (prepared.durationMs > 0) {
         await client.rpc(
@@ -196,7 +211,10 @@ class LessonMediaRepository {
       }
       await prepared.release();
       return result;
+    } on CompressCancelled {
+      rethrow;
     } finally {
+      onUploadCanceller?.call(null);
       _activeUploads.remove(key);
     }
   }
@@ -206,6 +224,7 @@ class LessonMediaRepository {
     required File file,
     required String mimeType,
     void Function(double)? onProgress,
+    void Function(LessonUploadCanceller?)? onUploadCanceller,
   }) async {
     final ownerId = client.auth.currentUser?.id;
     if (ownerId == null) throw StateError('Sign in again to upload.');
@@ -283,12 +302,33 @@ class LessonMediaRepository {
         'cacheControl': '3600',
       },
     );
+    onUploadCanceller?.call(() async {
+      final cancellation = upload.cancelUpload();
+      if (cancellation != null) await cancellation;
+      try {
+        try {
+          await client.storage.from('lesson-videos').remove([path]);
+        } catch (_) {
+          // A partial resumable upload may not have created an object yet.
+        }
+        await client.rpc(
+          'cancel_lesson_media_upload',
+          params: {'p_media_id': mediaId},
+        );
+      } finally {
+        if (await intentFile.exists()) await intentFile.delete();
+      }
+    });
     try {
       await upload.startUpload(
         onProgress: (sent, total, _) {
           onProgress?.call(sent / total);
         },
       );
+      if (upload.state == TusUploadState.cancelled) {
+        throw VideoCompressCancelledException();
+      }
+      onUploadCanceller?.call(null);
       if (client.auth.currentUser?.id != ownerId) {
         throw StateError('Account changed during upload.');
       }
@@ -308,6 +348,7 @@ class LessonMediaRepository {
       if (await intentFile.exists()) await intentFile.delete();
       return result;
     } finally {
+      onUploadCanceller?.call(null);
       upload.close();
     }
   }

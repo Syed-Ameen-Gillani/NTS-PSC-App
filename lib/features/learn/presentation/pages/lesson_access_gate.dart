@@ -23,27 +23,7 @@ class LessonAccessGate extends ConsumerStatefulWidget {
   ConsumerState<LessonAccessGate> createState() => _LessonAccessGateState();
 }
 
-class _LessonAccessGateState extends ConsumerState<LessonAccessGate>
-    with WidgetsBindingObserver {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addObserver(this);
-  }
-
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    super.dispose();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      ref.invalidate(lessonAccessCourseProvider(widget.courseId));
-    }
-  }
-
+class _LessonAccessGateState extends ConsumerState<LessonAccessGate> {
   @override
   Widget build(BuildContext context) => ref
       .watch(lessonAccessCourseProvider(widget.courseId))

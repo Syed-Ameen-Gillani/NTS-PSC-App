@@ -9,6 +9,7 @@ import 'package:nts_psc_app/features/home/presentation/widgets/course_resources_
 import 'package:nts_psc_app/features/teacher/presentation/widgets/broadcast_announcement_dialog.dart';
 import 'package:nts_psc_app/features/teacher/presentation/widgets/course_workspace_header.dart';
 import 'package:nts_psc_app/features/teacher/presentation/widgets/course_workspace_module.dart';
+import 'package:nts_psc_app/presentation/widgets/module_accordion.dart';
 
 class TeacherCourseWorkspace extends StatelessWidget {
   const TeacherCourseWorkspace({
@@ -26,116 +27,119 @@ class TeacherCourseWorkspace extends StatelessWidget {
   final ValueChanged<String> onAddLesson;
 
   @override
-  Widget build(BuildContext context) => SafeArea(
-    top: false,
-    child: SingleChildScrollView(
-      padding: EdgeInsets.fromLTRB(20.w, 20.h, 20.w, 40.h),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 760),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              CourseWorkspaceHeader(course: course, onPublish: onPublish),
-              SizedBox(height: 20.h),
-              Row(
-                children: [
-                  _tool(
-                    Icons.people_outline,
-                    'Learners',
-                    () => context.pushNamed(
-                      AppRoute.teacherStudents.name,
-                      extra: course.title,
+  Widget build(BuildContext context) => ModuleAccordion(
+    initialModuleId: course.modules.firstOrNull?.id,
+    child: SafeArea(
+      top: false,
+      child: SingleChildScrollView(
+        padding: EdgeInsets.fromLTRB(20.w, 20.h, 20.w, 40.h),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 760),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                CourseWorkspaceHeader(course: course, onPublish: onPublish),
+                SizedBox(height: 20.h),
+                Row(
+                  children: [
+                    _tool(
+                      Icons.people_outline,
+                      'Learners',
+                      () => context.pushNamed(
+                        AppRoute.teacherStudents.name,
+                        extra: course.title,
+                      ),
                     ),
-                  ),
-                  SizedBox(width: 8.w),
-                  _tool(
-                    Icons.campaign_outlined,
-                    'Broadcast',
-                    () => BroadcastAnnouncementDialog.show(
-                      context,
-                      courseId: course.id,
-                      courseTitle: course.title,
+                    SizedBox(width: 8.w),
+                    _tool(
+                      Icons.campaign_outlined,
+                      'Broadcast',
+                      () => BroadcastAnnouncementDialog.show(
+                        context,
+                        courseId: course.id,
+                        courseTitle: course.title,
+                      ),
                     ),
-                  ),
-                  SizedBox(width: 8.w),
-                  _tool(
-                    Icons.folder_open_outlined,
-                    'Handouts',
-                    () => CourseResourcesSheet.show(
-                      context,
-                      courseId: course.id,
-                      courseTitle: course.title,
-                      isTeacher: true,
+                    SizedBox(width: 8.w),
+                    _tool(
+                      Icons.folder_open_outlined,
+                      'Handouts',
+                      () => CourseResourcesSheet.show(
+                        context,
+                        courseId: course.id,
+                        courseTitle: course.title,
+                        isTeacher: true,
+                      ),
                     ),
-                  ),
-                ],
-              ),
-              Divider(height: 40.h, color: AppColors.grey200),
-              _section(
-                'Assessments',
-                '$assessmentCount ${assessmentCount == 1 ? 'assessment' : 'assessments'}',
-                TextButton.icon(
-                  style: TextButton.styleFrom(
-                    textStyle: AppTextStyles.interMedium16.copyWith(
-                      fontSize: 13.sp,
-                    ),
-                  ),
-                  onPressed: () => context.pushNamed(
-                    AppRoute.teacherCourseAssignments.name,
-                    extra: course,
-                  ),
-                  icon: Icon(Icons.assignment_outlined, size: 18.w),
-                  label: const Text('Manage'),
+                  ],
                 ),
-              ),
-              Divider(height: 40.h, color: AppColors.grey200),
-              _section(
-                'Curriculum',
-                '${course.modules.length} ${course.modules.length == 1 ? 'module' : 'modules'}',
-                FilledButton.icon(
-                  onPressed: onAddModule,
-                  icon: Icon(Icons.add, size: 18.w),
-                  label: const Text('Add module'),
-                  style: FilledButton.styleFrom(
-                    textStyle: AppTextStyles.interMedium16.copyWith(
-                      fontSize: 13.sp,
+                Divider(height: 40.h, color: AppColors.grey200),
+                _section(
+                  'Assessments',
+                  '$assessmentCount ${assessmentCount == 1 ? 'assessment' : 'assessments'}',
+                  TextButton.icon(
+                    style: TextButton.styleFrom(
+                      textStyle: AppTextStyles.interMedium16.copyWith(
+                        fontSize: 13.sp,
+                      ),
                     ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8.r),
+                    onPressed: () => context.pushNamed(
+                      AppRoute.teacherCourseAssignments.name,
+                      extra: course,
                     ),
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 12.w,
-                      vertical: 10.h,
-                    ),
+                    icon: Icon(Icons.assignment_outlined, size: 18.w),
+                    label: const Text('Manage'),
                   ),
                 ),
-              ),
-              SizedBox(height: 16.h),
-              if (course.modules.isEmpty)
-                Padding(
-                  padding: EdgeInsets.symmetric(vertical: 24.h),
-                  child: Center(
-                    child: Text(
-                      'No modules added yet.',
-                      style: AppTextStyles.interRegular14.copyWith(
-                        color: AppColors.grey500,
+                Divider(height: 40.h, color: AppColors.grey200),
+                _section(
+                  'Curriculum',
+                  '${course.modules.length} ${course.modules.length == 1 ? 'module' : 'modules'}',
+                  FilledButton.icon(
+                    onPressed: onAddModule,
+                    icon: Icon(Icons.add, size: 18.w),
+                    label: const Text('Add module'),
+                    style: FilledButton.styleFrom(
+                      textStyle: AppTextStyles.interMedium16.copyWith(
+                        fontSize: 13.sp,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8.r),
+                      ),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 12.w,
+                        vertical: 10.h,
                       ),
                     ),
                   ),
-                )
-              else
-                for (var i = 0; i < course.modules.length; i++) ...[
-                  CourseWorkspaceModule(
-                    courseId: course.id,
-                    module: course.modules[i],
-                    index: i,
-                    onAddLesson: () => onAddLesson(course.modules[i].id),
-                  ),
-                  SizedBox(height: 12.h),
-                ],
-              SizedBox(height: 24.h),
-            ],
+                ),
+                SizedBox(height: 16.h),
+                if (course.modules.isEmpty)
+                  Padding(
+                    padding: EdgeInsets.symmetric(vertical: 24.h),
+                    child: Center(
+                      child: Text(
+                        'No modules added yet.',
+                        style: AppTextStyles.interRegular14.copyWith(
+                          color: AppColors.grey500,
+                        ),
+                      ),
+                    ),
+                  )
+                else
+                  for (var i = 0; i < course.modules.length; i++) ...[
+                    CourseWorkspaceModule(
+                      courseId: course.id,
+                      module: course.modules[i],
+                      index: i,
+                      onAddLesson: () => onAddLesson(course.modules[i].id),
+                    ),
+                    SizedBox(height: 12.h),
+                  ],
+                SizedBox(height: 24.h),
+              ],
+            ),
           ),
         ),
       ),

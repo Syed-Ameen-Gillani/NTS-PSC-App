@@ -1,3 +1,4 @@
+import 'package:nts_psc_app/core/theme/app_gradients.dart';
 import 'package:nts_psc_app/presentation/widgets/app_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -140,34 +141,48 @@ class TeacherGenerateAiQuizScreen extends ConsumerWidget {
                         ]) ...[
                           if (option != 'Easy') SizedBox(width: 12.w),
                           Expanded(
-                            child: OutlinedButton(
-                              onPressed: () =>
-                                  ref
-                                          .read(quizDifficultyProvider.notifier)
-                                          .state =
-                                      option,
-                              style: OutlinedButton.styleFrom(
-                                backgroundColor: option == difficulty
-                                    ? AppColors.surface
-                                    : AppColors.background,
-                                side: BorderSide(
-                                  color: option == difficulty
-                                      ? AppColors.primary
-                                      : AppColors.grey300,
-                                  width: 1.w,
-                                ),
-                                padding: EdgeInsets.symmetric(vertical: 12.h),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16.r),
-                                ),
+                            child: DecoratedBox(
+                              decoration: BoxDecoration(
+                                gradient: option == difficulty
+                                    ? AppGradients.primaryBanner(
+                                        Theme.of(context).colorScheme,
+                                      )
+                                    : null,
+                                borderRadius: BorderRadius.circular(16.r),
                               ),
-                              child: Text(
-                                option,
-                                style: AppTextStyles.interMedium16.copyWith(
-                                  fontSize: 14.sp,
-                                  color: option == difficulty
-                                      ? AppColors.primary
-                                      : AppColors.grey500,
+                              child: OutlinedButton(
+                                onPressed: () =>
+                                    ref
+                                            .read(
+                                              quizDifficultyProvider.notifier,
+                                            )
+                                            .state =
+                                        option,
+                                style: OutlinedButton.styleFrom(
+                                  backgroundColor: option == difficulty
+                                      ? Colors.transparent
+                                      : AppColors.background,
+                                  side: BorderSide(
+                                    color: option == difficulty
+                                        ? Colors.transparent
+                                        : AppColors.grey300,
+                                    width: 1.w,
+                                  ),
+                                  padding: EdgeInsets.symmetric(vertical: 12.h),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16.r),
+                                  ),
+                                ),
+                                child: Text(
+                                  option,
+                                  style: AppTextStyles.interMedium16.copyWith(
+                                    fontSize: 14.sp,
+                                    color: option == difficulty
+                                        ? Theme.of(
+                                            context,
+                                          ).colorScheme.onPrimary
+                                        : AppColors.grey500,
+                                  ),
                                 ),
                               ),
                             ),

@@ -13,6 +13,7 @@ enum AppRoute {
   forgotPassword,
   resetPassword,
   main,
+  learningInterests,
   accountSettings,
   editProfile,
   appLanguage,
@@ -77,6 +78,8 @@ enum AppRoute {
 extension AppRouteExtension on AppRoute {
   String get path {
     switch (this) {
+      case AppRoute.learningInterests:
+        return '/learning_interests';
       case AppRoute.splash:
         return '/';
       case AppRoute.onboarding1:

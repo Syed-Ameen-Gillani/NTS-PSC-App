@@ -7,6 +7,8 @@ import 'package:nts_psc_app/core/repositories/supabase_course_repository.dart';
 import 'package:nts_psc_app/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:nts_psc_app/features/discover/presentation/controllers/category_courses_controller.dart';
 import 'package:nts_psc_app/features/learn/presentation/controllers/my_learning_controller.dart';
+import 'package:nts_psc_app/core/models/user_role.dart';
+import 'package:nts_psc_app/features/onboarding/data/learning_preferences_repository.dart';
 
 class HomeState {
   final List<CourseModel> featuredCourses;
@@ -21,6 +23,27 @@ class HomeState {
     this.newCourses = const [],
   });
 }
+
+/// Shares preference-aware recommendations between Home, Discover and See All.
+final recommendedCatalogProvider = FutureProvider<List<CourseModel>>((
+  ref,
+) async {
+  final identity = ref.watch(
+    authControllerProvider.select(
+      (state) => (state.value?.user?.id, state.value?.user?.role),
+    ),
+  );
+  if (identity.$1 != null && identity.$2 == UserRole.student) {
+    await ref.watch(learningPreferencesProvider(identity.$1!).future);
+  }
+  final repository = ref.read(courseRepositoryProvider);
+  return AppConfig.isSupabaseEnabled
+      ? (repository as SupabaseCourseRepository).getRecommendedCoursesPage(
+          offset: 0,
+          limit: 12,
+        )
+      : repository.getNewCourses();
+});
 
 class HomeController extends AsyncNotifier<HomeState> {
   @override

@@ -118,6 +118,7 @@ class StudentAssignmentsSection extends ConsumerWidget {
                   children: [
                     CategoryFilterChips(
                       filters: _filters,
+                      initialSelectedIndex: selectedFilter,
                       includeHorizontalPadding: false,
                       onSelected: (index) =>
                           ref.read(_filterProvider.notifier).state = index,

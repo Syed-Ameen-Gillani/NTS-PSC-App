@@ -14,6 +14,8 @@ class LessonCurriculumTile extends StatelessWidget {
     this.complete = false,
     this.loading = false,
     this.indent = 0,
+    this.titleColor,
+    this.subtitleAccent,
     this.onTap,
   });
 
@@ -24,6 +26,8 @@ class LessonCurriculumTile extends StatelessWidget {
   final bool complete;
   final bool loading;
   final double indent;
+  final Color? titleColor;
+  final String? subtitleAccent;
   final VoidCallback? onTap;
 
   @override
@@ -49,17 +53,35 @@ class LessonCurriculumTile extends StatelessWidget {
         overflow: TextOverflow.ellipsis,
         style: AppTextStyles.interMedium16.copyWith(
           fontSize: 12.sp,
-          color: selected ? AppColors.primary : AppColors.onBackground,
+          color: selected
+              ? AppColors.primary
+              : titleColor ?? AppColors.onBackground,
           fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
         ),
       ),
-      subtitle: Text(
-        subtitle,
-        style: AppTextStyles.interRegular14.copyWith(
-          fontSize: 10.sp,
-          color: AppColors.grey500,
-        ),
-      ),
+      subtitle: subtitleAccent == null || !subtitle.startsWith(subtitleAccent!)
+          ? Text(
+              subtitle,
+              style: AppTextStyles.interRegular14.copyWith(
+                fontSize: 10.sp,
+                color: AppColors.grey500,
+              ),
+            )
+          : Text.rich(
+              TextSpan(
+                children: [
+                  TextSpan(
+                    text: subtitleAccent,
+                    style: const TextStyle(color: AppColors.primary),
+                  ),
+                  TextSpan(text: subtitle.substring(subtitleAccent!.length)),
+                ],
+              ),
+              style: AppTextStyles.interRegular14.copyWith(
+                fontSize: 10.sp,
+                color: AppColors.grey500,
+              ),
+            ),
       trailing: loading
           ? SizedBox.square(
               dimension: 19.w,

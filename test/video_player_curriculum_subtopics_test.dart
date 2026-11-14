@@ -3,19 +3,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nts_psc_app/core/models/app_models.dart';
+import 'package:nts_psc_app/core/theme/app_colors.dart';
 import 'package:nts_psc_app/features/curriculum/domain/curriculum_models.dart';
 import 'package:nts_psc_app/features/curriculum/domain/lesson_activity.dart';
 import 'package:nts_psc_app/features/curriculum/domain/lesson_subtopic.dart';
 import 'package:nts_psc_app/features/learn/presentation/widgets/live_lesson_module_group.dart';
 
 Widget _testApp(Widget child) => ProviderScope(
-      child: ScreenUtilInit(
-        designSize: const Size(390, 844),
-        builder: (context, _) => MaterialApp(
-          home: Scaffold(body: SingleChildScrollView(child: child)),
-        ),
-      ),
-    );
+  child: ScreenUtilInit(
+    designSize: const Size(390, 844),
+    builder: (context, _) => MaterialApp(
+      home: Scaffold(body: SingleChildScrollView(child: child)),
+    ),
+  ),
+);
 
 void main() {
   group('LessonSubTopic domain tests', () {
@@ -78,38 +79,42 @@ void main() {
       expect(videoSub, isNull);
     });
 
-    test('maps CurriculumAssessment and CurriculumMaterial to LessonSubTopic', () {
-      final assessment = const CurriculumAssessment(
-        id: 'link_1',
-        assessmentId: 'quiz_123',
-        title: 'Chapter Assessment',
-        kind: 'quiz',
-        status: 'published',
-      );
-      final material = const CurriculumMaterial(
-        id: 'mat_1',
-        title: 'Constitutional Charter PDF',
-        path: 'materials/charter.pdf',
-        sizeBytes: 1024,
-      );
+    test(
+      'maps CurriculumAssessment and CurriculumMaterial to LessonSubTopic',
+      () {
+        final assessment = const CurriculumAssessment(
+          id: 'link_1',
+          assessmentId: 'quiz_123',
+          title: 'Chapter Assessment',
+          kind: 'quiz',
+          status: 'published',
+        );
+        final material = const CurriculumMaterial(
+          id: 'mat_1',
+          title: 'Constitutional Charter PDF',
+          path: 'materials/charter.pdf',
+          sizeBytes: 1024,
+        );
 
-      final assessSub = LessonSubTopic.fromAssessment(assessment);
-      final matSub = LessonSubTopic.fromMaterial(material);
+        final assessSub = LessonSubTopic.fromAssessment(assessment);
+        final matSub = LessonSubTopic.fromMaterial(material);
 
-      expect(assessSub.assessmentId, 'quiz_123');
-      expect(assessSub.title, 'Chapter Assessment');
-      expect(assessSub.kind, LessonSubTopicKind.quiz);
+        expect(assessSub.assessmentId, 'quiz_123');
+        expect(assessSub.title, 'Chapter Assessment');
+        expect(assessSub.kind, LessonSubTopicKind.quiz);
 
-      expect(matSub.materialId, 'mat_1');
-      expect(matSub.materialPath, 'materials/charter.pdf');
-      expect(matSub.title, 'Constitutional Charter PDF');
-      expect(matSub.kind, LessonSubTopicKind.handout);
-    });
+        expect(matSub.materialId, 'mat_1');
+        expect(matSub.materialPath, 'materials/charter.pdf');
+        expect(matSub.title, 'Constitutional Charter PDF');
+        expect(matSub.kind, LessonSubTopicKind.handout);
+      },
+    );
   });
 
   group('LiveLessonModuleGroup sub-topics widget tests', () {
-    testWidgets('renders subtopics under lesson row on video player screen',
-        (tester) async {
+    testWidgets('renders subtopics under lesson row on video player screen', (
+      tester,
+    ) async {
       final lessonWithSubTopics = LessonModel(
         id: 'lesson_101',
         title: 'Constitutional Guarantees',
@@ -166,52 +171,90 @@ void main() {
 
       // Sub-topics under the lesson
       expect(find.text('Fundamental Rights Quiz'), findsOneWidget);
-      expect(find.text('Quiz'), findsOneWidget);
+      expect(find.text('Quiz · Required'), findsOneWidget);
       expect(find.byIcon(Icons.quiz_outlined), findsOneWidget);
 
       expect(find.text('Articles 1-28 Reference Handout'), findsOneWidget);
-      expect(find.text('Handout'), findsOneWidget);
+      expect(find.text('Handout · Optional'), findsOneWidget);
       expect(find.byIcon(Icons.description_outlined), findsOneWidget);
 
       expect(find.text('Case Summary Submission'), findsOneWidget);
-      expect(find.text('Assignment'), findsOneWidget);
+      expect(find.text('Assignment · Optional'), findsOneWidget);
       expect(find.byIcon(Icons.assignment_outlined), findsOneWidget);
+
+      for (final icon in [
+        Icons.quiz_outlined,
+        Icons.description_outlined,
+        Icons.assignment_outlined,
+      ]) {
+        expect(tester.widget<Icon>(find.byIcon(icon)).color, AppColors.grey500);
+      }
+      for (final title in [
+        'Fundamental Rights Quiz',
+        'Articles 1-28 Reference Handout',
+        'Case Summary Submission',
+      ]) {
+        expect(
+          tester.widget<Text>(find.text(title)).style?.color,
+          AppColors.onBackground,
+        );
+      }
+      for (final activityId in [
+        'act_quiz_1',
+        'act_handout_1',
+        'act_assign_1',
+      ]) {
+        final row = find.byKey(ValueKey('curriculum-activity-$activityId'));
+        final subtitle = tester
+            .widgetList<Text>(
+              find.descendant(of: row, matching: find.byType(Text)),
+            )
+            .firstWhere((text) => text.textSpan != null);
+        final span = subtitle.textSpan! as TextSpan;
+        expect(
+          (span.children!.first as TextSpan).style?.color,
+          AppColors.primary,
+        );
+        expect(subtitle.style?.color, AppColors.grey500);
+      }
     });
 
-    testWidgets('lesson without subtopics renders cleanly without subtopic rows',
-        (tester) async {
-      final lessonClean = LessonModel(
-        id: 'lesson_102',
-        title: 'Introductory Lecture',
-        durationMinutes: 15,
-        videoPath: 'courses/c1/v2.mp4',
-        activities: const [],
-      );
+    testWidgets(
+      'lesson without subtopics renders cleanly without subtopic rows',
+      (tester) async {
+        final lessonClean = LessonModel(
+          id: 'lesson_102',
+          title: 'Introductory Lecture',
+          durationMinutes: 15,
+          videoPath: 'courses/c1/v2.mp4',
+          activities: const [],
+        );
 
-      final module = CourseModuleModel(
-        id: 'mod_1',
-        title: 'Module 1: Basic Rights',
-        lessons: [lessonClean],
-      );
+        final module = CourseModuleModel(
+          id: 'mod_1',
+          title: 'Module 1: Basic Rights',
+          lessons: [lessonClean],
+        );
 
-      await tester.pumpWidget(
-        _testApp(
-          LiveLessonModuleGroup(
-            courseId: 'c1',
-            module: module,
-            moduleNumber: 1,
-            currentLesson: lessonClean,
-            completedLessonIds: const {},
-            onSelectLesson: (_) {},
+        await tester.pumpWidget(
+          _testApp(
+            LiveLessonModuleGroup(
+              courseId: 'c1',
+              module: module,
+              moduleNumber: 1,
+              currentLesson: lessonClean,
+              completedLessonIds: const {},
+              onSelectLesson: (_) {},
+            ),
           ),
-        ),
-      );
-      await tester.pumpAndSettle();
+        );
+        await tester.pumpAndSettle();
 
-      expect(find.text('1.1 Introductory Lecture'), findsOneWidget);
-      expect(find.text('Quiz'), findsNothing);
-      expect(find.text('Handout'), findsNothing);
-      expect(find.text('Assignment'), findsNothing);
-    });
+        expect(find.text('1.1 Introductory Lecture'), findsOneWidget);
+        expect(find.text('Quiz'), findsNothing);
+        expect(find.text('Handout'), findsNothing);
+        expect(find.text('Assignment'), findsNothing);
+      },
+    );
   });
 }

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:typed_data';
+import 'package:nts_psc_app/core/utils/lifecycle_diagnostics.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:nts_psc_app/core/models/app_models.dart';
@@ -41,6 +42,7 @@ class AuthController extends AsyncNotifier<AuthState> {
       final subscription = Supabase.instance.client.auth.onAuthStateChange
           .listen(
             (data) {
+              LifecycleDiagnostics.event('auth', data.event.name);
               if (data.event == AuthChangeEvent.signedOut) {
                 AppConfig.restoredRole = null;
                 state = AsyncValue.data(AuthState());

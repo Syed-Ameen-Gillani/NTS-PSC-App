@@ -33,12 +33,19 @@ class _Auth extends AuthController {
 }
 
 class _Evidence extends FakeLearningEvidenceRepository {
+  _Evidence(this.units);
+  final int units;
   final samples = <Map<String, num>>[];
   @override
   Future<Map<String, dynamic>?> videoSession(
     String lesson, {
     String? source,
-  }) async => {'id': 'native-fixture', 'lesson_id': lesson, 'source': source};
+  }) async => {
+    'id': 'native-fixture',
+    'lesson_id': lesson,
+    'source': source,
+    'units': units,
+  };
   @override
   Future<void> append(
     String owner,
@@ -87,8 +94,8 @@ void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
   testWidgets('native video speed and foreground evidence', (tester) async {
     final video = VideoPlayerController.asset('assets/videos/lecture.mp4');
-    final evidence = _Evidence();
     await video.initialize().timeout(const Duration(seconds: 30));
+    final evidence = _Evidence(video.value.duration.inMilliseconds);
     await tester.pumpWidget(
       ProviderScope(
         overrides: [

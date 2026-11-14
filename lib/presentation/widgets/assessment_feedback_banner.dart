@@ -1,3 +1,4 @@
+import 'package:nts_psc_app/core/theme/app_gradients.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:nts_psc_app/core/theme/app_text_styles.dart';
@@ -25,14 +26,7 @@ class AssessmentFeedbackBanner extends StatelessWidget {
       child: Ink(
         padding: EdgeInsets.all(16.w),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              Color.lerp(colors.primary, colors.secondary, 0.2)!,
-              colors.primary,
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
+          gradient: AppGradients.primaryBanner(colors),
           borderRadius: BorderRadius.circular(16.r),
           boxShadow: [
             BoxShadow(

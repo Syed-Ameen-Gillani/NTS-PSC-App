@@ -1,3 +1,4 @@
+import 'package:nts_psc_app/core/theme/app_gradients.dart';
 import 'dart:io';
 import 'dart:async';
 import 'dart:developer' as developer;
@@ -32,6 +33,7 @@ part '../widgets/lesson_studio_video_tab.dart';
 part '../widgets/lesson_studio_handouts_tab.dart';
 part '../widgets/lesson_studio_assessments_tab.dart';
 part '../widgets/lesson_studio_shared_widgets.dart';
+part '../widgets/lesson_studio_video_status_announcement.dart';
 
 class TeacherLessonMediaScreen extends ConsumerStatefulWidget {
   const TeacherLessonMediaScreen({super.key, required this.lesson});
@@ -48,7 +50,12 @@ class _TeacherLessonMediaScreenState
   late final TabController _tabController;
   final busy = ValueNotifier<bool>(false);
   final progress = ValueNotifier<LessonUploadProgressValue?>(null);
+  final documentProgress = ValueNotifier<LessonUploadProgressValue?>(null);
+  String? _uploadingDocumentName;
   CancellationToken? _preparationCancellation;
+  LessonUploadCanceller? _uploadCancellation;
+  bool _videoCancellationRequested = false;
+  bool _cancelDialogOpen = false;
   Timer? _refresh;
 
   CurriculumScope get _scope => CurriculumScope(lessonId: widget.lesson.id);
@@ -71,10 +78,12 @@ class _TeacherLessonMediaScreenState
   @override
   void dispose() {
     unawaited(_preparationCancellation?.cancel());
+    unawaited(_uploadCancellation?.call());
     _tabController.dispose();
     _refresh?.cancel();
     busy.dispose();
     progress.dispose();
+    documentProgress.dispose();
     super.dispose();
   }
 
@@ -99,6 +108,8 @@ class _TeacherLessonMediaScreenState
       }
     } finally {
       _preparationCancellation = null;
+      _uploadCancellation = null;
+      _videoCancellationRequested = false;
       if (mounted) {
         ref.invalidate(teacherLessonMediaProvider(widget.lesson.id));
         progress.value = null;
@@ -150,6 +161,7 @@ class _TeacherLessonMediaScreenState
         value: 0,
         originalBytes: sourceBytes,
       );
+      _videoCancellationRequested = false;
       _preparationCancellation = CancellationToken();
       await ref
           .read(lessonMediaRepositoryProvider)
@@ -158,8 +170,13 @@ class _TeacherLessonMediaScreenState
             file: localFile,
             mimeType: mime,
             preparationCancellation: _preparationCancellation,
+            onUploadCanceller: (canceller) {
+              _uploadCancellation = canceller;
+              if (canceller != null) _preparationCancellation = null;
+            },
             onPreparationEstimate: (estimate) {
               if (mounted &&
+                  !_videoCancellationRequested &&
                   !(_preparationCancellation?.isCancelled ?? false)) {
                 progress.value = LessonUploadProgressValue(
                   label: 'Compressing video',
@@ -171,6 +188,7 @@ class _TeacherLessonMediaScreenState
             },
             onCompressionProgress: (value) {
               if (mounted &&
+                  !_videoCancellationRequested &&
                   !(_preparationCancellation?.isCancelled ?? false)) {
                 progress.value =
                     (progress.value ??
@@ -183,8 +201,7 @@ class _TeacherLessonMediaScreenState
               }
             },
             onProgress: (value) {
-              _preparationCancellation = null;
-              if (mounted) {
+              if (mounted && !_videoCancellationRequested) {
                 progress.value =
                     (progress.value ??
                             LessonUploadProgressValue(
@@ -273,10 +290,56 @@ class _TeacherLessonMediaScreenState
     final size = await File(file.path!).length();
     validateCurriculumMaterial(file.name, size);
     if (!mounted) return;
-    final scope = await _resolveScope();
-    await ref.read(curriculumActionsProvider(scope).notifier).upload([
-      (path: file.path!, name: file.name, sizeBytes: size),
-    ]);
+    _uploadingDocumentName = file.name;
+    documentProgress.value = LessonUploadProgressValue(
+      label: 'Preparing document',
+      value: 0,
+      originalBytes: size,
+      indeterminate: true,
+    );
+    try {
+      final details = await ref.read(curriculumContextProvider(_scope).future);
+      if (!mounted) return;
+      if (!details.canManage) {
+        throw ArgumentError('You no longer have permission to upload here.');
+      }
+      final scope = details.scope;
+      await ref
+          .read(curriculumActionsProvider(scope).notifier)
+          .upload(
+            [(path: file.path!, name: file.name, sizeBytes: size)],
+            onProgress: (value) {
+              if (!mounted) return;
+              documentProgress.value = LessonUploadProgressValue(
+                label: value >= 1 ? 'Saving document' : 'Uploading document',
+                value: value,
+                originalBytes: size,
+                indeterminate: value >= 1,
+              );
+            },
+            onUploaded: (_) {
+              if (!mounted) return;
+              documentProgress.value = LessonUploadProgressValue(
+                label: 'Preparing document',
+                value: 1,
+                originalBytes: size,
+                indeterminate: true,
+              );
+              // Refresh at finalization, before reading extraction finishes. This
+              // does not depend on the auto-disposed action provider staying alive.
+              ref.invalidate(curriculumMaterialsProvider(scope));
+              ref.invalidate(curriculumMaterialsProvider(_scope));
+              ref.invalidate(curriculumAttachmentSummaryProvider(scope));
+              ref.invalidate(curriculumAttachmentSummaryProvider(_scope));
+              ref.invalidate(teacherControllerProvider);
+            },
+          );
+    } finally {
+      if (mounted) {
+        documentProgress.value = null;
+        _uploadingDocumentName = null;
+      }
+    }
     if (mounted) {
       CustomToast.showSuccess(context, message: 'Document attached to lesson.');
     }
@@ -309,31 +372,32 @@ class _TeacherLessonMediaScreenState
         queryParameters: {'assignmentId': item.assessmentId},
       );
     } else {
-      final quiz = await ref.read(
-        curriculumQuizProvider(item.assessmentId).future,
-      );
-      if (quiz == null || !mounted) return;
-      if (!quiz.isPublished) {
-        await context.pushNamed(AppRoute.teacherCreateQuiz.name, extra: quiz);
-      } else {
-        await showModalBottomSheet<void>(
-          context: context,
-          isScrollControlled: true,
-          builder: (ctx) => SafeArea(
-            child: SizedBox(
-              height: MediaQuery.sizeOf(ctx).height * 0.7,
-              child: ListView(
-                padding: EdgeInsets.all(20.w),
-                children: [
-                  Text(quiz.title, style: Theme.of(ctx).textTheme.titleLarge),
-                  for (final question in quiz.questions)
-                    ListTile(title: Text(question.questionText)),
-                ],
-              ),
-            ),
-          ),
-        );
+      QuizModel? quiz;
+      try {
+        quiz = await ref.read(curriculumQuizProvider(item.assessmentId).future);
+      } catch (_) {
+        if (mounted) {
+          CustomToast.showError(
+            context,
+            message: 'Could not open this quiz. Try again.',
+          );
+        }
+        return;
       }
+      if (!mounted) return;
+      if (quiz == null) {
+        CustomToast.showError(
+          context,
+          message: 'This quiz is unavailable. Refresh the assessments.',
+        );
+        return;
+      }
+      await context.pushNamed(
+        quiz.isPublished
+            ? AppRoute.teacherQuizAnalysis.name
+            : AppRoute.teacherCreateQuiz.name,
+        extra: quiz,
+      );
       final scope = await _resolveScope();
       ref.invalidate(curriculumAssessmentsProvider(scope));
     }
@@ -435,27 +499,32 @@ class _TeacherLessonMediaScreenState
                       color: AppColors.grey100,
                       borderRadius: BorderRadius.circular(10.r),
                     ),
-                    child: TabBar(
-                      controller: _tabController,
-                      dividerColor: Colors.transparent,
-                      dividerHeight: 0,
-                      indicatorSize: TabBarIndicatorSize.tab,
-                      indicator: BoxDecoration(
-                        color: AppColors.primary,
-                        borderRadius: BorderRadius.circular(8.r),
+                    child: AbsorbPointer(
+                      absorbing: isBusy,
+                      child: TabBar(
+                        controller: _tabController,
+                        dividerColor: Colors.transparent,
+                        dividerHeight: 0,
+                        indicatorSize: TabBarIndicatorSize.tab,
+                        indicator: BoxDecoration(
+                          gradient: AppGradients.primaryBanner(
+                            Theme.of(context).colorScheme,
+                          ),
+                          borderRadius: BorderRadius.circular(8.r),
+                        ),
+                        labelColor: Colors.white,
+                        unselectedLabelColor: AppColors.grey600,
+                        labelStyle: AppTextStyles.interSemiBold16.copyWith(
+                          fontSize: 13.sp,
+                        ),
+                        unselectedLabelStyle: AppTextStyles.interMedium16
+                            .copyWith(fontSize: 13.sp),
+                        tabs: const [
+                          Tab(text: 'Video'),
+                          Tab(text: 'Handouts'),
+                          Tab(text: 'Assessments'),
+                        ],
                       ),
-                      labelColor: Colors.white,
-                      unselectedLabelColor: AppColors.grey600,
-                      labelStyle: AppTextStyles.interSemiBold16.copyWith(
-                        fontSize: 13.sp,
-                      ),
-                      unselectedLabelStyle: AppTextStyles.interMedium16
-                          .copyWith(fontSize: 13.sp),
-                      tabs: const [
-                        Tab(text: 'Video'),
-                        Tab(text: 'Handouts'),
-                        Tab(text: 'Assessments'),
-                      ],
                     ),
                   ),
                   SizedBox(height: 8.h),
@@ -465,21 +534,25 @@ class _TeacherLessonMediaScreenState
             ),
           ),
           body: SafeArea(
-            child: AbsorbPointer(
-              absorbing: isBusy,
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  // Tab 1: Video & Transcripts & Checkpoints
-                  _buildVideoTab(media),
+            child: TabBarView(
+              physics: isBusy ? const NeverScrollableScrollPhysics() : null,
+              controller: _tabController,
+              children: [
+                // Tab 1: Video & Transcripts & Checkpoints
+                _buildVideoTab(media),
 
-                  // Tab 2: Handouts & Documents
-                  _buildHandoutsTab(materials),
+                // Tab 2: Handouts & Documents
+                AbsorbPointer(
+                  absorbing: isBusy,
+                  child: _buildHandoutsTab(materials),
+                ),
 
-                  // Tab 3: Quizzes & Assessments
-                  _buildAssessmentsTab(assessments),
-                ],
-              ),
+                // Tab 3: Quizzes & Assessments
+                AbsorbPointer(
+                  absorbing: isBusy,
+                  child: _buildAssessmentsTab(assessments),
+                ),
+              ],
             ),
           ),
         ),

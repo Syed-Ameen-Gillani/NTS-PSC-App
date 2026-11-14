@@ -1,3 +1,4 @@
+import 'package:nts_psc_app/core/theme/app_gradients.dart';
 import 'package:nts_psc_app/presentation/widgets/app_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,7 +16,8 @@ class TeacherDoubtsScreen extends ConsumerStatefulWidget {
   const TeacherDoubtsScreen({super.key});
 
   @override
-  ConsumerState<TeacherDoubtsScreen> createState() => _TeacherDoubtsScreenState();
+  ConsumerState<TeacherDoubtsScreen> createState() =>
+      _TeacherDoubtsScreenState();
 }
 
 class _TeacherDoubtsScreenState extends ConsumerState<TeacherDoubtsScreen> {
@@ -28,7 +30,9 @@ class _TeacherDoubtsScreenState extends ConsumerState<TeacherDoubtsScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24.r))),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+      ),
       builder: (ctx) => Padding(
         padding: EdgeInsets.only(
           left: 24.w,
@@ -44,8 +48,14 @@ class _TeacherDoubtsScreenState extends ConsumerState<TeacherDoubtsScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('Answer Student Doubt', style: AppTextStyles.interBold24.copyWith(fontSize: 18.sp)),
-                  IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(ctx)),
+                  Text(
+                    'Answer Student Doubt',
+                    style: AppTextStyles.interBold24.copyWith(fontSize: 18.sp),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(ctx),
+                  ),
                 ],
               ),
               SizedBox(height: 12.h),
@@ -59,19 +69,33 @@ class _TeacherDoubtsScreenState extends ConsumerState<TeacherDoubtsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Student Question (${doubt.studentName}):',
-                        style: AppTextStyles.interSemiBold16.copyWith(fontSize: 12.sp, color: AppColors.primary)),
+                    Text(
+                      'Student Question (${doubt.studentName}):',
+                      style: AppTextStyles.interSemiBold16.copyWith(
+                        fontSize: 12.sp,
+                        color: AppColors.primary,
+                      ),
+                    ),
                     SizedBox(height: 4.h),
-                    Text(doubt.question, style: AppTextStyles.interRegular14.copyWith(fontSize: 13.sp)),
+                    Text(
+                      doubt.question,
+                      style: AppTextStyles.interRegular14.copyWith(
+                        fontSize: 13.sp,
+                      ),
+                    ),
                   ],
                 ),
               ),
               SizedBox(height: 16.h),
-              Text('Your Explanation & Guidance', style: AppTextStyles.interSemiBold16.copyWith(fontSize: 13.sp)),
+              Text(
+                'Your Explanation & Guidance',
+                style: AppTextStyles.interSemiBold16.copyWith(fontSize: 13.sp),
+              ),
               SizedBox(height: 6.h),
               CustomTextFormField(
                 controller: answerController,
-                hintText: 'Type your detailed answer, referencing the relevant exam law or topic...',
+                hintText:
+                    'Type your detailed answer, referencing the relevant exam law or topic...',
                 maxLines: 4,
               ),
               SizedBox(height: 20.h),
@@ -79,9 +103,14 @@ class _TeacherDoubtsScreenState extends ConsumerState<TeacherDoubtsScreen> {
                 text: 'Send Explanation',
                 onPressed: () {
                   if (answerController.text.trim().isNotEmpty) {
-                    ref.read(teacherControllerProvider.notifier).answerDoubt(doubt.id, answerController.text.trim());
+                    ref
+                        .read(teacherControllerProvider.notifier)
+                        .answerDoubt(doubt.id, answerController.text.trim());
                     Navigator.pop(ctx);
-                    CustomToast.showSuccess(context, message: 'Answer sent to ${doubt.studentName}!');
+                    CustomToast.showSuccess(
+                      context,
+                      message: 'Answer sent to ${doubt.studentName}!',
+                    );
                   }
                 },
                 color: AppColors.primary,
@@ -103,12 +132,19 @@ class _TeacherDoubtsScreenState extends ConsumerState<TeacherDoubtsScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: AppColors.onBackground, size: 20),
+          icon: const Icon(
+            Icons.arrow_back_ios_new,
+            color: AppColors.onBackground,
+            size: 20,
+          ),
           onPressed: () => context.pop(),
         ),
         title: Text(
           'Student Doubts & Q&A',
-          style: AppTextStyles.interBold24.copyWith(fontSize: 18.sp, color: AppColors.onBackground),
+          style: AppTextStyles.interBold24.copyWith(
+            fontSize: 18.sp,
+            color: AppColors.onBackground,
+          ),
         ),
         centerTitle: true,
         bottom: PreferredSize(
@@ -127,7 +163,10 @@ class _TeacherDoubtsScreenState extends ConsumerState<TeacherDoubtsScreen> {
               children: [
                 // Top Tab Bar
                 Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 16.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 24.w,
+                    vertical: 16.h,
+                  ),
                   child: Row(
                     children: [
                       Expanded(
@@ -136,7 +175,14 @@ class _TeacherDoubtsScreenState extends ConsumerState<TeacherDoubtsScreen> {
                           child: Container(
                             padding: EdgeInsets.symmetric(vertical: 10.h),
                             decoration: BoxDecoration(
-                              color: _selectedTab == 0 ? AppColors.primary : AppColors.grey100,
+                              color: _selectedTab == 0
+                                  ? null
+                                  : AppColors.grey100,
+                              gradient: _selectedTab == 0
+                                  ? AppGradients.primaryBanner(
+                                      Theme.of(context).colorScheme,
+                                    )
+                                  : null,
                               borderRadius: BorderRadius.circular(50.r),
                             ),
                             alignment: Alignment.center,
@@ -144,7 +190,9 @@ class _TeacherDoubtsScreenState extends ConsumerState<TeacherDoubtsScreen> {
                               'Unanswered (${state.doubts.where((d) => !d.isResolved).length})',
                               style: AppTextStyles.interSemiBold16.copyWith(
                                 fontSize: 13.sp,
-                                color: _selectedTab == 0 ? Colors.white : AppColors.grey500,
+                                color: _selectedTab == 0
+                                    ? Colors.white
+                                    : AppColors.grey500,
                               ),
                             ),
                           ),
@@ -157,7 +205,14 @@ class _TeacherDoubtsScreenState extends ConsumerState<TeacherDoubtsScreen> {
                           child: Container(
                             padding: EdgeInsets.symmetric(vertical: 10.h),
                             decoration: BoxDecoration(
-                              color: _selectedTab == 1 ? AppColors.primary : AppColors.grey100,
+                              color: _selectedTab == 1
+                                  ? null
+                                  : AppColors.grey100,
+                              gradient: _selectedTab == 1
+                                  ? AppGradients.primaryBanner(
+                                      Theme.of(context).colorScheme,
+                                    )
+                                  : null,
                               borderRadius: BorderRadius.circular(50.r),
                             ),
                             alignment: Alignment.center,
@@ -165,7 +220,9 @@ class _TeacherDoubtsScreenState extends ConsumerState<TeacherDoubtsScreen> {
                               'Resolved (${state.doubts.where((d) => d.isResolved).length})',
                               style: AppTextStyles.interSemiBold16.copyWith(
                                 fontSize: 13.sp,
-                                color: _selectedTab == 1 ? Colors.white : AppColors.grey500,
+                                color: _selectedTab == 1
+                                    ? Colors.white
+                                    : AppColors.grey500,
                               ),
                             ),
                           ),
@@ -182,17 +239,28 @@ class _TeacherDoubtsScreenState extends ConsumerState<TeacherDoubtsScreen> {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.check_circle_outline, size: 48.w, color: AppColors.primary),
+                              Icon(
+                                Icons.check_circle_outline,
+                                size: 48.w,
+                                color: AppColors.primary,
+                              ),
                               SizedBox(height: 12.h),
                               Text(
-                                _selectedTab == 0 ? 'All student doubts resolved!' : 'No resolved doubts yet.',
-                                style: AppTextStyles.interMedium16.copyWith(color: AppColors.grey500),
+                                _selectedTab == 0
+                                    ? 'All student doubts resolved!'
+                                    : 'No resolved doubts yet.',
+                                style: AppTextStyles.interMedium16.copyWith(
+                                  color: AppColors.grey500,
+                                ),
                               ),
                             ],
                           ),
                         )
                       : ListView.separated(
-                          padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 8.h),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 24.w,
+                            vertical: 8.h,
+                          ),
                           itemCount: doubts.length,
                           separatorBuilder: (_, __) => SizedBox(height: 16.h),
                           itemBuilder: (context, index) {
@@ -202,70 +270,120 @@ class _TeacherDoubtsScreenState extends ConsumerState<TeacherDoubtsScreen> {
                               decoration: BoxDecoration(
                                 color: const Color(0xFFF8F9FA),
                                 borderRadius: BorderRadius.circular(16.r),
-                                border: Border.all(color: AppColors.grey300, width: 1.w),
+                                border: Border.all(
+                                  color: AppColors.grey300,
+                                  width: 1.w,
+                                ),
                               ),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
                                     children: [
-                                      Expanded(child: Row(
-                                        children: [
-                                          CircleAvatar(
-                                            radius: 14.r,
-                                            backgroundColor: AppColors.primary,
-                                            child: Text(
-                                              doubt.studentName.isNotEmpty ? doubt.studentName[0] : 'S',
-                                              style: const TextStyle(color: Colors.white, fontSize: 11),
+                                      Expanded(
+                                        child: Row(
+                                          children: [
+                                            CircleAvatar(
+                                              radius: 14.r,
+                                              backgroundColor:
+                                                  AppColors.primary,
+                                              child: Text(
+                                                doubt.studentName.isNotEmpty
+                                                    ? doubt.studentName[0]
+                                                    : 'S',
+                                                style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 11,
+                                                ),
+                                              ),
                                             ),
-                                          ),
-                                          SizedBox(width: 8.w),
-                                          Flexible(child: Text(doubt.studentName,
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: AppTextStyles.interSemiBold16.copyWith(fontSize: 13.sp))),
-                                        ],
-                                      )),
-                                      Text(doubt.createdAt,
-                                          style: AppTextStyles.interRegular14
-                                              .copyWith(fontSize: 11.sp, color: AppColors.grey400)),
+                                            SizedBox(width: 8.w),
+                                            Flexible(
+                                              child: Text(
+                                                doubt.studentName,
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: AppTextStyles
+                                                    .interSemiBold16
+                                                    .copyWith(fontSize: 13.sp),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Text(
+                                        doubt.createdAt,
+                                        style: AppTextStyles.interRegular14
+                                            .copyWith(
+                                              fontSize: 11.sp,
+                                              color: AppColors.grey400,
+                                            ),
+                                      ),
                                     ],
                                   ),
                                   SizedBox(height: 8.h),
                                   Text(
                                     '${doubt.courseTitle} • ${doubt.lessonTitle}',
                                     style: AppTextStyles.interRegular14
-                                        .copyWith(fontSize: 11.sp, color: AppColors.primary),
+                                        .copyWith(
+                                          fontSize: 11.sp,
+                                          color: AppColors.primary,
+                                        ),
                                   ),
                                   SizedBox(height: 8.h),
-                                  Text(doubt.question,
-                                      style: AppTextStyles.interRegular14
-                                          .copyWith(fontSize: 13.sp, color: AppColors.onBackground)),
-                                  if (doubt.isResolved && doubt.answer != null) ...[
+                                  Text(
+                                    doubt.question,
+                                    style: AppTextStyles.interRegular14
+                                        .copyWith(
+                                          fontSize: 13.sp,
+                                          color: AppColors.onBackground,
+                                        ),
+                                  ),
+                                  if (doubt.isResolved &&
+                                      doubt.answer != null) ...[
                                     SizedBox(height: 12.h),
                                     Container(
                                       padding: EdgeInsets.all(12.w),
                                       decoration: BoxDecoration(
                                         color: const Color(0xFFE3F2FD),
-                                        borderRadius: BorderRadius.circular(12.r),
+                                        borderRadius: BorderRadius.circular(
+                                          12.r,
+                                        ),
                                       ),
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           Row(
                                             children: [
-                                              Icon(Icons.verified, size: 14.w, color: AppColors.primary),
+                                              Icon(
+                                                Icons.verified,
+                                                size: 14.w,
+                                                color: AppColors.primary,
+                                              ),
                                               SizedBox(width: 4.w),
-                                              Text('Your Answer:',
-                                                  style: AppTextStyles.interSemiBold16
-                                                      .copyWith(fontSize: 11.sp, color: AppColors.primary)),
+                                              Text(
+                                                'Your Answer:',
+                                                style: AppTextStyles
+                                                    .interSemiBold16
+                                                    .copyWith(
+                                                      fontSize: 11.sp,
+                                                      color: AppColors.primary,
+                                                    ),
+                                              ),
                                             ],
                                           ),
                                           SizedBox(height: 4.h),
-                                          Text(doubt.answer!,
-                                              style: AppTextStyles.interRegular14
-                                                  .copyWith(fontSize: 12.sp, color: AppColors.onBackground)),
+                                          Text(
+                                            doubt.answer!,
+                                            style: AppTextStyles.interRegular14
+                                                .copyWith(
+                                                  fontSize: 12.sp,
+                                                  color: AppColors.onBackground,
+                                                ),
+                                          ),
                                         ],
                                       ),
                                     ),
@@ -274,15 +392,34 @@ class _TeacherDoubtsScreenState extends ConsumerState<TeacherDoubtsScreen> {
                                     Align(
                                       alignment: Alignment.centerRight,
                                       child: ElevatedButton.icon(
-                                        onPressed: () => _showAnswerBottomSheet(context, doubt),
-                                        icon: Icon(Icons.reply, size: 14.w, color: Colors.white),
-                                        label: Text('Reply & Resolve',
-                                            style: AppTextStyles.interSemiBold16
-                                                .copyWith(color: Colors.white, fontSize: 12.sp)),
+                                        onPressed: () => _showAnswerBottomSheet(
+                                          context,
+                                          doubt,
+                                        ),
+                                        icon: Icon(
+                                          Icons.reply,
+                                          size: 14.w,
+                                          color: Colors.white,
+                                        ),
+                                        label: Text(
+                                          'Reply & Resolve',
+                                          style: AppTextStyles.interSemiBold16
+                                              .copyWith(
+                                                color: Colors.white,
+                                                fontSize: 12.sp,
+                                              ),
+                                        ),
                                         style: ElevatedButton.styleFrom(
                                           backgroundColor: AppColors.primary,
-                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
-                                          padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              20.r,
+                                            ),
+                                          ),
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: 14.w,
+                                            vertical: 8.h,
+                                          ),
                                           elevation: 0,
                                         ),
                                       ),

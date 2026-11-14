@@ -10,7 +10,6 @@ import 'package:nts_psc_app/core/theme/app_colors.dart';
 import 'package:nts_psc_app/core/theme/app_text_styles.dart';
 import 'package:nts_psc_app/features/learn/presentation/controllers/video_controls_state.dart';
 import 'package:nts_psc_app/features/learn/presentation/widgets/video_player_status.dart';
-import 'package:nts_psc_app/features/learn/presentation/widgets/video_quality_menu.dart';
 import 'package:video_player/video_player.dart';
 
 part 'professional_video_canvas.dart';
@@ -24,6 +23,22 @@ class VideoPlayerSession {
   final VideoPlayerController controller;
   final String title;
   final List<Map<String, dynamic>> segments;
+
+  // The portrait player remains mounted beneath the fullscreen route. Track
+  // the actual controller shown there instead of relying on a nested router
+  // context to report the top route's extra.
+  static final Set<VideoPlayerController> _fullscreenControllers = {};
+  static final _requestedPlayback = Expando<bool>();
+  static bool playbackRequested(VideoPlayerController controller) =>
+      _requestedPlayback[controller] ?? controller.value.isPlaying;
+  static void requestPlayback(VideoPlayerController controller, bool playing) =>
+      _requestedPlayback[controller] = playing;
+  static bool isFullscreen(VideoPlayerController controller) =>
+      _fullscreenControllers.contains(controller);
+  static void enterFullscreen(VideoPlayerController controller) =>
+      _fullscreenControllers.add(controller);
+  static void leaveFullscreen(VideoPlayerController controller) =>
+      _fullscreenControllers.remove(controller);
 }
 
 /// Rendering and transport controls only. Authorization, quizzes, downloads and
@@ -53,6 +68,9 @@ class _ProfessionalVideoPlayerState
   final _identity = Object();
   final _focus = FocusNode();
   Timer? _hideTimer;
+  Timer? _bufferTimer;
+  bool _showBuffering = false;
+  bool _playRequested = false;
   bool _wasPlaying = false;
   bool _wasBuffering = false;
   bool _covered = false;
@@ -63,10 +81,14 @@ class _ProfessionalVideoPlayerState
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _wasPlaying = video.value.isPlaying;
+    _playRequested = VideoPlayerSession.playbackRequested(video);
     _wasBuffering = video.value.isBuffering;
     video.addListener(_playbackChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _scheduleHide();
+      if (mounted) {
+        _updateBuffering();
+        _scheduleHide();
+      }
     });
   }
 
@@ -77,8 +99,12 @@ class _ProfessionalVideoPlayerState
       oldWidget.controller.removeListener(_playbackChanged);
       video.addListener(_playbackChanged);
       _wasPlaying = video.value.isPlaying;
+      _playRequested = VideoPlayerSession.playbackRequested(video);
       _wasBuffering = video.value.isBuffering;
       _hideTimer?.cancel();
+      _cancelBuffering();
+      _updateBuffering();
+      _scheduleHide();
     }
   }
 
@@ -87,12 +113,17 @@ class _ProfessionalVideoPlayerState
     if (state == AppLifecycleState.inactive ||
         state == AppLifecycleState.paused ||
         state == AppLifecycleState.detached) {
+      _setPlaybackIntent(false);
+      setState(_cancelBuffering);
       unawaited(video.pause());
     }
   }
 
   void _playbackChanged() {
     if (!mounted || _covered) return;
+    final wasBuffering = _wasBuffering;
+    if (video.value.isPlaying) _setPlaybackIntent(true);
+    _updateBuffering();
     if (controls.scrubMilliseconds != null) {
       _wasPlaying = video.value.isPlaying;
       _wasBuffering = video.value.isBuffering;
@@ -100,9 +131,7 @@ class _ProfessionalVideoPlayerState
     }
     if (_wasBuffering != video.value.isBuffering) {
       _wasBuffering = video.value.isBuffering;
-      if (_wasBuffering) {
-        _reveal();
-      } else {
+      if (!_wasBuffering) {
         _scheduleHide();
       }
     }
@@ -110,26 +139,58 @@ class _ProfessionalVideoPlayerState
       _wasPlaying = video.value.isPlaying;
       if (_wasPlaying) {
         _scheduleHide();
-      } else {
+      } else if (!video.value.isBuffering && !wasBuffering) {
+        _setPlaybackIntent(false);
         _reveal();
       }
     }
   }
 
+  bool get _waitingForPlayback =>
+      video.value.isBuffering &&
+      _playRequested &&
+      !video.value.hasError &&
+      video.value.position < video.value.duration;
+
+  void _setPlaybackIntent(bool playing) {
+    _playRequested = playing;
+    VideoPlayerSession.requestPlayback(video, playing);
+  }
+
+  void _cancelBuffering() {
+    _bufferTimer?.cancel();
+    _bufferTimer = null;
+    _showBuffering = false;
+  }
+
+  void _updateBuffering() {
+    if (!_waitingForPlayback) {
+      if (_bufferTimer != null || _showBuffering) {
+        setState(_cancelBuffering);
+      }
+      return;
+    }
+    if (_bufferTimer != null) return;
+    _bufferTimer = Timer(const Duration(milliseconds: 300), () {
+      if (mounted && !_covered && _waitingForPlayback) {
+        setState(() => _showBuffering = true);
+      }
+    });
+  }
+
   void _reveal() {
     _hideTimer?.cancel();
-    if (!mounted) return;
+    if (!mounted || _waitingForPlayback) return;
     ref.read(videoControlsProvider(_identity).notifier).state =
         const VideoControlsState();
   }
 
   void _scheduleHide() {
     _hideTimer?.cancel();
-    if (!video.value.isPlaying || video.value.isBuffering || _covered) return;
+    if ((!video.value.isPlaying && !_waitingForPlayback) || _covered) return;
     _hideTimer = Timer(const Duration(seconds: 3), () {
       if (!mounted ||
-          !video.value.isPlaying ||
-          video.value.isBuffering ||
+          (!video.value.isPlaying && !_waitingForPlayback) ||
           controls.scrubMilliseconds != null ||
           MediaQuery.maybeOf(context)?.accessibleNavigation == true) {
         return;
@@ -156,9 +217,12 @@ class _ProfessionalVideoPlayerState
   }
 
   Future<void> _togglePlay() => _perform(() async {
-    if (video.value.isPlaying) {
+    if (video.value.isPlaying || _waitingForPlayback) {
+      _setPlaybackIntent(false);
+      setState(_cancelBuffering);
       await video.pause();
     } else {
+      _setPlaybackIntent(true);
       if (video.value.position >= video.value.duration) {
         await video.seekTo(Duration.zero);
       }
@@ -228,6 +292,11 @@ class _ProfessionalVideoPlayerState
     } finally {
       _covered = false;
       if (mounted) {
+        _cancelBuffering();
+        _playRequested = VideoPlayerSession.playbackRequested(video);
+        _wasPlaying = video.value.isPlaying;
+        _wasBuffering = video.value.isBuffering;
+        _updateBuffering();
         _reveal();
         _scheduleHide();
       }
@@ -237,6 +306,7 @@ class _ProfessionalVideoPlayerState
   @override
   void dispose() {
     _hideTimer?.cancel();
+    _cancelBuffering();
     video.removeListener(_playbackChanged);
     WidgetsBinding.instance.removeObserver(this);
     _focus.dispose();
@@ -251,7 +321,7 @@ class _ProfessionalVideoPlayerState
   }) => IconButton(
     tooltip: label,
     onPressed: action,
-    icon: Icon(icon, size: 22.r.clamp(18, 26)),
+    icon: Icon(icon, size: 24.r.clamp(24, 28)),
     color: selected ? AppColors.primaryLight : AppColors.videoForeground,
     padding: EdgeInsets.zero,
     constraints: BoxConstraints.tightFor(

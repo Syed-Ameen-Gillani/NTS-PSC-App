@@ -1,3 +1,4 @@
+import 'package:nts_psc_app/presentation/widgets/app_choice_chip.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -205,11 +206,10 @@ class _CourseFilterChip extends StatelessWidget {
   final VoidCallback onSelected;
 
   @override
-  Widget build(BuildContext context) => ChoiceChip(
+  Widget build(BuildContext context) => AppChoiceChip(
     label: Text(label),
     selected: selected,
     onSelected: (_) => onSelected(),
-    selectedColor: AppColors.primary,
     backgroundColor: const Color(0xFFF8F9FA),
     labelStyle: AppTextStyles.interMedium16.copyWith(
       fontSize: 11.sp,

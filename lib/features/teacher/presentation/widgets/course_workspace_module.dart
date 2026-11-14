@@ -11,6 +11,7 @@ import 'package:nts_psc_app/features/curriculum/domain/curriculum_models.dart';
 import 'package:nts_psc_app/features/curriculum/domain/lesson_classification.dart';
 import 'package:nts_psc_app/features/curriculum/presentation/curriculum_providers.dart';
 import 'package:nts_psc_app/features/teacher/domain/lesson_limits.dart';
+import 'package:nts_psc_app/presentation/widgets/module_accordion.dart';
 
 class CourseWorkspaceModule extends ConsumerWidget {
   const CourseWorkspaceModule({
@@ -35,80 +36,60 @@ class CourseWorkspaceModule extends ConsumerWidget {
     clipBehavior: Clip.antiAlias,
     child: Theme(
       data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-      child: ExpansionTile(
-        key: PageStorageKey(module.id),
+      child: ModuleAccordionEntry(
+        moduleId: module.id,
         initiallyExpanded: index == 0,
-        tilePadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
-        leading: Container(
-          width: 36.w,
-          height: 36.w,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: AppColors.grey100,
-            borderRadius: BorderRadius.circular(6.r),
-          ),
-          child: Text(
-            '${index + 1}'.padLeft(2, '0'),
-            style: AppTextStyles.interSemiBold16.copyWith(
-              fontSize: 12.sp,
-              color: AppColors.primary,
+        builder: (context, controller, expanded, onChanged) => ExpansionTile(
+          controller: controller,
+          initiallyExpanded: expanded,
+          onExpansionChanged: onChanged,
+          tilePadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
+          leading: Container(
+            width: 36.w,
+            height: 36.w,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: AppColors.grey100,
+              borderRadius: BorderRadius.circular(6.r),
             ),
-          ),
-        ),
-        title: Text(
-          module.title,
-          style: AppTextStyles.interSemiBold16.copyWith(fontSize: 14.sp),
-        ),
-        subtitle: Text(
-          '${module.lessons.length}/$maxLessonsPerModule lessons',
-          style: AppTextStyles.interRegular14.copyWith(
-            fontSize: 12.sp,
-            color: AppColors.grey500,
-          ),
-        ),
-        children: [
-          Divider(height: 1.h, color: AppColors.grey200),
-          if (module.lessons.isEmpty)
-            Padding(
-              padding: EdgeInsets.all(16.w),
-              child: Text(
-                'No lessons added yet.',
-                style: AppTextStyles.interRegular14.copyWith(
-                  color: AppColors.grey500,
-                ),
+            child: Text(
+              '${index + 1}'.padLeft(2, '0'),
+              style: AppTextStyles.interSemiBold16.copyWith(
+                fontSize: 12.sp,
+                color: AppColors.primary,
               ),
             ),
-          for (var i = 0; i < module.lessons.length; i++)
-            _lesson(context, ref, module.lessons[i], i),
-          Padding(
-            padding: EdgeInsets.fromLTRB(16.w, 4.h, 16.w, 8.h),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: TextButton.icon(
-                    style: TextButton.styleFrom(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 8.w,
-                        vertical: 8.h,
-                      ),
-                      textStyle: AppTextStyles.interMedium16.copyWith(
-                        fontSize: 13.sp,
-                      ),
-                    ),
-                    onPressed: module.lessons.length >= maxLessonsPerModule
-                        ? null
-                        : onAddLesson,
-                    icon: Icon(Icons.add, size: 18.w),
-                    label: Text(
-                      module.lessons.length >= maxLessonsPerModule
-                          ? 'Module full'
-                          : 'Add lesson',
-                    ),
+          ),
+          title: Text(
+            module.title,
+            style: AppTextStyles.interSemiBold16.copyWith(fontSize: 14.sp),
+          ),
+          subtitle: Text(
+            '${module.lessons.length}/$maxLessonsPerModule lessons',
+            style: AppTextStyles.interRegular14.copyWith(
+              fontSize: 12.sp,
+              color: AppColors.grey500,
+            ),
+          ),
+          children: [
+            Divider(height: 1.h, color: AppColors.grey200),
+            if (module.lessons.isEmpty)
+              Padding(
+                padding: EdgeInsets.all(16.w),
+                child: Text(
+                  'No lessons added yet.',
+                  style: AppTextStyles.interRegular14.copyWith(
+                    color: AppColors.grey500,
                   ),
                 ),
-                if (module.lessons.isNotEmpty && AppConfig.isSupabaseEnabled)
+              ),
+            for (var i = 0; i < module.lessons.length; i++)
+              _lesson(context, ref, module.lessons[i], i),
+            Padding(
+              padding: EdgeInsets.fromLTRB(16.w, 4.h, 16.w, 8.h),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   Align(
                     alignment: Alignment.centerLeft,
                     child: TextButton.icon(
@@ -117,21 +98,46 @@ class CourseWorkspaceModule extends ConsumerWidget {
                           horizontal: 8.w,
                           vertical: 8.h,
                         ),
-                      ),
-                      onPressed: () => _openLessonStudio(context),
-                      icon: Icon(Icons.folder_outlined, size: 18.w),
-                      label: Text(
-                        'Materials & assessments',
-                        style: AppTextStyles.interMedium16.copyWith(
+                        textStyle: AppTextStyles.interMedium16.copyWith(
                           fontSize: 13.sp,
                         ),
                       ),
+                      onPressed: module.lessons.length >= maxLessonsPerModule
+                          ? null
+                          : onAddLesson,
+                      icon: Icon(Icons.add, size: 18.w),
+                      label: Text(
+                        module.lessons.length >= maxLessonsPerModule
+                            ? 'Module full'
+                            : 'Add lesson',
+                      ),
                     ),
                   ),
-              ],
+                  if (module.lessons.isNotEmpty && AppConfig.isSupabaseEnabled)
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: TextButton.icon(
+                        style: TextButton.styleFrom(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 8.w,
+                            vertical: 8.h,
+                          ),
+                        ),
+                        onPressed: () => _openLessonStudio(context),
+                        icon: Icon(Icons.folder_outlined, size: 18.w),
+                        label: Text(
+                          'Materials & assessments',
+                          style: AppTextStyles.interMedium16.copyWith(
+                            fontSize: 13.sp,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     ),
   );
@@ -221,11 +227,7 @@ class CourseWorkspaceModule extends ConsumerWidget {
       onTap: () =>
           context.pushNamed(AppRoute.teacherLessonMedia.name, extra: lesson),
       contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
-      leading: Icon(
-        icon,
-        color: AppColors.primary,
-        size: 24.w,
-      ),
+      leading: Icon(icon, color: AppColors.primary, size: 24.w),
       title: Text(
         '${index + 1}. ${lesson.title}',
         style: AppTextStyles.interMedium16.copyWith(

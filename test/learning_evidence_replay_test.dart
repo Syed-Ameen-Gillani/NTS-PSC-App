@@ -145,6 +145,116 @@ void main() {
     },
   );
 
+  test(
+    'a boundary sync waits for an active sync and drains later samples',
+    () async {
+      final started = Completer<void>();
+      final release = Completer<void>();
+      final counts = <int>[];
+      final client = SupabaseClient(
+        'https://example.invalid',
+        'key',
+        authOptions: const AuthClientOptions(autoRefreshToken: false),
+        httpClient: MockClient((request) async {
+          final events = (jsonDecode(request.body) as Map)['p_events'] as List;
+          counts.add(events.length);
+          if (counts.length == 1) {
+            started.complete();
+            await release.future;
+          }
+          return response(request, events);
+        }),
+      );
+      addTearDown(client.dispose);
+      final repository = _Repository(client, store: store);
+      await append(repository, 0);
+      final periodic = repository.sync();
+      await started.future.timeout(const Duration(seconds: 3));
+      await append(repository, 1);
+      var boundaryFinished = false;
+      final boundary = repository.sync().then((_) => boundaryFinished = true);
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+      expect(boundaryFinished, isFalse);
+      release.complete();
+      await Future.wait([periodic, boundary]);
+      expect(counts, [1, 1]);
+      expect(
+        await store.read(
+          owner,
+          (data) async => (data['events'] as List).length,
+        ),
+        0,
+      );
+    },
+  );
+
+  test(
+    'video session selects the playing source, not the first video',
+    () async {
+      final calls = <String>[];
+      final client = SupabaseClient(
+        'https://example.invalid',
+        'key',
+        authOptions: const AuthClientOptions(autoRefreshToken: false),
+        httpClient: MockClient((request) async {
+          calls.add(request.url.path);
+          final data = request.url.path.endsWith('get_learning_outcome')
+              ? {
+                  'activities': [
+                    {'id': 'first', 'kind': 'video', 'source': 'old.mp4'},
+                    {'id': activity, 'kind': 'video', 'source': 'current.mp4'},
+                  ],
+                }
+              : {
+                  ...ticket,
+                  'kind': 'video',
+                  'source': 'current.mp4',
+                  'started_at': DateTime.now().toUtc().toIso8601String(),
+                  'expires_at': DateTime.now()
+                      .toUtc()
+                      .add(const Duration(days: 1))
+                      .toIso8601String(),
+                };
+          return http.Response(
+            jsonEncode(data),
+            200,
+            request: request,
+            headers: {'content-type': 'application/json'},
+          );
+        }),
+      );
+      addTearDown(client.dispose);
+      final repository = _Repository(client, store: store);
+      final selected = await repository.videoSession(
+        lesson,
+        source: 'current.mp4',
+      );
+      expect(selected?['activity_id'], activity);
+      expect(calls, hasLength(2));
+    },
+  );
+
+  test('a replaced playback session cannot silently discard samples', () async {
+    final client = SupabaseClient(
+      'https://example.invalid',
+      'key',
+      authOptions: const AuthClientOptions(autoRefreshToken: false),
+    );
+    addTearDown(client.dispose);
+    final repository = _Repository(client, store: store);
+    await store.transaction(owner, (data) async {
+      (data['tickets'] as Map)['$lesson:$activity'] = {
+        ...ticket,
+        'id': 'new-session',
+      };
+    });
+    await expectLater(append(repository, 0), throwsStateError);
+    expect(
+      await store.read(owner, (data) async => (data['events'] as List).length),
+      0,
+    );
+  });
+
   test('successful handout open refreshes the lesson outcome', () async {
     late Map<String, dynamic> body;
     final changed = LearningEvidenceRepository.changes.stream.first;

@@ -29,7 +29,7 @@ class DiscoverController extends AsyncNotifier<DiscoverState> {
       ref.watch(authControllerProvider.select((s) => s.value?.user?.id));
       final repository = ref.read(courseRepositoryProvider);
       final categoriesRequest = ref.watch(allCategoriesProvider.future);
-      final coursesRequest = ref.watch(publishedCatalogProvider.future);
+      final coursesRequest = ref.watch(recommendedCatalogProvider.future);
       final teachersRequest = (repository as SupabaseCourseRepository)
           .getPublicTeachers(limit: 4);
       final categories = await categoriesRequest;

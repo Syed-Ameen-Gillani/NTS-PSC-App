@@ -134,7 +134,9 @@ class CurriculumActions extends StateNotifier<bool> {
   final void Function() onUnlink;
   bool _alive = true;
   Future<void> _run(Future<void> Function() action) async {
-    if (state) return;
+    if (state) {
+      throw StateError('Another curriculum action is still in progress.');
+    }
     state = true;
     try {
       await action();
@@ -146,9 +148,18 @@ class CurriculumActions extends StateNotifier<bool> {
     }
   }
 
-  Future<void> upload(List<PendingMaterial> files) => _run(() async {
+  Future<void> upload(
+    List<PendingMaterial> files, {
+    void Function(double)? onProgress,
+    void Function(CurriculumMaterial)? onUploaded,
+  }) => _run(() async {
     for (final file in files) {
-      await repository.upload(scope, file);
+      await repository.upload(
+        scope,
+        file,
+        onProgress: onProgress,
+        onUploaded: onUploaded,
+      );
     }
   });
   Future<void> delete(CurriculumMaterial file) =>

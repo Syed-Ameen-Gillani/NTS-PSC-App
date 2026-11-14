@@ -1,0 +1,7 @@
+# Example key.properties for release signing in all modes
+# Place the actual keystore in android/app/upload-keystore.jks (or android/app/key.jks)
+# Copy this file to android/key.properties and fill in your details:
+keyAlias=upload
+keyPassword=your_key_password
+storeFile=upload-keystore.jks
+storePassword=your_store_password

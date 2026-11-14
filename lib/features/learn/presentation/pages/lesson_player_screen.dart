@@ -17,19 +17,18 @@ import 'package:nts_psc_app/features/curriculum/domain/lesson_subtopic.dart';
 import 'package:nts_psc_app/features/curriculum/domain/lesson_activity.dart';
 import 'package:nts_psc_app/features/learn/domain/lesson_player_mode.dart';
 import 'package:nts_psc_app/presentation/widgets/custom_toast.dart';
+import 'package:nts_psc_app/presentation/widgets/module_accordion.dart';
 
 class LessonPlayerScreen extends ConsumerStatefulWidget {
   final CourseModel? course;
   final LessonModel? initialLesson;
   final LessonPlayerMode mode;
-
   const LessonPlayerScreen({
     super.key,
     this.course,
     this.initialLesson,
     this.mode = LessonPlayerMode.learning,
   });
-
   @override
   ConsumerState<LessonPlayerScreen> createState() => _LessonPlayerScreenState();
 }
@@ -39,13 +38,10 @@ class _LessonPlayerScreenState extends ConsumerState<LessonPlayerScreen>
   late TabController _tabController;
   late CourseModel _course;
   late LessonModel _currentLesson;
-
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
-
-    // Initial course matching user screenshot
     _course =
         widget.course ??
         CourseModel(
@@ -56,8 +52,6 @@ class _LessonPlayerScreenState extends ConsumerState<LessonPlayerScreen>
           price: 'Rs 3,500',
           imagePath: 'assets/images/course4.jpg',
         );
-
-    // Initial lesson matching user screenshot
     _currentLesson =
         widget.initialLesson ??
         LessonModel(
@@ -75,11 +69,15 @@ class _LessonPlayerScreenState extends ConsumerState<LessonPlayerScreen>
     super.dispose();
   }
 
-  Widget _buildSyllabusTab() {
+  Widget _buildSyllabusTab() => ModuleAccordion(
+    initialModuleId:
+        _course.modules.firstOrNull?.id ??
+        'Module 1: Constitutional & Administrative Framework',
+    child: _buildModuleList(),
+  );
+  Widget _buildModuleList() {
     final modules = _course.modules;
-
     if (modules.isEmpty) {
-      // Default curriculum for demonstration
       return ListView(
         padding: EdgeInsets.all(24.w),
         children: [
@@ -159,19 +157,23 @@ class _LessonPlayerScreenState extends ConsumerState<LessonPlayerScreen>
         ],
       );
     }
-
     return ListView.separated(
       padding: EdgeInsets.all(24.w),
       itemCount: modules.length,
       separatorBuilder: (_, __) => SizedBox(height: 14.h),
       itemBuilder: (context, mIdx) {
         final module = modules[mIdx];
-        return _buildModuleCard(title: module.title, lessons: module.lessons);
+        return _buildModuleCard(
+          moduleId: module.id,
+          title: module.title,
+          lessons: module.lessons,
+        );
       },
     );
   }
 
   Widget _buildModuleCard({
+    String? moduleId,
     required String title,
     required List<LessonModel> lessons,
   }) {
@@ -182,142 +184,173 @@ class _LessonPlayerScreenState extends ConsumerState<LessonPlayerScreen>
         side: const BorderSide(color: AppColors.grey300),
       ),
       clipBehavior: Clip.antiAlias,
-      child: ExpansionTile(
-        initiallyExpanded: true,
-        title: Text(
-          title,
-          style: AppTextStyles.interBold24.copyWith(fontSize: 13.sp),
-        ),
-        subtitle: Text(
-          '${lessons.length} Lectures',
-          style: AppTextStyles.interRegular14.copyWith(
-            fontSize: 11.sp,
-            color: AppColors.grey500,
+      child: ModuleAccordionEntry(
+        moduleId: moduleId ?? title,
+        builder: (context, controller, expanded, onChanged) => ExpansionTile(
+          controller: controller,
+          initiallyExpanded: expanded,
+          onExpansionChanged: onChanged,
+          title: Text(
+            title,
+            style: AppTextStyles.interBold24.copyWith(fontSize: 13.sp),
           ),
-        ),
-        children: lessons.map((lesson) {
-          final isCurrent = lesson.id == _currentLesson.id;
-          final subTopics = lesson.activities
-              .map(LessonSubTopic.fromActivity)
-              .whereType<LessonSubTopic>()
-              .toList();
-
-          return Material(
-            color: Colors.transparent,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                ListTile(
-                  leading: CircleAvatar(
-                    radius: 12.r,
-                    backgroundColor: isCurrent
-                        ? AppColors.primary
-                        : AppColors.grey300,
-                    child: Icon(
-                      isCurrent ? Icons.play_arrow : Icons.lock_outline,
-                      size: 14.w,
-                      color: isCurrent ? Colors.white : AppColors.grey500,
+          subtitle: Text(
+            '${lessons.length} Lectures',
+            style: AppTextStyles.interRegular14.copyWith(
+              fontSize: 11.sp,
+              color: AppColors.grey500,
+            ),
+          ),
+          children: lessons.map((lesson) {
+            final isCurrent = lesson.id == _currentLesson.id;
+            final subTopics = lesson.activities
+                .map(LessonSubTopic.fromActivity)
+                .whereType<LessonSubTopic>()
+                .toList();
+            return Material(
+              color: Colors.transparent,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ListTile(
+                    leading: CircleAvatar(
+                      radius: 12.r,
+                      backgroundColor: isCurrent
+                          ? AppColors.primary
+                          : AppColors.grey300,
+                      child: Icon(
+                        isCurrent ? Icons.play_arrow : Icons.lock_outline,
+                        size: 14.w,
+                        color: isCurrent ? Colors.white : AppColors.grey500,
+                      ),
                     ),
-                  ),
-                  title: Text(
-                    lesson.title,
-                    style: AppTextStyles.interSemiBold16.copyWith(
-                      fontSize: 12.sp,
-                      color: isCurrent ? AppColors.primary : AppColors.onBackground,
+                    title: Text(
+                      lesson.title,
+                      style: AppTextStyles.interSemiBold16.copyWith(
+                        fontSize: 12.sp,
+                        color: isCurrent
+                            ? AppColors.primary
+                            : AppColors.onBackground,
+                      ),
                     ),
-                  ),
-                  subtitle: Text(
-                    '${lesson.durationMinutes} mins',
-                    style: AppTextStyles.interRegular14.copyWith(
-                      fontSize: 10.sp,
-                      color: AppColors.grey500,
+                    subtitle: Text(
+                      '${lesson.durationMinutes} mins',
+                      style: AppTextStyles.interRegular14.copyWith(
+                        fontSize: 10.sp,
+                        color: AppColors.grey500,
+                      ),
                     ),
+                    onTap: () {
+                      setState(() => _currentLesson = lesson);
+                      CustomToast.showInfo(
+                        context,
+                        message: 'Loaded: ${lesson.title}',
+                      );
+                    },
                   ),
-                  onTap: () {
-                    setState(() => _currentLesson = lesson);
-                    CustomToast.showInfo(
-                      context,
-                      message: 'Loaded: ${lesson.title}',
-                    );
-                  },
-                ),
-                if (subTopics.isNotEmpty)
-                  Padding(
-                    padding: EdgeInsets.only(left: 48.w, right: 16.w, bottom: 8.h),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        for (final subTopic in subTopics)
-                          Padding(
-                            padding: EdgeInsets.only(top: 4.h),
-                            child: Material(
-                              color: AppColors.surfaceVariant.withValues(alpha: 0.5),
-                              borderRadius: BorderRadius.circular(6.r),
-                              child: InkWell(
+                  if (subTopics.isNotEmpty)
+                    Padding(
+                      padding: EdgeInsets.only(
+                        left: 48.w,
+                        right: 16.w,
+                        bottom: 8.h,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          for (final subTopic in subTopics)
+                            Padding(
+                              padding: EdgeInsets.only(top: 4.h),
+                              child: Material(
+                                color: AppColors.surfaceVariant.withValues(
+                                  alpha: 0.5,
+                                ),
                                 borderRadius: BorderRadius.circular(6.r),
-                                onTap: () {
-                                  CustomToast.showInfo(
-                                    context,
-                                    message: 'Opening ${subTopic.kindLabel}: ${subTopic.title}',
-                                  );
-                                },
-                                child: Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 7.h),
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        subTopic.icon,
-                                        size: 14.w,
-                                        color: subTopic.kind == LessonSubTopicKind.handout
-                                            ? AppColors.grey700
-                                            : AppColors.primary,
-                                      ),
-                                      SizedBox(width: 8.w),
-                                      Expanded(
-                                        child: Text(
-                                          subTopic.title,
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: AppTextStyles.interMedium16.copyWith(
-                                            fontSize: 11.sp,
-                                            color: AppColors.onBackground,
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(6.r),
+                                  onTap: () {
+                                    CustomToast.showInfo(
+                                      context,
+                                      message:
+                                          'Opening ${subTopic.kindLabel}: ${subTopic.title}',
+                                    );
+                                  },
+                                  child: Padding(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 10.w,
+                                      vertical: 7.h,
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          subTopic.icon,
+                                          size: 14.w,
+                                          color:
+                                              subTopic.kind ==
+                                                  LessonSubTopicKind.handout
+                                              ? AppColors.grey700
+                                              : AppColors.primary,
+                                        ),
+                                        SizedBox(width: 8.w),
+                                        Expanded(
+                                          child: Text(
+                                            subTopic.title,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: AppTextStyles.interMedium16
+                                                .copyWith(
+                                                  fontSize: 11.sp,
+                                                  color: AppColors.onBackground,
+                                                ),
                                           ),
                                         ),
-                                      ),
-                                      SizedBox(width: 6.w),
-                                      Container(
-                                        padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
-                                        decoration: BoxDecoration(
-                                          color: (subTopic.kind == LessonSubTopicKind.handout
-                                                  ? AppColors.grey500
-                                                  : AppColors.primary)
-                                              .withValues(alpha: 0.1),
-                                          borderRadius: BorderRadius.circular(4.r),
-                                        ),
-                                        child: Text(
-                                          subTopic.kindLabel,
-                                          style: AppTextStyles.interSemiBold16.copyWith(
-                                            fontSize: 9.sp,
-                                            color: subTopic.kind == LessonSubTopicKind.handout
-                                                ? AppColors.grey700
-                                                : AppColors.primary,
+                                        SizedBox(width: 6.w),
+                                        Container(
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: 6.w,
+                                            vertical: 2.h,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color:
+                                                (subTopic.kind ==
+                                                            LessonSubTopicKind
+                                                                .handout
+                                                        ? AppColors.grey500
+                                                        : AppColors.primary)
+                                                    .withValues(alpha: 0.1),
+                                            borderRadius: BorderRadius.circular(
+                                              4.r,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            subTopic.kindLabel,
+                                            style: AppTextStyles.interSemiBold16
+                                                .copyWith(
+                                                  fontSize: 9.sp,
+                                                  color:
+                                                      subTopic.kind ==
+                                                          LessonSubTopicKind
+                                                              .handout
+                                                      ? AppColors.grey700
+                                                      : AppColors.primary,
+                                                ),
                                           ),
                                         ),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
-                          ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-              ],
-            ),
-          );
-        }).toList(),
+                ],
+              ),
+            );
+          }).toList(),
+        ),
       ),
     );
   }
@@ -336,7 +369,6 @@ class _LessonPlayerScreenState extends ConsumerState<LessonPlayerScreen>
         mode: widget.mode,
       );
     }
-    // Listen for surprise in-video quiz checkpoint trigger
     ref.listen<LessonPlaybackState>(lessonPlaybackControllerProvider, (
       previous,
       next,
@@ -349,7 +381,6 @@ class _LessonPlayerScreenState extends ConsumerState<LessonPlayerScreen>
         InVideoQuizDialog.show(context);
       }
     });
-
     return AppScaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -361,7 +392,6 @@ class _LessonPlayerScreenState extends ConsumerState<LessonPlayerScreen>
             return Flex(
               direction: isCompactLandscape ? Axis.horizontal : Axis.vertical,
               children: [
-                // Video Viewport Component with Coursera Checkpoint Pip
                 if (isCompactLandscape)
                   Expanded(
                     child: ColoredBox(
@@ -376,11 +406,9 @@ class _LessonPlayerScreenState extends ConsumerState<LessonPlayerScreen>
                   )
                 else
                   LessonVideoViewport(course: _course, lesson: _currentLesson),
-
                 Expanded(
                   child: Column(
                     children: [
-                      // Lesson Header Details (exactly matching screenshot)
                       Padding(
                         padding: EdgeInsets.fromLTRB(24.w, 16.h, 24.w, 8.h),
                         child: Column(
@@ -416,8 +444,6 @@ class _LessonPlayerScreenState extends ConsumerState<LessonPlayerScreen>
                           ],
                         ),
                       ),
-
-                      // Tab Bar
                       Container(
                         decoration: BoxDecoration(
                           border: Border(
@@ -444,8 +470,6 @@ class _LessonPlayerScreenState extends ConsumerState<LessonPlayerScreen>
                           ],
                         ),
                       ),
-
-                      // Tab Views
                       Expanded(
                         child: TabBarView(
                           controller: _tabController,

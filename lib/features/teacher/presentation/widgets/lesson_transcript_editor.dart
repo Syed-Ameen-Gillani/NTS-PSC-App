@@ -222,7 +222,8 @@ class _LessonTranscriptEditorState
               onTapOutside: dismissKeyboardOnTapOutside,
               controller: _texts[i],
               textDirection: contentTextDirection(_texts[i].text),
-              textAlign: contentTextDirection(_texts[i].text) == TextDirection.rtl
+              textAlign:
+                  contentTextDirection(_texts[i].text) == TextDirection.rtl
                   ? TextAlign.right
                   : TextAlign.left,
               onChanged: (_) => _markDirty(),
@@ -244,16 +245,10 @@ class _LessonTranscriptEditorState
           ],
           SizedBox(
             width: double.infinity,
-            child: OutlinedButton.icon(
+            child: FilledButton.icon(
               onPressed: _save,
               icon: const Icon(Icons.save_outlined),
               label: const Text('Save transcript'),
-              style: OutlinedButton.styleFrom(
-                padding: EdgeInsets.symmetric(vertical: 12.h),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8.r),
-                ),
-              ),
             ),
           ),
         ],

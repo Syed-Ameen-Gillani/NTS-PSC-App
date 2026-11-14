@@ -68,6 +68,37 @@ class MyLearningScreen extends ConsumerWidget {
                       course.author.toLowerCase().contains(query),
                 )
                 .toList();
+            final header = Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                StudentTabHeader(
+                  title: 'My Learning',
+                  action: AppConfig.isSupabaseEnabled
+                      ? IconButton(
+                          tooltip: 'Downloads',
+                          icon: const Icon(Icons.download_outlined),
+                          onPressed: () =>
+                              context.pushNamed(AppRoute.offlineDownloads.name),
+                        )
+                      : null,
+                  search: CourseSearchField(
+                    key: ValueKey(studentId),
+                    initialValue: query,
+                    hintText: 'Search your courses',
+                    onChanged: ref.read(learningSearchProvider.notifier).update,
+                  ),
+                ),
+                SizedBox(height: 24.h),
+                CategoryFilterChips(
+                  filters: AppConfig.isSupabaseEnabled
+                      ? const ['Ongoing', 'Completed']
+                      : const ['Ongoing', 'Completed', 'Downloaded'],
+                  initialSelectedIndex: tab,
+                  onSelected: ref.read(myLearningTabProvider.notifier).select,
+                ),
+                SizedBox(height: 24.h),
+              ],
+            );
             return RefreshIndicator(
               onRefresh: () async {
                 if (AppConfig.isSupabaseEnabled) {
@@ -76,96 +107,79 @@ class MyLearningScreen extends ConsumerWidget {
                 ref.invalidate(myLearningControllerProvider);
                 await ref.read(myLearningControllerProvider.future);
               },
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    StudentTabHeader(
-                      title: 'My Learning',
-                      action: AppConfig.isSupabaseEnabled
-                          ? IconButton(
-                              tooltip: 'Downloads',
-                              icon: const Icon(Icons.download_outlined),
-                              onPressed: () => context.pushNamed(
-                                AppRoute.offlineDownloads.name,
+              child: courses.isEmpty
+                  ? CustomScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      slivers: [
+                        SliverToBoxAdapter(child: header),
+                        SliverFillRemaining(
+                          hasScrollBody: false,
+                          child: Center(
+                            child: Padding(
+                              padding: EdgeInsets.fromLTRB(24.w, 0, 24.w, 48.h),
+                              child: Text(
+                                query.isEmpty
+                                    ? 'No courses in this section'
+                                    : 'No courses match your search',
+                                textAlign: TextAlign.center,
                               ),
-                            )
-                          : null,
-                      search: CourseSearchField(
-                        key: ValueKey(studentId),
-                        initialValue: query,
-                        hintText: 'Search your courses',
-                        onChanged: ref
-                            .read(learningSearchProvider.notifier)
-                            .update,
-                      ),
-                    ),
-                    SizedBox(height: 24.h),
-                    CategoryFilterChips(
-                      filters: AppConfig.isSupabaseEnabled
-                          ? const ['Ongoing', 'Completed']
-                          : const ['Ongoing', 'Completed', 'Downloaded'],
-                      initialSelectedIndex: tab,
-                      onSelected: ref
-                          .read(myLearningTabProvider.notifier)
-                          .select,
-                    ),
-                    SizedBox(height: 24.h),
-                    if (courses.isEmpty)
-                      Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 24.w),
-                        child: Text(
-                          query.isEmpty
-                              ? 'No courses in this section'
-                              : 'No courses match your search',
+                            ),
+                          ),
                         ),
+                      ],
+                    )
+                  : SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          header,
+                          ListView.separated(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            padding: EdgeInsets.only(
+                              left: 24.w,
+                              right: 24.w,
+                              bottom: 48.h,
+                            ),
+                            itemCount: courses.length,
+                            separatorBuilder: (context, index) =>
+                                SizedBox(height: 16.h),
+                            itemBuilder: (context, index) {
+                              final course = courses[index];
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  HorizontalCourseCard(course: course),
+                                  if (course.learningComplete == true)
+                                    TextButton.icon(
+                                      onPressed: () => context.pushNamed(
+                                        AppRoute.courseCertificate.name,
+                                        queryParameters: {
+                                          'courseId': course.id,
+                                        },
+                                      ),
+                                      icon: const Icon(
+                                        Icons.workspace_premium_outlined,
+                                      ),
+                                      label: const Text('View certificate'),
+                                    ),
+                                  if (course.remainingAssessments > 0)
+                                    Padding(
+                                      padding: EdgeInsets.only(top: 8.h),
+                                      child: Text(
+                                        '${course.remainingAssessments} assessments still required',
+                                        style: AppTextStyles.interRegular14
+                                            .copyWith(color: AppColors.grey600),
+                                      ),
+                                    ),
+                                ],
+                              );
+                            },
+                          ),
+                        ],
                       ),
-                    ListView.separated(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      padding: EdgeInsets.only(
-                        left: 24.w,
-                        right: 24.w,
-                        bottom: 48.h,
-                      ),
-                      itemCount: courses.length,
-                      separatorBuilder: (context, index) =>
-                          SizedBox(height: 16.h),
-                      itemBuilder: (context, index) {
-                        final course = courses[index];
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            HorizontalCourseCard(course: course),
-                            if (course.learningComplete == true)
-                              TextButton.icon(
-                                onPressed: () => context.pushNamed(
-                                  AppRoute.courseCertificate.name,
-                                  queryParameters: {'courseId': course.id},
-                                ),
-                                icon: const Icon(
-                                  Icons.workspace_premium_outlined,
-                                ),
-                                label: const Text('View certificate'),
-                              ),
-                            if (course.remainingAssessments > 0)
-                              Padding(
-                                padding: EdgeInsets.only(top: 8.h),
-                                child: Text(
-                                  '${course.remainingAssessments} assessments still required',
-                                  style: AppTextStyles.interRegular14.copyWith(
-                                    color: AppColors.grey600,
-                                  ),
-                                ),
-                              ),
-                          ],
-                        );
-                      },
                     ),
-                  ],
-                ),
-              ),
             );
           },
           loading: () => const Center(child: CircularProgressIndicator()),

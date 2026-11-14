@@ -3,6 +3,7 @@ import 'package:nts_psc_app/core/networks/supabase_client.dart';
 import 'package:nts_psc_app/core/models/user_role.dart';
 import 'package:nts_psc_app/features/learn/data/learning_evidence_repository.dart';
 import 'dart:async';
+import 'dart:developer' as developer;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -35,6 +36,7 @@ class StudyVideoPlayer extends ConsumerWidget {
     this.onEnded,
     this.showStudyPanel = false,
     this.trackLearning = false,
+    this.recoveryState,
   });
   final VideoPlayerController controller;
   final String lessonId;
@@ -46,6 +48,7 @@ class StudyVideoPlayer extends ConsumerWidget {
   final VoidCallback? onEnded;
   final bool showStudyPanel;
   final bool trackLearning;
+  final VideoStudyState? recoveryState;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -62,7 +65,7 @@ class StudyVideoPlayer extends ConsumerWidget {
     }
     final scope = (userId: userId, lessonId: lessonId, source: source);
     return _StudySession(
-      key: ValueKey((controller, scope)),
+      key: ValueKey((controller, scope, trackLearning)),
       player: this,
       scope: scope,
     );
@@ -89,6 +92,7 @@ class _StudySessionState extends ConsumerState<_StudySession>
   bool _playing = false;
   int _savedSecond = -1;
   bool _ended = false;
+  String? _learningError;
 
   @override
   void initState() {
@@ -101,16 +105,70 @@ class _StudySessionState extends ConsumerState<_StudySession>
   Future<void> _restore(VideoStudyState saved) async {
     if (_restoring) return;
     _restoring = true;
+    var startAfterRestore = false;
     try {
+      if (widget.player.trackLearning) {
+        var durationMismatch = false;
+        try {
+          final session = await ref
+              .read(learningEvidenceRepositoryProvider)
+              .videoSession(
+                widget.player.lessonId,
+                source: widget.player.source,
+              );
+          if (session == null) {
+            throw StateError('No released video activity is available.');
+          }
+          final confirmedDuration = (session['units'] as num?)?.toInt() ?? 0;
+          final playbackDuration = video.value.duration.inMilliseconds;
+          developer.log(
+            'Video progress ready for lesson ${widget.player.lessonId}: '
+            'confirmedDurationMs=$confirmedDuration, '
+            'playbackDurationMs=$playbackDuration.',
+            name: 'CBOA.LearningProgress',
+          );
+          durationMismatch =
+              confirmedDuration <= 0 ||
+              playbackDuration <= 0 ||
+              confirmedDuration * 0.90 > playbackDuration + 3000;
+          if (durationMismatch) {
+            throw StateError(
+              'The confirmed video duration is inconsistent with playback.',
+            );
+          }
+          _learningError = null;
+        } catch (error, stackTrace) {
+          developer.log(
+            'Could not start video progress for lesson ${widget.player.lessonId}.',
+            name: 'CBOA.LearningProgress',
+            error: error,
+            stackTrace: stackTrace,
+          );
+          _learningError = durationMismatch
+              ? 'This video needs its duration checked by the instructor.'
+              : 'Progress is unavailable. Check your connection and retry before watching.';
+          return;
+        }
+        if (!mounted) return;
+      }
+      final recovery = widget.player.recoveryState;
+      final playback = recovery ?? saved;
       await video
-          .seekTo(saved.resumePosition(video.value.duration))
+          .seekTo(
+            recovery == null
+                ? saved.resumePosition(video.value.duration)
+                : boundedVideoSeek(
+                    Duration(milliseconds: recovery.positionMs),
+                    video.value.duration,
+                  ),
+          )
           .timeout(videoLoadTimeout);
       if (!mounted) return;
-      await video.setPlaybackSpeed(saved.speed).timeout(videoLoadTimeout);
+      await video.setPlaybackSpeed(playback.speed).timeout(videoLoadTimeout);
       if (!mounted) return;
-      await video.setVolume(saved.volume).timeout(videoLoadTimeout);
+      await video.setVolume(playback.volume).timeout(videoLoadTimeout);
       if (!mounted) return;
-      ref.read(videoCaptionsProvider(video).notifier).state = saved.captions;
+      ref.read(videoCaptionsProvider(video).notifier).state = playback.captions;
       if (AppConfig.isSupabaseEnabled &&
           ref.read(authControllerProvider).value?.user?.role ==
               UserRole.teacher &&
@@ -126,13 +184,18 @@ class _StudySessionState extends ConsumerState<_StudySession>
               .catchError((Object _) {}),
         );
       }
-      if (widget.player.autoPlay) await video.play();
+      startAfterRestore = widget.player.autoPlay;
     } catch (_) {
       // A platform seek or disk failure must not lock the playback surface.
     } finally {
       if (mounted) {
         _ready = true;
         ref.read(_restoredVideo(_identity).notifier).state = true;
+        if (startAfterRestore) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted && _learningError == null) unawaited(video.play());
+          });
+        }
       }
     }
   }
@@ -141,7 +204,9 @@ class _StudySessionState extends ConsumerState<_StudySession>
     if (!_ready || !mounted) return;
     final value = video.value;
     final second = value.position.inSeconds;
-    final paused = _playing && !value.isPlaying;
+    // Native buffering can temporarily clear isPlaying. It isn't a user pause
+    // and must not enqueue a disk write/rebuild for every short underrun.
+    final paused = _playing && !value.isPlaying && !value.isBuffering;
     _playing = value.isPlaying;
     if (value.position < value.duration) _ended = false;
     if (!_ended &&
@@ -214,6 +279,16 @@ class _StudySessionState extends ConsumerState<_StudySession>
       });
     }
     if (!ready) return const VideoPlayerStatus(loading: true);
+    if (_learningError != null) {
+      return VideoPlayerStatus(
+        message: _learningError!,
+        onRetry: () {
+          _restoring = false;
+          _ready = false;
+          ref.read(_restoredVideo(_identity).notifier).state = false;
+        },
+      );
+    }
     final playerWidget = ProfessionalVideoPlayer(
       controller: video,
       title: widget.player.title,

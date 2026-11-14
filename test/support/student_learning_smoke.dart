@@ -49,9 +49,7 @@ class _SessionRepository extends SupabaseQuizRepository {
 }
 
 void runStudentLearningSmoke() {
-  testWidgets('quiz exit, answer save, result and return flow', (
-    tester,
-  ) async {
+  testWidgets('quiz exit, answer save, result and return flow', (tester) async {
     AppConfig.isSupabaseEnabled = false;
     final quiz = QuizModel(
       id: 'quiz',
@@ -180,8 +178,7 @@ void runStudentLearningSmoke() {
     expect(find.text('Assessment Results'), findsOneWidget);
     expect(repository.finishes, 1);
     expect(repository.answers, {'one': 1, 'two': 1});
-    await tester.ensureVisible(find.text('Continue learning'));
-    await tester.tap(find.text('Continue learning'));
+    await tester.tap(find.byTooltip('Close results'));
     await tester.pumpAndSettle(
       const Duration(milliseconds: 100),
       EnginePhase.sendSemanticsUpdate,

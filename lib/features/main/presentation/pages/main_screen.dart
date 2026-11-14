@@ -23,8 +23,22 @@ class MainScreen extends ConsumerStatefulWidget {
   ConsumerState<MainScreen> createState() => _MainScreenState();
 }
 
-class _MainScreenState extends ConsumerState<MainScreen> {
-  int _currentIndex = 0;
+class _MainScreenState extends ConsumerState<MainScreen> with RestorationMixin {
+  final _currentIndex = RestorableInt(0);
+
+  @override
+  String get restorationId => 'student-main';
+
+  @override
+  void restoreState(RestorationBucket? oldBucket, bool initialRestore) {
+    registerForRestoration(_currentIndex, 'tab');
+  }
+
+  @override
+  void dispose() {
+    _currentIndex.dispose();
+    super.dispose();
+  }
 
   final List<Widget> _screens = [
     const HomeScreen(),
@@ -36,9 +50,12 @@ class _MainScreenState extends ConsumerState<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isGuest = AppConfig.isSupabaseEnabled &&
+    final isGuest =
+        AppConfig.isSupabaseEnabled &&
         ref.watch(authControllerProvider).value?.user == null;
-    final currentIndex = isGuest ? _currentIndex.clamp(0, 1) : _currentIndex;
+    final currentIndex = isGuest
+        ? _currentIndex.value.clamp(0, 1)
+        : _currentIndex.value;
     return AppScaffold(
       body: IndexedStack(
         index: currentIndex,
@@ -46,7 +63,9 @@ class _MainScreenState extends ConsumerState<MainScreen> {
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          border: Border(top: BorderSide(color: AppColors.grey300, width: 1.w)),
+          border: Border(
+            top: BorderSide(color: AppColors.grey300, width: 1.w),
+          ),
         ),
         child: Theme(
           data: Theme.of(context).copyWith(
@@ -54,108 +73,142 @@ class _MainScreenState extends ConsumerState<MainScreen> {
             highlightColor: Colors.transparent,
           ),
           child: BottomNavigationBar(
-          currentIndex: currentIndex,
-          onTap: (index) {
-            if (isGuest && index == 2) {
-              context.pushNamed(AppRoute.login.name);
-              return;
-            }
-            setState(() {
-              _currentIndex = index;
-            });
-          },
-          type: BottomNavigationBarType.fixed,
-          backgroundColor: Colors.white,
-          selectedItemColor: AppColors.primary,
-          unselectedItemColor: AppColors.grey500,
-          selectedLabelStyle: AppTextStyles.interMedium16.copyWith(fontSize: 10.sp),
-          unselectedLabelStyle: AppTextStyles.interRegular14.copyWith(fontSize: 10.sp),
-          items: [
-            BottomNavigationBarItem(
-              icon: SvgPicture.asset(
-                AppAssets.homeIcon,
-                width: 24,
-                height: 24,
-                colorFilter: const ColorFilter.mode(AppColors.grey500, BlendMode.srcIn),
-              ),
-              activeIcon: SvgPicture.asset(
-                AppAssets.homeIcon,
-                width: 24,
-                height: 24,
-                colorFilter: const ColorFilter.mode(AppColors.primary, BlendMode.srcIn),
-              ),
-              label: 'Home',
+            currentIndex: currentIndex,
+            onTap: (index) {
+              if (isGuest && index == 2) {
+                context.pushNamed(AppRoute.login.name);
+                return;
+              }
+              setState(() {
+                _currentIndex.value = index;
+              });
+            },
+            type: BottomNavigationBarType.fixed,
+            backgroundColor: Colors.white,
+            selectedItemColor: AppColors.primary,
+            unselectedItemColor: AppColors.grey500,
+            selectedLabelStyle: AppTextStyles.interMedium16.copyWith(
+              fontSize: 10.sp,
             ),
-            BottomNavigationBarItem(
-              icon: SvgPicture.asset(
-                AppAssets.discoverIcon,
-                width: 24,
-                height: 24,
-                colorFilter: const ColorFilter.mode(AppColors.grey500, BlendMode.srcIn),
-              ),
-              activeIcon: SvgPicture.asset(
-                AppAssets.discoverIcon,
-                width: 24,
-                height: 24,
-                colorFilter: const ColorFilter.mode(AppColors.primary, BlendMode.srcIn),
-              ),
-              label: 'Discover',
+            unselectedLabelStyle: AppTextStyles.interRegular14.copyWith(
+              fontSize: 10.sp,
             ),
-            if (isGuest)
-              const BottomNavigationBarItem(
-                icon: Icon(Icons.login_outlined),
-                label: 'Sign In',
+            items: [
+              BottomNavigationBarItem(
+                icon: SvgPicture.asset(
+                  AppAssets.homeIcon,
+                  width: 24,
+                  height: 24,
+                  colorFilter: const ColorFilter.mode(
+                    AppColors.grey500,
+                    BlendMode.srcIn,
+                  ),
+                ),
+                activeIcon: SvgPicture.asset(
+                  AppAssets.homeIcon,
+                  width: 24,
+                  height: 24,
+                  colorFilter: const ColorFilter.mode(
+                    AppColors.primary,
+                    BlendMode.srcIn,
+                  ),
+                ),
+                label: 'Home',
               ),
-            if (!isGuest) ...[
-            BottomNavigationBarItem(
-              icon: SvgPicture.asset(
-                AppAssets.learnIcon,
-                width: 24,
-                height: 24,
-                colorFilter: const ColorFilter.mode(AppColors.grey500, BlendMode.srcIn),
+              BottomNavigationBarItem(
+                icon: SvgPicture.asset(
+                  AppAssets.discoverIcon,
+                  width: 24,
+                  height: 24,
+                  colorFilter: const ColorFilter.mode(
+                    AppColors.grey500,
+                    BlendMode.srcIn,
+                  ),
+                ),
+                activeIcon: SvgPicture.asset(
+                  AppAssets.discoverIcon,
+                  width: 24,
+                  height: 24,
+                  colorFilter: const ColorFilter.mode(
+                    AppColors.primary,
+                    BlendMode.srcIn,
+                  ),
+                ),
+                label: 'Discover',
               ),
-              activeIcon: SvgPicture.asset(
-                AppAssets.learnIcon,
-                width: 24,
-                height: 24,
-                colorFilter: const ColorFilter.mode(AppColors.primary, BlendMode.srcIn),
-              ),
-              label: 'Learn',
-            ),
-            BottomNavigationBarItem(
-              icon: SvgPicture.asset(
-                AppAssets.quizzIcon,
-                width: 24,
-                height: 24,
-                colorFilter: const ColorFilter.mode(AppColors.grey500, BlendMode.srcIn),
-              ),
-              activeIcon: SvgPicture.asset(
-                AppAssets.quizzIcon,
-                width: 24,
-                height: 24,
-                colorFilter: const ColorFilter.mode(AppColors.primary, BlendMode.srcIn),
-              ),
-              label: 'Quizzes',
-            ),
-            BottomNavigationBarItem(
-              icon: SvgPicture.asset(
-                AppAssets.profileIcon,
-                width: 24,
-                height: 24,
-                colorFilter: const ColorFilter.mode(AppColors.grey500, BlendMode.srcIn),
-              ),
-              activeIcon: SvgPicture.asset(
-                AppAssets.profileIcon,
-                width: 24,
-                height: 24,
-                colorFilter: const ColorFilter.mode(AppColors.primary, BlendMode.srcIn),
-              ),
-              label: 'Profile',
-            ),
+              if (isGuest)
+                const BottomNavigationBarItem(
+                  icon: Icon(Icons.login_outlined),
+                  label: 'Sign In',
+                ),
+              if (!isGuest) ...[
+                BottomNavigationBarItem(
+                  icon: SvgPicture.asset(
+                    AppAssets.learnIcon,
+                    width: 24,
+                    height: 24,
+                    colorFilter: const ColorFilter.mode(
+                      AppColors.grey500,
+                      BlendMode.srcIn,
+                    ),
+                  ),
+                  activeIcon: SvgPicture.asset(
+                    AppAssets.learnIcon,
+                    width: 24,
+                    height: 24,
+                    colorFilter: const ColorFilter.mode(
+                      AppColors.primary,
+                      BlendMode.srcIn,
+                    ),
+                  ),
+                  label: 'Learn',
+                ),
+                BottomNavigationBarItem(
+                  icon: SvgPicture.asset(
+                    AppAssets.quizzIcon,
+                    width: 24,
+                    height: 24,
+                    colorFilter: const ColorFilter.mode(
+                      AppColors.grey500,
+                      BlendMode.srcIn,
+                    ),
+                  ),
+                  activeIcon: SvgPicture.asset(
+                    AppAssets.quizzIcon,
+                    width: 24,
+                    height: 24,
+                    colorFilter: const ColorFilter.mode(
+                      AppColors.primary,
+                      BlendMode.srcIn,
+                    ),
+                  ),
+                  label: 'Quizzes',
+                ),
+                BottomNavigationBarItem(
+                  icon: SvgPicture.asset(
+                    AppAssets.profileIcon,
+                    width: 24,
+                    height: 24,
+                    colorFilter: const ColorFilter.mode(
+                      AppColors.grey500,
+                      BlendMode.srcIn,
+                    ),
+                  ),
+                  activeIcon: SvgPicture.asset(
+                    AppAssets.profileIcon,
+                    width: 24,
+                    height: 24,
+                    colorFilter: const ColorFilter.mode(
+                      AppColors.primary,
+                      BlendMode.srcIn,
+                    ),
+                  ),
+                  label: 'Profile',
+                ),
+              ],
             ],
-          ],
+          ),
         ),
-      ),
       ),
     );
   }

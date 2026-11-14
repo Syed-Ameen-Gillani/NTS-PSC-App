@@ -20,8 +20,42 @@ final teacherMainTabProvider = NotifierProvider<TeacherMainTab, int>(
   TeacherMainTab.new,
 );
 
-class TeacherMainScreen extends ConsumerWidget {
+class TeacherMainScreen extends ConsumerStatefulWidget {
   const TeacherMainScreen({super.key});
+
+  @override
+  ConsumerState<TeacherMainScreen> createState() => _TeacherMainScreenState();
+}
+
+class _TeacherMainScreenState extends ConsumerState<TeacherMainScreen>
+    with RestorationMixin {
+  late final RestorableInt _currentIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = RestorableInt(ref.read(teacherMainTabProvider));
+  }
+
+  @override
+  String get restorationId => 'teacher-main';
+
+  @override
+  void restoreState(RestorationBucket? oldBucket, bool initialRestore) {
+    registerForRestoration(_currentIndex, 'tab');
+    // Publish after restoration so programmatic tab switches keep working.
+    Future.microtask(() {
+      if (mounted) {
+        ref.read(teacherMainTabProvider.notifier).select(_currentIndex.value);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _currentIndex.dispose();
+    super.dispose();
+  }
 
   static const _screens = [
     TeacherDashboardScreen(),
@@ -31,8 +65,13 @@ class TeacherMainScreen extends ConsumerWidget {
   ];
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final currentIndex = ref.watch(teacherMainTabProvider);
+  Widget build(BuildContext context) {
+    ref.listen(teacherMainTabProvider, (_, next) {
+      if (next != _currentIndex.value) {
+        setState(() => _currentIndex.value = next);
+      }
+    });
+    final currentIndex = _currentIndex.value;
     return AppScaffold(
       body: IndexedStack(index: currentIndex, children: _screens),
       bottomNavigationBar: Container(

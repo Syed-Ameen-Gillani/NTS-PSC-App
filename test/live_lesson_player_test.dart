@@ -1,8 +1,9 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nts_psc_app/core/models/app_models.dart';
+import 'package:nts_psc_app/features/learn/domain/lesson_player_mode.dart';
 import 'package:nts_psc_app/features/learn/presentation/pages/live_lesson_player_screen.dart';
 
 void main() {
@@ -44,14 +45,39 @@ void main() {
     );
     await tester.pump();
 
+    expect(find.byType(AppBar), findsNothing);
+    expect(find.byTooltip('Back'), findsOneWidget);
     expect(find.text('Introduction'), findsWidgets);
     expect(find.text('Read the syllabus first.'), findsOneWidget);
     expect(find.text('No video attached'), findsNothing);
-    expect(find.text('Lesson completed'), findsOneWidget);
+    expect(find.text('Completed'), findsOneWidget);
     expect(
       find.text('Module 1: Constitutional & Administrative Framework'),
       findsNothing,
     );
   });
-}
 
+  test('preview playback does not track until the course is enrolled', () {
+    expect(
+      shouldTrackLessonProgress(
+        mode: LessonPlayerMode.learning,
+        hasEntitlement: false,
+      ),
+      isFalse,
+    );
+    expect(
+      shouldTrackLessonProgress(
+        mode: LessonPlayerMode.learning,
+        hasEntitlement: true,
+      ),
+      isTrue,
+    );
+    expect(
+      shouldTrackLessonProgress(
+        mode: LessonPlayerMode.instructorPreview,
+        hasEntitlement: true,
+      ),
+      isFalse,
+    );
+  });
+}

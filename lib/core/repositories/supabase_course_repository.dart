@@ -125,8 +125,38 @@ class SupabaseCourseRepository implements CourseRepository {
     );
   }
 
-  /// Returns one published search page. The RPC searches course, category and
-  /// instructor text, and the regular catalog loader applies RLS to details.
+  /// Loads the server-ranked page through the existing catalog access checks.
+  Future<List<CourseModel>> getRecommendedCoursesPage({
+    required int offset,
+    int limit = 20,
+  }) async {
+    final owner = _client.auth.currentUser?.id;
+    final rows =
+        await _client.rpc(
+              'recommended_course_ids',
+              params: {'p_limit': limit, 'p_offset': offset},
+            )
+            as List;
+    if (_client.auth.currentUser?.id != owner) {
+      throw StateError('Account changed.');
+    }
+    final ids = [for (final row in rows) row['course_id'] as String];
+    if (ids.isEmpty) return [];
+    final courses = await _loadCourses(
+      publishedOnly: true,
+      courseIds: ids,
+      includeProgress: true,
+    );
+    if (_client.auth.currentUser?.id != owner) {
+      throw StateError('Account changed.');
+    }
+    final byId = {for (final course in courses) course.id: course};
+    return [
+      for (final id in ids)
+        if (byId[id] != null) byId[id]!,
+    ];
+  }
+
   Future<List<CourseModel>> searchPublishedCourses(
     String query, {
     required int offset,

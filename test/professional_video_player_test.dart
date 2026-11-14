@@ -128,31 +128,27 @@ void main() {
     },
   );
 
-  testWidgets(
-    'quality menu reports the actual source without fake resolutions',
-    (tester) async {
-      final video = FakeVideoController();
-      addTearDown(video.dispose);
-      await video.seekTo(const Duration(seconds: 25));
-      await tester.pumpWidget(_app(ProfessionalVideoPlayer(controller: video)));
-      await tester.tap(find.byTooltip('Video quality'));
-      await tester.pumpAndSettle();
-      expect(find.text('Original (720p)'), findsOneWidget);
-      expect(find.text('1080p'), findsNothing);
-      expect(find.text('360p'), findsNothing);
-      await tester.tap(
-        find.widgetWithText(CheckedPopupMenuItem<String>, 'Original (720p)'),
-      );
-      await tester.pumpAndSettle();
-      expect(video.value.position, const Duration(seconds: 25));
-      expect(video.seeks, [const Duration(seconds: 25)]);
-      expect(
-        VideoQualityMenu.sourceLabel(const Size(1080, 1920)),
-        'Original (1080p)',
-      );
-      expect(VideoQualityMenu.sourceLabel(Size.zero), 'Original');
-    },
-  );
+  testWidgets('player hides quality and duplicate seek-row playback controls', (
+    tester,
+  ) async {
+    final video = FakeVideoController();
+    addTearDown(video.dispose);
+    await video.seekTo(const Duration(seconds: 25));
+    await tester.pumpWidget(_app(ProfessionalVideoPlayer(controller: video)));
+    expect(find.byTooltip('Video quality'), findsNothing);
+    expect(find.byTooltip('Play video'), findsNothing);
+    expect(find.byTooltip('Pause video'), findsNothing);
+    expect(find.byTooltip('Play'), findsOneWidget);
+    expect(find.text('1080p'), findsNothing);
+    expect(find.text('360p'), findsNothing);
+    expect(video.value.position, const Duration(seconds: 25));
+    expect(video.seeks, [const Duration(seconds: 25)]);
+    expect(
+      VideoQualityMenu.sourceLabel(const Size(1080, 1920)),
+      'Original (1080p)',
+    );
+    expect(VideoQualityMenu.sourceLabel(Size.zero), 'Original');
+  });
 
   testWidgets(
     'mute restores the previous level and keyboard volume is bounded',
@@ -183,7 +179,7 @@ void main() {
   );
 
   testWidgets(
-    'buffering reveals controls and prevents auto-hide until recovery',
+    'buffering shows a debounced spinner without revealing controls',
     (tester) async {
       final video = FakeVideoController();
       addTearDown(video.dispose);
@@ -196,13 +192,29 @@ void main() {
       );
       video.value = video.value.copyWith(isBuffering: true);
       await tester.pump();
-      await tester.pump(const Duration(seconds: 5));
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
       expect(
         tester.widget<AnimatedOpacity>(find.byType(AnimatedOpacity)).opacity,
-        1,
+        0,
+      );
+      // Native buffering may temporarily report not-playing. It must not be
+      // interpreted as the learner deliberately pausing.
+      video.value = video.value.copyWith(isPlaying: false);
+      await tester.pump();
+      expect(
+        tester.widget<AnimatedOpacity>(find.byType(AnimatedOpacity)).opacity,
+        0,
       );
       video.value = video.value.copyWith(isBuffering: false);
       await tester.pump();
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+      expect(
+        tester.widget<AnimatedOpacity>(find.byType(AnimatedOpacity)).opacity,
+        0,
+      );
+      await video.play();
       await tester.pump(const Duration(seconds: 4));
       expect(
         tester.widget<AnimatedOpacity>(find.byType(AnimatedOpacity)).opacity,
@@ -210,6 +222,100 @@ void main() {
       );
     },
   );
+
+  testWidgets(
+    'brief buffers do not flash a spinner and timers cancel on disposal',
+    (tester) async {
+      final video = FakeVideoController();
+      addTearDown(video.dispose);
+      await video.play();
+      await tester.pumpWidget(_app(ProfessionalVideoPlayer(controller: video)));
+      video.value = video.value.copyWith(isBuffering: true);
+      await tester.pump(const Duration(milliseconds: 100));
+      video.value = video.value.copyWith(isBuffering: false);
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+      video.value = video.value.copyWith(isBuffering: true);
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump(const Duration(seconds: 20));
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets('tapping during buffering keeps only the spinner visible', (
+    tester,
+  ) async {
+    final video = FakeVideoController();
+    addTearDown(video.dispose);
+    await video.play();
+    await tester.pumpWidget(_app(ProfessionalVideoPlayer(controller: video)));
+    video.value = video.value.copyWith(isBuffering: true);
+    await tester.pump(const Duration(milliseconds: 350));
+    await tester.tapAt(
+      tester.getTopLeft(find.byType(ProfessionalVideoPlayer)) +
+          const Offset(8, 64),
+    );
+    await tester.pump(const Duration(milliseconds: 350));
+    expect(
+      tester.widget<AnimatedOpacity>(find.byType(AnimatedOpacity)).opacity,
+      0,
+    );
+    await tester.pump(const Duration(seconds: 4));
+    expect(
+      tester.widget<AnimatedOpacity>(find.byType(AnimatedOpacity)).opacity,
+      0,
+    );
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    await tester.pump(const Duration(seconds: 12));
+    expect(
+      find.text('Taking longer than expected. Check your connection.'),
+      findsNothing,
+    );
+    video.value = video.value.copyWith(isBuffering: false);
+    await tester.pump();
+    expect(
+      find.text('Taking longer than expected. Check your connection.'),
+      findsNothing,
+    );
+  });
+
+  testWidgets('paused and ended videos do not show a buffering spinner', (
+    tester,
+  ) async {
+    final video = FakeVideoController();
+    addTearDown(video.dispose);
+    video.value = video.value.copyWith(isBuffering: true);
+    await tester.pumpWidget(_app(ProfessionalVideoPlayer(controller: video)));
+    await tester.pump(const Duration(seconds: 1));
+    expect(find.byType(CircularProgressIndicator), findsNothing);
+    video.value = video.value.copyWith(
+      isPlaying: true,
+      position: video.value.duration,
+    );
+    await tester.pump(const Duration(seconds: 1));
+    expect(find.byType(CircularProgressIndicator), findsNothing);
+  });
+
+  testWidgets('pause during a native buffering pause clears playback intent', (
+    tester,
+  ) async {
+    final video = FakeVideoController();
+    addTearDown(video.dispose);
+    await video.play();
+    await tester.pumpWidget(_app(ProfessionalVideoPlayer(controller: video)));
+    video.value = video.value.copyWith(isBuffering: true, isPlaying: false);
+    await tester.pump(const Duration(milliseconds: 350));
+    await tester.tapAt(
+      tester.getTopLeft(find.byType(ProfessionalVideoPlayer)) +
+          const Offset(8, 64),
+    );
+    await tester.pump(const Duration(milliseconds: 350));
+    await tester.sendKeyEvent(LogicalKeyboardKey.space);
+    await tester.pump(const Duration(milliseconds: 350));
+    expect(VideoPlayerSession.playbackRequested(video), false);
+    expect(video.value.isPlaying, false);
+    expect(find.byType(CircularProgressIndicator), findsNothing);
+  });
 
   testWidgets('captions are only available for supplied transcript segments', (
     tester,
@@ -231,6 +337,20 @@ void main() {
     await tester.tap(find.byTooltip('Captions'));
     await tester.pump();
     expect(find.text('Actual lesson caption'), findsOneWidget);
+    final captionText = find.text('Actual lesson caption');
+    final shownRect = tester.getRect(captionText);
+    final captionBox = find
+        .ancestor(of: captionText, matching: find.byType(Container))
+        .first;
+    final frame = tester.getRect(find.byType(ProfessionalVideoPlayer));
+    expect(
+      frame.bottom - tester.getRect(captionBox).bottom,
+      closeTo(3.r + 2, 0.01),
+    );
+    await video.play();
+    await tester.pump(const Duration(seconds: 4));
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(tester.getRect(captionText), shownRect);
     video.value = video.value.copyWith(position: const Duration(seconds: 40));
     await tester.pump();
     expect(find.text('Actual lesson caption'), findsNothing);
@@ -296,12 +416,14 @@ void main() {
     final video = FakeVideoController();
     addTearDown(video.dispose);
     var retries = 0;
+    await video.play();
     video.value = video.value.copyWith(isBuffering: true);
     await tester.pumpWidget(
       _app(
         ProfessionalVideoPlayer(controller: video, onRetry: () => retries++),
       ),
     );
+    await tester.pump(const Duration(milliseconds: 350));
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
     expect(find.byTooltip('Captions'), findsNothing);
     video.value = video.value.copyWith(errorDescription: 'Decoder failed');
@@ -370,6 +492,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('Fullscreen'));
     await tester.pumpAndSettle();
+    expect(VideoPlayerSession.isFullscreen(video), isTrue);
     expect(
       tester
           .widget<ProfessionalVideoPlayer>(
@@ -380,6 +503,7 @@ void main() {
     );
     await tester.tap(find.byTooltip('Exit fullscreen').first);
     await tester.pumpAndSettle();
+    expect(VideoPlayerSession.isFullscreen(video), isFalse);
     expect(video.value.position, const Duration(seconds: 25));
     expect(video.value.playbackSpeed, 1.5);
     expect(video.value.volume, 0);

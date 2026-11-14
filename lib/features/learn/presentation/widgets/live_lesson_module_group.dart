@@ -6,6 +6,7 @@ import 'package:nts_psc_app/core/theme/app_text_styles.dart';
 import 'package:nts_psc_app/features/curriculum/domain/curriculum_models.dart';
 import 'lesson_curriculum_activity_rows.dart';
 import 'lesson_curriculum_tile.dart';
+import 'package:nts_psc_app/presentation/widgets/module_accordion.dart';
 
 class LiveLessonModuleGroup extends StatelessWidget {
   const LiveLessonModuleGroup({
@@ -28,88 +29,131 @@ class LiveLessonModuleGroup extends StatelessWidget {
   final bool isInstructorPreview;
 
   @override
-  Widget build(BuildContext context) => Material(
-    color: AppColors.background,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(8.r),
-      side: const BorderSide(color: AppColors.grey300),
-    ),
-    clipBehavior: Clip.antiAlias,
-    child: Column(
-      children: [
-        Padding(
-          padding: EdgeInsets.fromLTRB(14.w, 12.h, 8.w, 12.h),
-          child: Row(
-            children: [
-              Container(
-                width: 28.w,
-                height: 28.w,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceVariant,
-                  borderRadius: BorderRadius.circular(6.r),
+  Widget build(BuildContext context) {
+    final moduleCompleted =
+        module.lessons.isNotEmpty &&
+        module.lessons.every(
+          (lesson) => completedLessonIds.contains(lesson.id),
+        );
+    return Material(
+      color: AppColors.background,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8.r),
+        side: const BorderSide(color: AppColors.grey300),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ModuleAccordionEntry(
+          moduleId: module.id,
+          initiallyExpanded: true,
+          builder: (context, controller, expanded, onChanged) => ExpansionTile(
+            controller: controller,
+            initiallyExpanded: expanded,
+            onExpansionChanged: onChanged,
+            tilePadding: EdgeInsets.zero,
+            trailing: Padding(
+              padding: EdgeInsets.only(right: 14.w, bottom: 14.h),
+              child: AnimatedRotation(
+                turns: expanded ? 0.5 : 0,
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeInOut,
+                child: Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  size: 22.w,
+                  color: AppColors.onBackground,
                 ),
-                child: Text(
-                  '$moduleNumber',
-                  style: AppTextStyles.interSemiBold16.copyWith(
-                    fontSize: 11.sp,
-                    color: AppColors.primary,
+              ),
+            ),
+            title: Padding(
+              padding: EdgeInsets.fromLTRB(14.w, 12.h, 8.w, 12.h),
+              child: Row(
+                children: [
+                  Container(
+                    key: !expanded && moduleCompleted
+                        ? ValueKey('completed-module-${module.id}')
+                        : null,
+                    width: 28.w,
+                    height: 28.w,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceVariant,
+                      borderRadius: BorderRadius.circular(6.r),
+                    ),
+                    child: !expanded && moduleCompleted
+                        ? Icon(
+                            Icons.check_circle_rounded,
+                            semanticLabel: 'Module completed',
+                            size: 20.w,
+                            color: AppColors.success,
+                          )
+                        : Text(
+                            '$moduleNumber',
+                            style: AppTextStyles.interSemiBold16.copyWith(
+                              fontSize: 11.sp,
+                              color: AppColors.primary,
+                            ),
+                          ),
                   ),
-                ),
-              ),
-              SizedBox(width: 10.w),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      module.title,
-                      style: AppTextStyles.interSemiBold16.copyWith(
-                        fontSize: 13.sp,
-                        color: AppColors.onBackground,
-                      ),
+                  SizedBox(width: 10.w),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          module.title,
+                          style: AppTextStyles.interSemiBold16.copyWith(
+                            fontSize: 13.sp,
+                            color: AppColors.onBackground,
+                          ),
+                        ),
+                        SizedBox(height: 2.h),
+                        Text(
+                          '${module.lessons.length} ${module.lessons.length == 1 ? 'lesson' : 'lessons'}',
+                          style: AppTextStyles.interRegular14.copyWith(
+                            fontSize: 10.sp,
+                            color: AppColors.grey500,
+                          ),
+                        ),
+                      ],
                     ),
-                    SizedBox(height: 2.h),
-                    Text(
-                      '${module.lessons.length} ${module.lessons.length == 1 ? 'lesson' : 'lessons'}',
-                      style: AppTextStyles.interRegular14.copyWith(
-                        fontSize: 10.sp,
-                        color: AppColors.grey500,
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
+            ),
+            children: [
+              const Divider(height: 1, color: AppColors.grey300),
+              for (var index = 0; index < module.lessons.length; index++) ...[
+                _LessonRow(
+                  lesson: module.lessons[index],
+                  indexLabel: '$moduleNumber.${index + 1}',
+                  selected: module.lessons[index].id == currentLesson.id,
+                  complete: completedLessonIds.contains(
+                    module.lessons[index].id,
+                  ),
+                  onTap: () => onSelectLesson(module.lessons[index]),
+                ),
+                LessonCurriculumActivityRows(
+                  scope: CurriculumScope(
+                    courseId: courseId,
+                    moduleId: module.id,
+                    lessonId: module.lessons[index].id,
+                  ),
+                  lesson: module.lessons[index],
+                  isInstructorPreview: isInstructorPreview,
+                ),
+                if (index != module.lessons.length - 1)
+                  Padding(
+                    padding: EdgeInsets.only(left: 52.w),
+                    child: const Divider(height: 1, color: AppColors.grey200),
+                  ),
+              ],
             ],
           ),
         ),
-        const Divider(height: 1, color: AppColors.grey300),
-        for (var index = 0; index < module.lessons.length; index++) ...[
-          _LessonRow(
-            lesson: module.lessons[index],
-            indexLabel: '$moduleNumber.${index + 1}',
-            selected: module.lessons[index].id == currentLesson.id,
-            complete: completedLessonIds.contains(module.lessons[index].id),
-            onTap: () => onSelectLesson(module.lessons[index]),
-          ),
-          LessonCurriculumActivityRows(
-            scope: CurriculumScope(
-              courseId: courseId,
-              moduleId: module.id,
-              lessonId: module.lessons[index].id,
-            ),
-            lesson: module.lessons[index],
-            isInstructorPreview: isInstructorPreview,
-          ),
-          if (index != module.lessons.length - 1)
-            Padding(
-              padding: EdgeInsets.only(left: 52.w),
-              child: const Divider(height: 1, color: AppColors.grey200),
-            ),
-        ],
-      ],
-    ),
-  );
+      ),
+    );
+  }
 }
 
 class _LessonRow extends StatelessWidget {

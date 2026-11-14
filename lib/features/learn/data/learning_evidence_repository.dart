@@ -186,13 +186,17 @@ class LearningEvidenceRepository {
     );
     if (cached != null) return Map<String, dynamic>.from(cached);
     final state = await outcome(lesson);
-    final activity = (state['activities'] as List)
-        .cast<Map>()
-        .where((a) => a['kind'] == 'video')
-        .firstOrNull;
-    if (activity == null) return null;
-    if (source != null && activity['source'] != source) {
-      throw StateError('This lesson changed. Reopen it to continue.');
+    final videos = (state['activities'] as List).cast<Map>().where(
+      (a) => a['kind'] == 'video',
+    );
+    final activity = source == null
+        ? videos.firstOrNull
+        : videos.where((a) => a['source'] == source).firstOrNull;
+    if (activity == null) {
+      if (videos.isNotEmpty) {
+        throw StateError('This lesson video changed. Reopen it to continue.');
+      }
+      return null;
     }
     return session(lesson, activity['id'] as String);
   }
@@ -214,7 +218,9 @@ class LearningEvidenceRepository {
       }
       final key = '${ticket['lesson_id']}:${ticket['activity_id']}';
       final current = (data['tickets'] as Map)[key] as Map?;
-      if (current == null || current['id'] != ticket['id']) return;
+      if (current == null || current['id'] != ticket['id']) {
+        throw StateError('Playback session changed. Reopen this lesson.');
+      }
       events.add({
         'session_id': current['id'],
         'sequence': current['next_sequence'],
@@ -227,11 +233,27 @@ class LearningEvidenceRepository {
     });
   }
 
-  static final _syncing = <String>{};
+  static final _syncing = <String, Future<void>>{};
 
   Future<void> sync() async {
     final owner = user;
-    if (owner == null || !_syncing.add(owner)) return;
+    if (owner == null) return;
+    // A pause/end boundary must wait for an in-flight request, then drain any
+    // samples appended while that request was finishing.
+    final previous = _syncing[owner];
+    final operation = () async {
+      if (previous != null) await previous;
+      if (user == owner) await _syncOwner(owner);
+    }();
+    _syncing[owner] = operation;
+    try {
+      await operation;
+    } finally {
+      if (identical(_syncing[owner], operation)) _syncing.remove(owner);
+    }
+  }
+
+  Future<void> _syncOwner(String owner) async {
     try {
       await _syncMaterialOpens(owner);
       // Lease a batch under the local lock, then release the file before I/O.
@@ -272,6 +294,16 @@ class LearningEvidenceRepository {
               data.putIfAbsent('announced', () => <String, dynamic>{}) as Map;
           for (var i = 0; i < results.length; i++) {
             final result = results[i] as Map;
+            if (result['accepted'] == true &&
+                (result['activity_completed'] == true ||
+                    result['lesson_completed'] == true)) {
+              developer.log(
+                'Evidence accepted for lesson ${result['lesson_id']}: '
+                'activityCompleted=${result['activity_completed']}, '
+                'lessonCompleted=${result['lesson_completed']}.',
+                name: 'CBOA.LearningProgress',
+              );
+            }
             if (result['accepted'] != true) {
               developer.log(
                 'Playback sample rejected: ${result['message']}',
@@ -333,8 +365,6 @@ class LearningEvidenceRepository {
       );
       // Lost responses retry the same identities. Confirmed server progress is
       // never inferred from an optimistic client result or an erased queue.
-    } finally {
-      _syncing.remove(owner);
     }
   }
 

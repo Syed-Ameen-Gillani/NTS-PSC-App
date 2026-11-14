@@ -9,30 +9,45 @@ class CustomToast {
   static OverlayEntry? _activeEntry;
   static Timer? _dismissTimer;
 
-  static void showSuccess(BuildContext context, {required String message}) {
+  static void showSuccess(
+    BuildContext context, {
+    required String message,
+    bool top = false,
+  }) {
     show(
       context,
       message: message,
       icon: Icons.check_circle_outline,
       backgroundColor: AppColors.primary,
+      top: top,
     );
   }
 
-  static void showError(BuildContext context, {required String message}) {
+  static void showError(
+    BuildContext context, {
+    required String message,
+    bool top = false,
+  }) {
     show(
       context,
       message: message,
       icon: Icons.error_outline,
       backgroundColor: AppColors.error,
+      top: top,
     );
   }
 
-  static void showInfo(BuildContext context, {required String message}) {
+  static void showInfo(
+    BuildContext context, {
+    required String message,
+    bool top = false,
+  }) {
     show(
       context,
       message: message,
       icon: Icons.info_outline,
       backgroundColor: AppColors.primary,
+      top: top,
     );
   }
 
@@ -41,6 +56,7 @@ class CustomToast {
     required String message,
     IconData? icon,
     Color? backgroundColor,
+    bool top = false,
     Duration duration = const Duration(seconds: 3),
   }) {
     _dismissTimer?.cancel();
@@ -64,7 +80,8 @@ class CustomToast {
       builder: (context) {
         final bottomOffset = MediaQuery.of(context).padding.bottom + 32.h;
         return Positioned(
-          bottom: bottomOffset,
+          top: top ? MediaQuery.of(context).padding.top + 16.h : null,
+          bottom: top ? null : bottomOffset,
           left: 16.w,
           right: 16.w,
           child: Material(
@@ -76,7 +93,7 @@ class CustomToast {
                 return Opacity(
                   opacity: value,
                   child: Transform.translate(
-                    offset: Offset(0, (1 - value) * 12.h),
+                    offset: Offset(0, (top ? -1 : 1) * (1 - value) * 12.h),
                     child: child,
                   ),
                 );

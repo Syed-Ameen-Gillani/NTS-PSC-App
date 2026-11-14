@@ -1,6 +1,9 @@
 import 'package:nts_psc_app/features/teacher/presentation/pages/teacher_lesson_activities_screen.dart';
 import 'package:nts_psc_app/features/learn/presentation/pages/lesson_reading_screen.dart';
 import 'package:go_router/go_router.dart';
+import 'navigation_extra_codec.dart';
+import 'package:nts_psc_app/features/onboarding/presentation/widgets/student_interest_gate.dart';
+import 'package:nts_psc_app/core/utils/lifecycle_diagnostics.dart';
 import 'package:nts_psc_app/features/discover/presentation/pages/instructors_screen.dart';
 import 'package:nts_psc_app/features/learn/presentation/pages/course_certificate_screen.dart';
 import 'package:nts_psc_app/features/curriculum/domain/curriculum_models.dart';
@@ -111,6 +114,7 @@ final _teacherOnlyPaths = {
 };
 
 final _signedInPaths = {
+  AppRoute.learningInterests.path,
   AppRoute.curriculumResources.path,
   AppRoute.accountSettings.path,
   AppRoute.editProfile.path,
@@ -124,6 +128,9 @@ final _signedInPaths = {
 };
 
 final appRouter = GoRouter(
+  restorationScopeId: 'navigation',
+  extraCodec: const NavigationExtraCodec(),
+  observers: [if (LifecycleDiagnostics.enabled) LifecycleRouteObserver()],
   initialLocation: AppConfig.restoredRole == UserRole.teacher
       ? AppRoute.teacherMain.path
       : AppConfig.restoredRole == UserRole.student
