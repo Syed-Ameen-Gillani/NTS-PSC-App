@@ -78,27 +78,21 @@ class _TeacherSignupScreenState extends ConsumerState<TeacherSignupScreen> {
         backgroundColor: Colors.white,
         appBar: AppBar(
           backgroundColor: Colors.white,
+          surfaceTintColor: Colors.transparent,
           elevation: 0,
           leading: IconButton(
-            icon: const Icon(
+            tooltip: 'Back',
+            icon: Icon(
               Icons.arrow_back_ios_new,
               color: AppColors.onBackground,
-              size: 20,
+              size: 20.w,
             ),
             onPressed: () => context.goNamed(AppRoute.teacherLogin.name),
           ),
-          title: Text(
-            'Instructor Registration',
-            style: AppTextStyles.interBold24.copyWith(
-              fontSize: 18.sp,
-              color: AppColors.onBackground,
-            ),
-          ),
-          centerTitle: true,
         ),
         body: SafeArea(
           child: SingleChildScrollView(
-            padding: EdgeInsets.only(left: 24.w, right: 24.w, bottom: 16.h),
+            padding: EdgeInsets.fromLTRB(24.w, 24.h, 24.w, 16.h),
             child: Form(
               key: _formKey,
               child: Column(

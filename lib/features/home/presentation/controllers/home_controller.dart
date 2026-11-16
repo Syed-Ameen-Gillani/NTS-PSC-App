@@ -7,7 +7,8 @@ import 'package:nts_psc_app/core/repositories/supabase_course_repository.dart';
 import 'package:nts_psc_app/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:nts_psc_app/features/discover/presentation/controllers/category_courses_controller.dart';
 import 'package:nts_psc_app/features/learn/presentation/controllers/my_learning_controller.dart';
-import 'package:nts_psc_app/core/models/user_role.dart';
+import 'package:nts_psc_app/features/onboarding/domain/learning_preferences.dart';
+import 'package:nts_psc_app/features/onboarding/domain/course_interest_ranking.dart';
 import 'package:nts_psc_app/features/onboarding/data/learning_preferences_repository.dart';
 
 class HomeState {
@@ -15,12 +16,14 @@ class HomeState {
   final List<CourseModel> continueLearningCourses;
   final List<CategoryModel> categories;
   final List<CourseModel> newCourses;
+  final LearningPreferences preferences;
 
   HomeState({
     this.featuredCourses = const [],
     this.continueLearningCourses = const [],
     this.categories = const [],
     this.newCourses = const [],
+    this.preferences = const LearningPreferences(),
   });
 }
 
@@ -28,17 +31,13 @@ class HomeState {
 final recommendedCatalogProvider = FutureProvider<List<CourseModel>>((
   ref,
 ) async {
-  final identity = ref.watch(
-    authControllerProvider.select(
-      (state) => (state.value?.user?.id, state.value?.user?.role),
-    ),
+  final preferences = await ref.watch(
+    currentLearningPreferencesProvider.future,
   );
-  if (identity.$1 != null && identity.$2 == UserRole.student) {
-    await ref.watch(learningPreferencesProvider(identity.$1!).future);
-  }
   final repository = ref.read(courseRepositoryProvider);
   return AppConfig.isSupabaseEnabled
-      ? (repository as SupabaseCourseRepository).getRecommendedCoursesPage(
+      ? (repository as SupabaseCourseRepository).getPersonalizedCoursesPage(
+          ranking: CourseInterestRanking(preferences),
           offset: 0,
           limit: 12,
         )
@@ -50,7 +49,10 @@ class HomeController extends AsyncNotifier<HomeState> {
   FutureOr<HomeState> build() async {
     if (AppConfig.isSupabaseEnabled) {
       final catalogRequest = ref.watch(publishedCatalogProvider.future);
-      final categoriesRequest = ref.watch(allCategoriesProvider.future);
+      final categoriesRequest = ref.watch(prioritizedCategoriesProvider.future);
+      final preferencesRequest = ref.watch(
+        currentLearningPreferencesProvider.future,
+      );
       final learningRequest = ref.watch(myLearningControllerProvider.future);
       final featuredRequest = ref.watch(featuredCatalogProvider.future);
       final catalog = await catalogRequest;
@@ -62,6 +64,7 @@ class HomeController extends AsyncNotifier<HomeState> {
         continueLearningCourses: learning.ongoingCourses,
         categories: categories,
         newCourses: catalog,
+        preferences: await preferencesRequest,
       );
     }
     // Simulate slight loading
@@ -144,11 +147,16 @@ final homeControllerProvider = AsyncNotifierProvider<HomeController, HomeState>(
 );
 
 /// Shared published catalog for student-facing previews and lists.
-final publishedCatalogProvider = FutureProvider<List<CourseModel>>((ref) {
+final publishedCatalogProvider = FutureProvider<List<CourseModel>>((ref) async {
   ref.watch(authControllerProvider.select((state) => state.value?.user?.id));
   final repository = ref.read(courseRepositoryProvider);
   if (AppConfig.isSupabaseEnabled) {
-    return (repository as SupabaseCourseRepository).getNewCoursesPage(
+    final preferences = await ref.watch(
+      currentLearningPreferencesProvider.future,
+    );
+    return (repository as SupabaseCourseRepository).getPersonalizedCoursesPage(
+      ranking: CourseInterestRanking(preferences),
+      section: 'new',
       offset: 0,
       limit: 12,
     );
@@ -156,12 +164,19 @@ final publishedCatalogProvider = FutureProvider<List<CourseModel>>((ref) {
   return repository.getNewCourses();
 });
 
-final featuredCatalogProvider = FutureProvider<List<CourseModel>>((ref) {
+final featuredCatalogProvider = FutureProvider<List<CourseModel>>((ref) async {
   ref.watch(authControllerProvider.select((state) => state.value?.user?.id));
   final repository = ref.read(courseRepositoryProvider);
-  return AppConfig.isSupabaseEnabled
-      ? (repository as SupabaseCourseRepository).getFeaturedCoursesPreview()
-      : repository.getFeaturedCourses();
+  if (!AppConfig.isSupabaseEnabled) return repository.getFeaturedCourses();
+  final preferences = await ref.watch(
+    currentLearningPreferencesProvider.future,
+  );
+  return (repository as SupabaseCourseRepository).getPersonalizedCoursesPage(
+    ranking: CourseInterestRanking(preferences),
+    section: 'featured',
+    offset: 0,
+    limit: 4,
+  );
 });
 
 final allNewCoursesProvider = FutureProvider<List<CourseModel>>((ref) {
@@ -170,3 +185,17 @@ final allNewCoursesProvider = FutureProvider<List<CourseModel>>((ref) {
       ? ref.read(courseRepositoryProvider).getNewCourses()
       : ref.watch(publishedCatalogProvider.future);
 });
+
+final exploreTopicCoursesProvider = FutureProvider.autoDispose
+    .family<List<CourseModel>, String>((ref, topic) async {
+      final preferences = await ref.watch(
+        currentLearningPreferencesProvider.future,
+      );
+      return (ref.read(courseRepositoryProvider) as SupabaseCourseRepository)
+          .getPersonalizedCoursesPage(
+            ranking: CourseInterestRanking(preferences),
+            topic: topic,
+            offset: 0,
+            limit: 3,
+          );
+    });

@@ -1,3 +1,5 @@
+import 'package:nts_psc_app/features/onboarding/domain/course_interest_ranking.dart';
+import 'package:nts_psc_app/features/onboarding/domain/learning_preferences.dart';
 import 'package:nts_psc_app/presentation/widgets/app_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -59,7 +61,10 @@ class NewCoursesScreen extends ConsumerWidget {
                 .where(
                   (course) =>
                       seen.add(course.id) &&
-                      (category == null || course.category == category),
+                      (category == null ||
+                          CourseInterestRanking(
+                            const LearningPreferences(),
+                          ).matches(course, category!)),
                 )
                 .toList();
           });

@@ -1,3 +1,7 @@
+import 'package:nts_psc_app/features/onboarding/domain/course_interest_ranking.dart';
+import 'package:nts_psc_app/features/onboarding/data/learning_preferences_repository.dart';
+import 'package:nts_psc_app/features/auth/presentation/controllers/auth_controller.dart';
+import 'package:nts_psc_app/presentation/widgets/app_choice_chip.dart';
 import 'package:nts_psc_app/core/theme/app_gradients.dart';
 import 'package:nts_psc_app/presentation/widgets/app_scaffold.dart';
 import 'package:nts_psc_app/features/learn/presentation/controllers/my_learning_controller.dart';
@@ -30,7 +34,50 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
-  static const _courseFilters = ['All', 'AJK PSC', 'FPSC', 'NTS', 'CSS'];
+  Future<void> _showAllTopics(List<String> topics, String selected) async {
+    final owner = ref.read(authControllerProvider).value?.user?.id;
+    final topic = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      builder: (context) => SafeArea(
+        child: SizedBox(
+          height: MediaQuery.sizeOf(context).height * 0.75,
+          child: SingleChildScrollView(
+            padding: EdgeInsets.all(24.w),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Course Categories',
+                  style: AppTextStyles.interBold24.copyWith(fontSize: 20.sp),
+                ),
+                SizedBox(height: 16.h),
+                Wrap(
+                  spacing: 8.w,
+                  runSpacing: 8.h,
+                  children: [
+                    for (final topic in topics)
+                      AppChoiceChip(
+                        label: Text(topic),
+                        labelStyle: AppTextStyles.interRegular14,
+                        selected: topic == selected,
+                        onSelected: (_) => Navigator.of(context).pop(topic),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    if (mounted &&
+        topic != null &&
+        ref.read(authControllerProvider).value?.user?.id == owner) {
+      ref.read(homeFilterProvider.notifier).select(topic);
+    }
+  }
 
   @override
   void initState() {
@@ -48,7 +95,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final homeStateAsync = ref.watch(homeControllerProvider);
-    final selectedFilterIndex = ref.watch(homeFilterProvider);
+    final chosenTopic = ref.watch(homeFilterProvider);
     final sessions = AppConfig.isSupabaseEnabled
         ? null
         : ref.watch(teacherControllerProvider).value?.liveSessions;
@@ -60,6 +107,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       body: SafeArea(
         child: homeStateAsync.when(
           data: (state) {
+            final ranking = CourseInterestRanking(state.preferences);
+            final topics = ranking.topics(state.categories);
+            final selected = chosenTopic != null && topics.contains(chosenTopic)
+                ? chosenTopic
+                : ranking.initialTopic(state.categories);
+            final preview = {
+              'All',
+              if (selected != 'All') selected,
+              ...topics.skip(1),
+            }.take(4).toList();
             return RefreshIndicator(
               onRefresh: () async {
                 if (AppConfig.isSupabaseEnabled) {
@@ -67,6 +124,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 }
                 ref.invalidate(publishedCatalogProvider);
                 ref.invalidate(featuredCatalogProvider);
+                ref.invalidate(prioritizedCategoriesProvider);
+                ref.invalidate(recommendedCatalogProvider);
+                ref.invalidate(exploreTopicCoursesProvider);
                 ref.invalidate(allCategoriesProvider);
                 ref.invalidate(homeControllerProvider);
                 await ref.read(homeControllerProvider.future);
@@ -235,18 +295,39 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ),
                       SizedBox(height: 32.h),
                     ],
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 24.w),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              'Course Categories',
+                              style: AppTextStyles.interBold24.copyWith(
+                                fontSize: 18.sp,
+                              ),
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: () => _showAllTopics(topics, selected),
+                            child: const Text('See All'),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: 12.h),
                     CategoryFilterChips(
-                      filters: _courseFilters,
-                      initialSelectedIndex: selectedFilterIndex,
-                      onSelected: ref.read(homeFilterProvider.notifier).select,
+                      filters: preview,
+                      wrap: true,
+                      initialSelectedIndex: preview.indexOf(selected),
+                      onSelected: (index) => ref
+                          .read(homeFilterProvider.notifier)
+                          .select(preview[index]),
                     ),
                     SizedBox(height: 20.h),
                     _CategoryCourseResults(
-                      filter: _courseFilters[selectedFilterIndex],
-                      courses: AppConfig.isSupabaseEnabled
-                          ? ref.watch(recommendedCatalogProvider).value ??
-                                [...state.featuredCourses, ...state.newCourses]
-                          : [...state.featuredCourses, ...state.newCourses],
+                      filter: selected,
+                      ranking: ranking,
+                      courses: [...state.featuredCourses, ...state.newCourses],
                     ),
                     SizedBox(height: 32.h),
                     if (state.continueLearningCourses.isEmpty)
@@ -318,14 +399,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 }
 
-class HomeFilter extends Notifier<int> {
+class HomeFilter extends Notifier<String?> {
   @override
-  int build() => 0;
+  String? build() {
+    ref.watch(authControllerProvider.select((state) => state.value?.user?.id));
+    ref.watch(currentLearningPreferencesProvider);
+    return null;
+  }
 
-  void select(int index) => state = index;
+  void select(String topic) => state = topic;
 }
 
-final homeFilterProvider = NotifierProvider<HomeFilter, int>(HomeFilter.new);
+final homeFilterProvider = NotifierProvider<HomeFilter, String?>(
+  HomeFilter.new,
+);
 
 class _DashboardEmptySection extends StatelessWidget {
   const _DashboardEmptySection({
@@ -396,20 +483,43 @@ class _DashboardEmptySection extends StatelessWidget {
   }
 }
 
-class _CategoryCourseResults extends StatelessWidget {
-  const _CategoryCourseResults({required this.filter, required this.courses});
+class _CategoryCourseResults extends ConsumerWidget {
+  const _CategoryCourseResults({
+    required this.filter,
+    required this.courses,
+    required this.ranking,
+  });
+  final CourseInterestRanking ranking;
 
   final String filter;
   final List<CourseModel> courses;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (!AppConfig.isSupabaseEnabled) return _results(context, courses);
+    return ref
+        .watch(exploreTopicCoursesProvider(filter))
+        .when(
+          data: (items) => _results(context, items),
+          loading: () => const Padding(
+            padding: EdgeInsets.all(24),
+            child: Center(child: CircularProgressIndicator()),
+          ),
+          error: (_, _) => Center(
+            child: TextButton(
+              onPressed: () =>
+                  ref.invalidate(exploreTopicCoursesProvider(filter)),
+              child: const Text('Could not load courses. Retry'),
+            ),
+          ),
+        );
+  }
+
+  Widget _results(BuildContext context, List<CourseModel> courses) {
     final seen = <String>{};
     final matching = courses
         .where(
-          (course) =>
-              seen.add(course.id) &&
-              (filter == 'All' || course.category == filter),
+          (course) => seen.add(course.id) && ranking.matches(course, filter),
         )
         .toList();
     if (matching.isNotEmpty) {

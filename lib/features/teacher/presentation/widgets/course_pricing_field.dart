@@ -117,8 +117,8 @@ class _CourseTypeOption extends StatelessWidget {
           borderRadius: BorderRadius.circular(10.r),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 160),
-            height: 52.h,
-            padding: EdgeInsets.symmetric(horizontal: 12.w),
+            constraints: BoxConstraints(minHeight: 52.h),
+            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
             decoration: BoxDecoration(
               color: selected ? null : AppColors.settingsCardBackground,
               gradient: selected
@@ -137,11 +137,14 @@ class _CourseTypeOption extends StatelessWidget {
               children: [
                 Icon(icon, size: 18.w, color: foreground),
                 SizedBox(width: 8.w),
-                Text(
-                  label,
-                  style: AppTextStyles.interSemiBold16.copyWith(
-                    fontSize: 14.sp,
-                    color: foreground,
+                Flexible(
+                  child: Text(
+                    label,
+                    textAlign: TextAlign.center,
+                    style: AppTextStyles.interSemiBold16.copyWith(
+                      fontSize: 14.sp,
+                      color: foreground,
+                    ),
                   ),
                 ),
                 if (selected) ...[

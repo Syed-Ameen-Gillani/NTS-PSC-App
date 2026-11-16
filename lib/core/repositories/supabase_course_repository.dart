@@ -8,6 +8,7 @@ import 'package:nts_psc_app/core/repositories/supabase_course_enrichment.dart';
 import 'package:nts_psc_app/core/repositories/supabase_teacher_directory.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
+import 'package:nts_psc_app/features/onboarding/domain/course_interest_ranking.dart';
 
 class SupabaseCourseRepository implements CourseRepository {
   SupabaseCourseRepository(this._client);
@@ -126,6 +127,60 @@ class SupabaseCourseRepository implements CourseRepository {
   }
 
   /// Loads the server-ranked page through the existing catalog access checks.
+  Future<List<CourseModel>> getPersonalizedCoursesPage({
+    required CourseInterestRanking ranking,
+    required int offset,
+    int limit = 20,
+    String section = 'recommended',
+    String? topic,
+  }) async {
+    final owner = _client.auth.currentUser?.id;
+    final rows =
+        await _client.rpc(
+              'personalized_course_ids',
+              params: {
+                'p_terms': ranking.terms,
+                'p_section': section,
+                'p_topic_terms': topic == null || topic == 'All'
+                    ? null
+                    : CourseInterestRanking.topicTerms(topic),
+                'p_limit': limit,
+                'p_offset': offset,
+              },
+            )
+            as List;
+    if (_client.auth.currentUser?.id != owner) {
+      throw StateError('Account changed.');
+    }
+    return _coursesInOrder([
+      for (final row in rows) row['course_id'] as String,
+    ], owner);
+  }
+
+  Future<List<CategoryModel>> getPersonalizedCategories(
+    CourseInterestRanking ranking,
+  ) async {
+    final owner = _client.auth.currentUser?.id;
+    final rows =
+        await _client.rpc(
+              'personalized_course_categories',
+              params: {'p_terms': ranking.terms},
+            )
+            as List;
+    if (_client.auth.currentUser?.id != owner) {
+      throw StateError('Account changed.');
+    }
+    return [
+      for (final row in rows)
+        CategoryModel(
+          id: row['id'] as String,
+          name: row['name'] as String,
+          courseCount: (row['course_count'] as num).toInt(),
+          iconType: categoryIconForSlug(row['slug'] as String),
+        ),
+    ];
+  }
+
   Future<List<CourseModel>> getRecommendedCoursesPage({
     required int offset,
     int limit = 20,
@@ -141,6 +196,13 @@ class SupabaseCourseRepository implements CourseRepository {
       throw StateError('Account changed.');
     }
     final ids = [for (final row in rows) row['course_id'] as String];
+    return _coursesInOrder(ids, owner);
+  }
+
+  Future<List<CourseModel>> _coursesInOrder(
+    List<String> ids,
+    String? owner,
+  ) async {
     if (ids.isEmpty) return [];
     final courses = await _loadCourses(
       publishedOnly: true,

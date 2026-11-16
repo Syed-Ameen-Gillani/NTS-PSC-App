@@ -4,6 +4,8 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' show ClientException;
+import 'package:nts_psc_app/core/models/user_role.dart';
+import 'package:nts_psc_app/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:nts_psc_app/core/networks/supabase_client.dart';
 import 'package:nts_psc_app/features/onboarding/domain/learning_preferences.dart';
@@ -105,3 +107,17 @@ final learningPreferencesProvider =
       }
       return ref.read(learningPreferencesRepositoryProvider).load(owner);
     });
+
+final currentLearningPreferencesProvider = FutureProvider<LearningPreferences>((
+  ref,
+) {
+  final identity = ref.watch(
+    authControllerProvider.select(
+      (state) => (state.value?.user?.id, state.value?.user?.role),
+    ),
+  );
+  if (identity.$1 == null || identity.$2 != UserRole.student) {
+    return const LearningPreferences(completed: true);
+  }
+  return ref.watch(learningPreferencesProvider(identity.$1!).future);
+});

@@ -21,6 +21,13 @@ void main() {
     await tester.tap(find.text('Sign Up'));
     await tester.pumpAndSettle();
     expect(find.text('Create Account'), findsOneWidget);
+    expect(tester.widget<AppBar>(find.byType(AppBar)).title, isNull);
+    await tester.tap(find.byTooltip('Back'));
+    await tester.pumpAndSettle();
+    expect(appRouter.state.uri.path, AppRoute.login.path);
+    await tester.ensureVisible(find.text('Sign Up'));
+    await tester.tap(find.text('Sign Up'));
+    await tester.pumpAndSettle();
 
     await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
@@ -41,7 +48,14 @@ void main() {
     await tester.ensureVisible(find.text('Sign Up'));
     await tester.tap(find.text('Sign Up'));
     await tester.pumpAndSettle();
-    expect(find.text('Instructor Registration'), findsOneWidget);
+    expect(find.text('Join the Faculty'), findsOneWidget);
+    expect(tester.widget<AppBar>(find.byType(AppBar)).title, isNull);
+    await tester.tap(find.byTooltip('Back'));
+    await tester.pumpAndSettle();
+    expect(appRouter.state.uri.path, AppRoute.teacherLogin.path);
+    await tester.ensureVisible(find.text('Sign Up'));
+    await tester.tap(find.text('Sign Up'));
+    await tester.pumpAndSettle();
 
     await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();

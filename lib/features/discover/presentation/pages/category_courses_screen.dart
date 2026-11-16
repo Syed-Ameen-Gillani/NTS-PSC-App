@@ -164,7 +164,7 @@ class _AllCategoriesScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final categories = ref.watch(allCategoriesProvider);
+    final categories = ref.watch(prioritizedCategoriesProvider);
     return AppScaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -216,7 +216,7 @@ class _AllCategoriesScreen extends ConsumerWidget {
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (error, stack) => Center(
             child: TextButton(
-              onPressed: () => ref.invalidate(allCategoriesProvider),
+              onPressed: () => ref.invalidate(prioritizedCategoriesProvider),
               child: const Text('Could not load categories. Retry'),
             ),
           ),

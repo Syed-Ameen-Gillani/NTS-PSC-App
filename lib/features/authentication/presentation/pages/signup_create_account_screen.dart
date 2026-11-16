@@ -110,9 +110,23 @@ class _SignupCreateAccountScreenState
       },
       child: AppScaffold(
         backgroundColor: Colors.white,
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.transparent,
+          elevation: 0,
+          leading: IconButton(
+            tooltip: 'Back',
+            icon: Icon(
+              Icons.arrow_back_ios_new,
+              color: AppColors.onBackground,
+              size: 20.w,
+            ),
+            onPressed: () => context.goNamed(AppRoute.login.name),
+          ),
+        ),
         body: SafeArea(
           child: SingleChildScrollView(
-            padding: EdgeInsets.symmetric(horizontal: 24.w),
+            padding: EdgeInsets.fromLTRB(24.w, 24.h, 24.w, 0),
             child: Form(
               key: _formKey,
               child: Column(

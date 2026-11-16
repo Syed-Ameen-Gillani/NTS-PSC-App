@@ -15,6 +15,7 @@ import 'package:nts_psc_app/core/theme/app_theme.dart';
 import 'package:nts_psc_app/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:nts_psc_app/features/onboarding/data/learning_preferences_repository.dart';
 import 'package:nts_psc_app/features/onboarding/domain/learning_preferences.dart';
+import 'package:nts_psc_app/features/onboarding/domain/course_interest_ranking.dart';
 import 'package:nts_psc_app/features/onboarding/presentation/widgets/student_interest_gate.dart';
 import 'package:supabase_flutter/supabase_flutter.dart'
     show SupabaseClient, AuthClientOptions;
@@ -88,9 +89,12 @@ class _Courses extends SupabaseCourseRepository {
   int requests = 0;
 
   @override
-  Future<List<CourseModel>> getRecommendedCoursesPage({
+  Future<List<CourseModel>> getPersonalizedCoursesPage({
+    required CourseInterestRanking ranking,
     required int offset,
     int limit = 20,
+    String section = 'recommended',
+    String? topic,
   }) async {
     requests++;
     return [];

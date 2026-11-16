@@ -1,8 +1,11 @@
+import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:nts_psc_app/core/repositories/supabase_course_repository.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:nts_psc_app/features/onboarding/domain/course_interest_ranking.dart';
+import 'package:nts_psc_app/features/onboarding/domain/learning_preferences.dart';
 
 void main() {
   test('landing previews request bounded Supabase ranges', () async {
@@ -39,5 +42,36 @@ void main() {
     expect(requests[3].url.queryParameters['offset'], '20');
     expect(requests[3].url.queryParameters['limit'], '20');
     expect(requests[1].url.queryParameters['is_featured'], 'eq.true');
+
+    final ranking = CourseInterestRanking(
+      const LearningPreferences(
+        categories: ['Education'],
+        interests: ['English'],
+        skills: ['Grammar'],
+      ),
+    );
+    expect(
+      await repository.getPersonalizedCoursesPage(
+        ranking: ranking,
+        offset: 20,
+        limit: 20,
+        section: 'featured',
+        topic: 'English',
+      ),
+      isEmpty,
+    );
+    expect(await repository.getPersonalizedCategories(ranking), isEmpty);
+    expect(requests.length, 6);
+    final page = jsonDecode(requests[4].body) as Map<String, dynamic>;
+    expect(requests[4].url.path, endsWith('/rpc/personalized_course_ids'));
+    expect(page['p_offset'], 20);
+    expect(page['p_limit'], 20);
+    expect(page['p_section'], 'featured');
+    expect(page['p_topic_terms'], contains('english'));
+    expect(page['p_terms'], contains(equals({'term': 'english', 'weight': 4})));
+    expect(
+      requests[5].url.path,
+      endsWith('/rpc/personalized_course_categories'),
+    );
   });
 }

@@ -54,72 +54,75 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   Widget _buildRoleSelector() {
     return Container(
       width: double.infinity,
-      height: 48.h,
+      constraints: BoxConstraints(minHeight: 48.h),
       decoration: BoxDecoration(
         color: AppColors.grey100,
         borderRadius: BorderRadius.circular(50.r),
         border: Border.all(color: AppColors.grey300, width: 1.w),
       ),
       padding: EdgeInsets.all(4.w),
-      child: Row(
-        children: [
-          Expanded(
-            child: GestureDetector(
-              onTap: () {
-                setState(() => _selectedRole = UserRole.student);
-                ref
-                    .read(authControllerProvider.notifier)
-                    .selectRole(UserRole.student);
-              },
-              child: Container(
-                decoration: BoxDecoration(
-                  color: _selectedRole == UserRole.student
-                      ? AppColors.primary
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(50.r),
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  'Student',
-                  style: AppTextStyles.interSemiBold16.copyWith(
-                    fontSize: 14.sp,
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: GestureDetector(
+                onTap: () {
+                  setState(() => _selectedRole = UserRole.student);
+                  ref
+                      .read(authControllerProvider.notifier)
+                      .selectRole(UserRole.student);
+                },
+                child: Container(
+                  decoration: BoxDecoration(
                     color: _selectedRole == UserRole.student
-                        ? Colors.white
-                        : AppColors.grey500,
+                        ? AppColors.primary
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(50.r),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    'Student',
+                    style: AppTextStyles.interSemiBold16.copyWith(
+                      fontSize: 14.sp,
+                      color: _selectedRole == UserRole.student
+                          ? Colors.white
+                          : AppColors.grey500,
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-          Expanded(
-            child: GestureDetector(
-              onTap: () {
-                setState(() => _selectedRole = UserRole.teacher);
-                ref
-                    .read(authControllerProvider.notifier)
-                    .selectRole(UserRole.teacher);
-              },
-              child: Container(
-                decoration: BoxDecoration(
-                  color: _selectedRole == UserRole.teacher
-                      ? AppColors.primary
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(50.r),
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  'Teacher',
-                  style: AppTextStyles.interSemiBold16.copyWith(
-                    fontSize: 14.sp,
+            Expanded(
+              child: GestureDetector(
+                onTap: () {
+                  setState(() => _selectedRole = UserRole.teacher);
+                  ref
+                      .read(authControllerProvider.notifier)
+                      .selectRole(UserRole.teacher);
+                },
+                child: Container(
+                  decoration: BoxDecoration(
                     color: _selectedRole == UserRole.teacher
-                        ? Colors.white
-                        : AppColors.grey500,
+                        ? AppColors.primary
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(50.r),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    'Teacher',
+                    style: AppTextStyles.interSemiBold16.copyWith(
+                      fontSize: 14.sp,
+                      color: _selectedRole == UserRole.teacher
+                          ? Colors.white
+                          : AppColors.grey500,
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -189,7 +192,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       backgroundColor: Colors.white,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(horizontal: 24.w),
+          padding: EdgeInsets.fromLTRB(24.w, 24.h, 24.w, 0),
           child: Form(
             key: _formKey,
             child: Column(
